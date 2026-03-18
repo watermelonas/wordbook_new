@@ -1355,7 +1355,7 @@ const formatHighlight = (text) => {
   background-color: transparent !important;
   font-size: 52px;
   font-weight: 800;
-  color: #B85C6F !important;
+  color: #FF85A1 !important;
   text-align: center;
   overflow: visible;
   min-height: 72px;

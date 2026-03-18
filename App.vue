@@ -32,4 +32,13 @@ html, body, #app {
 body {
 	background-color: #FFF0F3;
 }
+
+/* 覆盖 uni-app 下拉刷新的背景颜色 */
+:deep(.uni-scroll-view__refresh) {
+	background-color: #FFF0F3 !important;
+}
+
+:deep(.uni-scroll-view__refresh-inner) {
+	background-color: #FFF0F3 !important;
+}
 </style>

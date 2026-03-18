@@ -3529,7 +3529,7 @@ if (uni.restoreGlobal) {
             allExternalWords = [];
             allExternalWordsLength.value = 0;
             enrichWordbookListInBackground(words.value, book, words);
-            formatAppLog("log", "at pages/index/index.vue:553", "极速加载：自用分页成功，数量:", words.value.length);
+            formatAppLog("log", "at pages/index/index.vue:555", "极速加载：自用分页成功，数量:", words.value.length);
             await loadLearningSnapshot();
             return;
           }
@@ -3543,18 +3543,18 @@ if (uni.restoreGlobal) {
           allExternalWordsLength.value = allExternalWords.length;
           words.value = allExternalWords.slice(0, PAGE_SIZE);
           displayLimit.value = PAGE_SIZE;
-          formatAppLog("log", "at pages/index/index.vue:570", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
+          formatAppLog("log", "at pages/index/index.vue:572", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
           enrichWordbookListInBackground(words.value, book, words);
           await loadLearningSnapshot();
         } catch (error) {
-          formatAppLog("error", "at pages/index/index.vue:575", "加载失败:", error);
+          formatAppLog("error", "at pages/index/index.vue:577", "加载失败:", error);
           words.value = [];
         } finally {
           loadWordsInProgress = false;
         }
       };
       onLoad(() => {
-        formatAppLog("log", "at pages/index/index.vue:583", "首页 onLoad - 开始加载");
+        formatAppLog("log", "at pages/index/index.vue:585", "首页 onLoad - 开始加载");
         try {
           const v2 = uni.getStorageSync(SHOW_CHINESE_KEY);
           if (v2 === false || v2 === "false" || v2 === 0 || v2 === "0")
@@ -3562,7 +3562,7 @@ if (uni.restoreGlobal) {
         } catch (_2) {
         }
         loadWords().catch((error) => {
-          formatAppLog("error", "at pages/index/index.vue:591", "首页加载单词失败:", error);
+          formatAppLog("error", "at pages/index/index.vue:593", "首页加载单词失败:", error);
           uni.showToast({
             title: "加载失败，请重试",
             icon: "error"
@@ -4063,8 +4063,10 @@ if (uni.restoreGlobal) {
         "scroll-y": "",
         "refresher-enabled": true,
         "refresher-triggered": $setup.refreshing,
+        "refresher-background": "#FFF0F3",
         onRefresherrefresh: $setup.onListRefresh,
-        onScrolltolower: $setup.onScrollToLower
+        onScrolltolower: $setup.onScrollToLower,
+        style: { "background-color": "#FFF0F3" }
       }, [
         $setup.filteredWords.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
           key: 0,
@@ -9819,7 +9821,7 @@ ${existingWordsStr}${examBlock}
   function T(e2) {
     return e2 && "string" == typeof e2 ? JSON.parse(e2) : e2;
   }
-  const b = true, E = "app", A = T(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), P = E, C = T('{"address":["127.0.0.1","192.168.1.222"],"servePort":7000,"debugPort":9000,"initialLaunchType":"local","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), O = T('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
+  const b = true, E = "app", A = T(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), P = E, C = T('{"address":["127.0.0.1","192.168.1.222"],"servePort":7001,"debugPort":9001,"initialLaunchType":"local","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), O = T('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
   let N = "";
   try {
     N = "__UNI__9F3DDBE";

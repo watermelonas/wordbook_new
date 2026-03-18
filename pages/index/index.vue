@@ -110,8 +110,10 @@
       scroll-y
       :refresher-enabled="true"
       :refresher-triggered="refreshing"
+      refresher-background="#FFF0F3"
       @refresherrefresh="onListRefresh"
       @scrolltolower="onScrollToLower"
+      style="background-color: #FFF0F3;"
     >
       <view v-if="filteredWords.length === 0" class="empty-state">
         <view class="empty-text">{{ (searchText || (filterType !== 'none' && (filterValue !== '' && filterValue !== undefined))) ? '未找到匹配的单词' : '还没有单词，开始添加吧' }}</view>
@@ -797,6 +799,7 @@ const onSearchConfirm = () => {
   flex-direction: column;
   height: 100%;
   padding-top: 0;
+  background-color: #FFF0F3;
 }
 
 .status-bar {
@@ -904,8 +907,20 @@ const onSearchConfirm = () => {
   display: flex;
   flex-direction: column;
   gap: 0;
-  padding: 8px 0 80px 0;
+  padding: 8px 0 20px 0;
   background-color: #FFF0F3;
+}
+
+:deep(.word-list) {
+  background-color: #FFF0F3 !important;
+}
+
+:deep(.uni-scroll-view) {
+  background-color: #FFF0F3 !important;
+}
+
+:deep(.uni-scroll-view__refresh-inner) {
+  background-color: #FFF0F3 !important;
 }
 
 .empty-state {
@@ -965,7 +980,7 @@ const onSearchConfirm = () => {
 .word-english {
   font-size: 28px;
   font-weight: 700;
-  color: #9B4A5A;
+  color: #FF85A1;
   letter-spacing: 0.5px;
 }
 
@@ -1315,5 +1330,10 @@ const onSearchConfirm = () => {
 
 .footer button:active {
   background-color: #FFE5EC !important;
+}
+
+/* 下拉刷新区域背景颜色 */
+:deep(.uni-scroll-view__refresh) {
+  background-color: #FFF0F3 !important;
 }
 </style>
