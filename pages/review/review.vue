@@ -1787,7 +1787,7 @@ const goToWordDetail = () => {
   if (!currentWord.value) {
     uni.showToast({ title: '无法查看详情', icon: 'none' });
     return;
-  }
+	
   
   // 保存当前复习进度
   saveReviewProgress();
@@ -3651,7 +3651,6 @@ onBackPress(() => {
   max-width: 400px;
   margin-bottom: 16px;
   flex-shrink: 0;
-}
 }
 
 .translation-input {
