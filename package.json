@@ -1,0 +1,17 @@
+{
+  "name": "wordbook",
+  "version": "1.0.0",
+  "description": "个人单词本应用",
+  "main": "main.js",
+  "scripts": {
+    "dev": "uni",
+    "build": "uni build"
+  },
+  "dependencies": {
+    "vue": "^3.3.4"
+  },
+  "devDependencies": {
+    "@dcloudio/vite-plugin-uni": "latest",
+    "vite": "^5.0.0"
+  }
+}

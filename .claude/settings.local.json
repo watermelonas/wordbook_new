@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf .hbuilderx .vite node_modules/.vite unpackage/dist unpackage/cache .claude/cache)",
+      "Bash(find . -name \".DS_Store\" -delete)",
+      "Bash(npm install:*)",
+      "Bash(npm view:*)",
+      "Bash(npm run:*)",
+      "Bash(rm -f vite.config.js package.json)",
+      "Bash(rm -rf node_modules .vite .hbuilderx unpackage/dist unpackage/cache)",
+      "Bash(find . -name *.bak -o -name *.orig)",
+      "Bash(ls -la *.json)",
+      "Bash(xargs grep:*)",
+      "Bash(for file:*)",
+      "Bash(do test:*)",
+      "Bash(echo \"✓ $file\")",
+      "Bash(echo \"✗ $file\")",
+      "Bash(done)",
+      "WebSearch",
+      "Bash(dir /B)",
+      "Bash(npm list:*)",
+      "Bash(dir /s /b)",
+      "Bash(findstr /i \"unpackage\\\\|\\\\.hbuilderx\\\\|dist\\\\|node_modules\\\\.vite\")",
+      "Bash(xargs rm:*)",
+      "Bash(find C:UsersroxyAppDataLocalHBuilder -name *.config.js -o -name vite.config.js)",
+      "Bash(xargs ls:*)"
+    ]
+  }
+}

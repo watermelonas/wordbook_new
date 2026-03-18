@@ -1,0 +1,6 @@
+# PDF 转文本（必装，用于 pdf_to_txt.py）
+pymupdf>=1.24.0
+# 词形还原，用于 build_wordbooks.py 只保留词根
+nltk>=3.8
+# 批处理 AI 预生成（batch_ai_vocab.py）
+requests>=2.28.0
