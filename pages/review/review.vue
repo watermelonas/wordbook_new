@@ -472,6 +472,22 @@ import {
 import { logger, errorHandler } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 import { getMasteredWordbookWords, addMasteredWordbookWord } from '../../src/utils/masteredWordbookWords.js';
+import {
+  getWordKey,
+  uniqueWordKeys,
+  getTodayKey,
+  normalizePlanEntry,
+  filterWordsByKeys,
+  shuffleList,
+  getReviewProgressKey,
+  REVIEW_PLAN_KEY,
+  loadPlanStore,
+  savePlanStore,
+  getPlanEntry,
+  savePlanEntry,
+  interleaveOldWords,
+  getOldReviewQuota,
+} from '../../src/utils/reviewUtils.js';
 
 const showSettings = ref(false);
 const showModeSelector = ref(false);
@@ -564,23 +580,13 @@ const reviewPreset = ref('default');
 const sessionNewCount = ref(0);
 const sessionOldCount = ref(0);
 
-const REVIEW_PLAN_KEY = 'reviewPlanByBook_v2';
-
 const getReviewProgressKey = () => `reviewProgress_${getCurrentBookId()}`;
 const getSettingsKey = () => `reviewSettings_${getCurrentBookId()}`;
 const getLastReviewResultKey = () => `lastReviewResult_${getCurrentBookId()}`;
 
-const getWordKey = (word) => {
-  if (!word) return '';
-  const english = typeof word === 'string' ? word : word.english;
-  return String(english || '').trim().toLowerCase();
-};
+const getCurrentBookId = () => getCurrentWordbook() || 'self';
 
-const uniqueWordKeys = (list) => {
-  if (!Array.isArray(list)) return [];
-  return [...new Set(list.map((item) => getWordKey(item)).filter(Boolean))];
-};
-
+// 依赖于组件状态的函数
 const saveReviewProgress = () => {
   if (!reviewStarted.value || reviewFinished.value || reviewWords.value.length === 0) return;
   uni.setStorageSync(getReviewProgressKey(), {
@@ -641,52 +647,9 @@ const checkProgress = () => {
   syncDashboardProgress();
 };
 
-const getTodayKey = () => {
-  const d = new Date();
-  const m = `${d.getMonth() + 1}`.padStart(2, '0');
-  const day = `${d.getDate()}`.padStart(2, '0');
-  return `${d.getFullYear()}-${m}-${day}`;
-};
-
-const normalizePlanEntry = (entry = {}) => ({
-  completed: Math.max(0, Number(entry.completed || 0)),
-  learnedKeys: uniqueWordKeys(entry.learnedKeys),
-  roundReviewedKeys: uniqueWordKeys(entry.roundReviewedKeys || entry.completedKeys),
-  todayKey: typeof entry.todayKey === 'string' ? entry.todayKey : '',
-  todayKeys: uniqueWordKeys(entry.todayKeys),
-  updatedAt: Number(entry.updatedAt || Date.now()),
-});
-
-const loadPlanStore = () => {
-  try {
-    const raw = uni.getStorageSync(REVIEW_PLAN_KEY);
-    if (!raw) return {};
-    if (typeof raw === 'string') {
-      const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === 'object' ? parsed : {};
-    }
-    return raw && typeof raw === 'object' ? raw : {};
-  } catch (_) {
-    return {};
-  }
-};
-
-const savePlanStore = (obj) => {
-  try {
-    uni.setStorageSync(REVIEW_PLAN_KEY, JSON.stringify(obj || {}));
-  } catch (_) {}
-};
-
-const getCurrentBookId = () => getCurrentWordbook() || 'self';
-
-const getPlanEntry = (bookId = getCurrentBookId()) => normalizePlanEntry(loadPlanStore()[bookId] || {});
-
-const savePlanEntry = (bookId, entry) => {
-  const store = loadPlanStore();
-  const next = normalizePlanEntry(entry);
-  store[bookId] = next;
-  savePlanStore(store);
-  return next;
+const filterWordsByKeys = (list, keySet) => {
+  const set = keySet instanceof Set ? keySet : new Set(keySet || []);
+  return (list || []).filter((item) => set.has(getWordKey(item)));
 };
 
 const getCurrentBookTotalWords = async () => {
@@ -826,36 +789,6 @@ const getOldReviewQuota = (count, oldPoolSize, newPoolSize) => {
   if (oldPoolSize <= 0) return 0;
   if (newPoolSize <= 0) return Math.min(count, oldPoolSize);
   return Math.min(oldPoolSize, Math.max(2, Math.min(count - 1, Math.round(count * 0.25))));
-};
-
-const shuffleList = (list) => {
-  const arr = Array.isArray(list) ? [...list] : [];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-};
-
-const interleaveOldWords = (freshWords, oldWords, count) => {
-  const fresh = shuffleList(freshWords).map((item) => ({ ...item, __isOldReview: false }));
-  const old = shuffleList(oldWords).map((item) => ({ ...item, __isOldReview: true }));
-  const result = [];
-  const step = Math.max(2, Math.round(fresh.length / Math.max(old.length, 1)));
-  let freshIndex = 0;
-  let oldIndex = 0;
-
-  while (result.length < count && (freshIndex < fresh.length || oldIndex < old.length)) {
-    let pushedFresh = 0;
-    while (freshIndex < fresh.length && pushedFresh < step && result.length < count) {
-      result.push(fresh[freshIndex++]);
-      pushedFresh++;
-    }
-    if (oldIndex < old.length && result.length < count) {
-      result.push(old[oldIndex++]);
-    }
-  }
-  return result.slice(0, count);
 };
 
 
