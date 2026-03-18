@@ -92,22 +92,25 @@ class DatabaseManager {
       console.log('[db] 调用 adapter.init()...');
 
       // 关键修复：在调用 adapter.init() 之前，确保 plus 对象已就绪
-      // 如果 plus 还未就绪，等待一下
+      // 使用 Promise.race 实现超时机制，防止无限等待
       if (typeof plus === 'undefined') {
         console.warn('[db] plus 对象未就绪，等待 plusready 事件...');
-        await new Promise((resolve) => {
-          const checkPlus = () => {
-            if (typeof plus !== 'undefined') {
-              console.log('[db] plus 对象已就绪');
-              resolve();
-            } else {
-              setTimeout(checkPlus, 100);
-            }
-          };
-          checkPlus();
-          // 最多等待 2 秒
-          setTimeout(resolve, 2000);
-        });
+        await Promise.race([
+          new Promise((resolve) => {
+            const checkPlus = () => {
+              if (typeof plus !== 'undefined') {
+                console.log('[db] plus 对象已就绪');
+                resolve();
+              } else {
+                setTimeout(checkPlus, 100);
+              }
+            };
+            checkPlus();
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('[db] plus 初始化超时（5秒）')), 5000)
+          )
+        ]);
       }
 
       // 重新检查 plus 对象，确定是否为 H5 环境

@@ -55,7 +55,7 @@ export class H5DatabaseAdapter {
   }
 
   async addWord(word) {
-    if (!word.english) return Promise.reject('单词不能为空');
+    if (!word.english) throw new Error('单词不能为空');
 
     const words = getH5Words();
     const newWord = {
@@ -74,11 +74,11 @@ export class H5DatabaseAdapter {
   }
 
   async updateWord(id, updates) {
-    if (!id) return Promise.reject('无效 id');
+    if (!id) throw new Error('无效 id');
 
     const words = getH5Words();
     const idx = words.findIndex(w => w.id === id);
-    if (idx === -1) return Promise.reject('未找到单词');
+    if (idx === -1) throw new Error('未找到单词');
 
     words[idx] = {
       ...words[idx],
@@ -90,7 +90,7 @@ export class H5DatabaseAdapter {
   }
 
   async deleteWord(id) {
-    if (!id) return Promise.reject('无效 id');
+    if (!id) throw new Error('无效 id');
 
     const words = getH5Words().filter(w => w.id !== id);
     setH5Words(words);
@@ -116,8 +116,14 @@ export class H5DatabaseAdapter {
 
   async getRandomDistractors(excludeId, count = 3) {
     const words = getH5Words().filter(w => w.id !== excludeId);
-    const shuffled = words.sort(() => Math.random() - 0.5);
-    return Promise.resolve(shuffled.slice(0, count).map(w => w.chinese));
+
+    // Fisher-Yates 洗牌算法 - 产生均匀分布的随机排列
+    for (let i = words.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [words[i], words[j]] = [words[j], words[i]];
+    }
+
+    return Promise.resolve(words.slice(0, count).map(w => w.chinese));
   }
 
   async getWordsByTag(tag, excludeId) {

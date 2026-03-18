@@ -156,17 +156,17 @@
           <view class="selector-modal" @click.stop>
             <text class="selector-title">选择复习难度</text>
             <view class="selector-options">
-              <view 
+              <view
                 class="selector-item"
                 :class="{ active: settings.difficulty === 'normal' }"
-                @click="settings.difficulty = 'normal'; showDifficultySelector = false"
+                @click="onDifficultyChange('normal'); showDifficultySelector = false"
               >
                 标准
               </view>
-              <view 
+              <view
                 class="selector-item"
                 :class="{ active: settings.difficulty === 'hard' }"
-                @click="settings.difficulty = 'hard'; showDifficultySelector = false"
+                @click="onDifficultyChange('hard'); showDifficultySelector = false"
               >
                 困难
               </view>
@@ -474,6 +474,10 @@ import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 import { getMasteredWordbookWords, addMasteredWordbookWord } from '../../src/utils/masteredWordbookWords.js';
 
 const showSettings = ref(false);
+const showModeSelector = ref(false);
+const showSortSelector = ref(false);
+const showCountSelector = ref(false);
+const showDifficultySelector = ref(false);
 const reviewStarted = ref(false);
 const reviewFinished = ref(false);
 
@@ -749,7 +753,12 @@ const refreshPlanStats = async () => {
   totalReviewedWords.value = Number(plan.completed || 0);
   learnedUniqueWords.value = plan.learnedKeys.length;
   todayReviewed.value = plan.todayKey === getTodayKey() ? plan.todayKeys.length : 0;
-  await refreshDashboardSnapshot();
+
+  // 分离 dashboard 快照加载，避免阻塞主线程
+  // 这个操作会加载所有单词并处理，比较耗时
+  refreshDashboardSnapshot().catch(() => {
+    dashboardSnapshot.value = { dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 };
+  });
 };
 
 const resetCurrentPlan = () => {
@@ -1091,20 +1100,45 @@ const countIndex = computed(() => countOptions.indexOf(settings.value.count) >= 
 const onModeChange = (e) => {
   const map = ['choice', 'choice_en', 'fill', 'ai', 'spell'];
   settings.value.mode = map[e.detail.value] || 'choice';
+  saveSettings();
 };
 
 const onSortChange = (e) => {
   const map = ['smart', 'error', 'new'];
   settings.value.sortBy = map[e.detail.value];
+  saveSettings();
 };
 
 const onCountChange = (e) => {
   settings.value.count = countOptions[e.detail.value];
+  saveSettings();
 };
 
 const setDailyTarget = (n) => {
   settings.value.count = Number(n);
   saveSettings();
+};
+
+const onDifficultyChange = (difficulty) => {
+  settings.value.difficulty = difficulty;
+  saveSettings();
+};
+
+// 打开各个选择器的函数
+const openModeSelector = () => {
+  showModeSelector.value = true;
+};
+
+const openSortSelector = () => {
+  showSortSelector.value = true;
+};
+
+const openCountSelector = () => {
+  showCountSelector.value = true;
+};
+
+const openDifficultySelector = () => {
+  showDifficultySelector.value = true;
 };
 
 onLoad((options) => {
@@ -1116,8 +1150,13 @@ onMounted(() => {
   loadLastReviewResult();
   checkProgress();
   syncDashboardProgress();
-  refreshPlanStats();
-  
+
+  // 延迟加载重操作，避免阻塞页面动画
+  // 动画时长通常 300ms，这里延迟 350ms 确保动画完成
+  setTimeout(() => {
+    refreshPlanStats();
+  }, 350);
+
   // 不自动恢复，让用户在选择页面主动开始复习
   // 如果有未完成的进度，会在用户点击"开始复习"时自动恢复
 });
@@ -1125,7 +1164,11 @@ onMounted(() => {
 onShow(() => {
   loadLastReviewResult();
   checkProgress();
-  refreshPlanStats();
+
+  // 延迟加载重操作
+  setTimeout(() => {
+    refreshPlanStats();
+  }, 350);
 });
 
 onHide(() => {
@@ -1239,9 +1282,17 @@ const saveSettingsAndStart = () => {
 const startReviewInternal = async (forceCount = null) => {
   // 预热词典，让第一题的干扰项加载不阻塞
   ensureDictWords();
+
+  // 保存当前的 todayKeys（今日学过的单词），以便在改变设置后仍然计入今日进度
+  const bookId = getCurrentBookId();
+  const oldPlanEntry = getPlanEntry(bookId);
+  const preservedTodayKeys = oldPlanEntry.todayKey === getTodayKey() ? oldPlanEntry.todayKeys : [];
+
+  // 清除复习进度（但不清除 planEntry 中的 todayKeys）
   clearReviewProgress();
+
   const count = forceCount != null ? Number(forceCount) : Number(settings.value.count || 20);
-  
+
   if (isSelfWordbook()) {
     if (reviewPreset.value === 'default') {
       reviewWords.value = await db.getReviewWords({
@@ -1258,7 +1309,7 @@ const startReviewInternal = async (forceCount = null) => {
     const presetQueue = buildPresetQueue(list, count);
     reviewWords.value = presetQueue.length ? presetQueue : await buildBookReviewQueue(list, count);
   }
-  
+
   if (reviewWords.value.length === 0) {
     uni.showToast({
       title: '没有单词可复习',
@@ -1266,7 +1317,7 @@ const startReviewInternal = async (forceCount = null) => {
     });
     return;
   }
-  
+
   reviewStarted.value = true;
   reviewFinished.value = false;
   currentIndex.value = 0;
@@ -1275,7 +1326,7 @@ const startReviewInternal = async (forceCount = null) => {
   wrongWords.value = [];
   sessionNewCount.value = reviewWords.value.filter((item) => !item.__isOldReview).length;
   sessionOldCount.value = reviewWords.value.filter((item) => !!item.__isOldReview).length;
-  
+
   loadCurrentQuestion();
 };
 
@@ -1304,13 +1355,15 @@ const onPrimaryStartClick = async () => {
 // 新增：开始推荐的复习
 const startRecommendedReview = async () => {
   reviewPreset.value = recommendedPreset.value;
-  await startReview();
+  // 直接开始新的复习，startReviewInternal 会处理进度清除
+  await startReviewInternal(null);
 };
 
 // 新增：开始指定预设的复习
 const startPresetReview = async (preset) => {
   reviewPreset.value = preset;
-  await startReview();
+  // 直接开始新的复习，startReviewInternal 会处理进度清除
+  await startReviewInternal(null);
 };
 
 /** 后台预取下一题的 masterDb 详情，命中缓存后当前题加载会极快 */
@@ -2900,8 +2953,8 @@ onBackPress(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: calc(70px + constant(safe-area-inset-top)) 16px 20px;
-  padding: calc(70px + env(safe-area-inset-top)) 16px 20px;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top));
   background-color: white;
   border-bottom: 1px solid #F0F0F0;
   box-sizing: border-box;
@@ -2909,7 +2962,7 @@ onBackPress(() => {
 }
 
 .stats-back-btn {
-  font-size: 32px;
+  font-size: 28px;
   color: #FF85A1;
   font-weight: 300;
   line-height: 1;
@@ -2926,7 +2979,7 @@ onBackPress(() => {
 }
 
 .stats-info text {
-  font-size: 13px;
+  font-size: 12px;
   color: #666;
 }
 
@@ -2973,8 +3026,8 @@ onBackPress(() => {
 
 .content {
   flex: 1;
-  padding: calc(100px + constant(safe-area-inset-top)) 16px 20px;
-  padding: calc(100px + env(safe-area-inset-top)) 16px 20px;
+  padding: 12px 16px 20px;
+  padding-top: max(12px, calc(env(safe-area-inset-top) + 60px));
   box-sizing: border-box;
 }
 
@@ -2982,9 +3035,10 @@ onBackPress(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 100%;
   width: 100%;
+  height: 100%;
   box-sizing: border-box;
+  justify-content: space-between;
 }
 
 .review-word-flag {
@@ -3003,8 +3057,10 @@ onBackPress(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 100px;
-  margin-bottom: 80px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  flex-shrink: 1;
+  min-height: 0;
 }
 
 .word-english {
@@ -3014,6 +3070,10 @@ onBackPress(() => {
   text-align: center;
   margin-bottom: 12px;
   line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .word-phonetic {
@@ -3024,21 +3084,30 @@ onBackPress(() => {
 }
 
 .word-chinese-prompt {
-  font-size: 48px;
+  font-size: 32px;
   font-weight: 700;
   color: #2C3E50;
   text-align: center;
-  margin-top: 100px;
-  margin-bottom: 80px;
+  margin-top: 20px;
+  margin-bottom: 20px;
   line-height: 1.2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
 }
 
 .options-grid {
   display: flex;
   flex-direction: column;
   width: 100%;
-  gap: 14px;
-  padding: 0 20px;
+  gap: 12px;
+  padding: 0 16px 16px 16px;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 .option-card {
@@ -3255,15 +3324,21 @@ onBackPress(() => {
   box-sizing: border-box;
   box-shadow: 0 2px 4px rgba(255, 133, 161, 0.1);
   border: 1px solid #FFD6E0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .fill-result {
-  margin-top: 20px;
+  margin-top: 16px;
   padding: 15px;
   border-radius: 8px;
   width: 100%;
   max-width: 400px;
   text-align: center;
+  overflow: hidden;
 }
 
 .fill-result .sentence-chinese,
@@ -3273,6 +3348,11 @@ onBackPress(() => {
   margin-bottom: 12px;
   line-height: 1.5;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .result-correct {
@@ -3559,9 +3639,15 @@ onBackPress(() => {
 .spell-chinese {
   font-size: 22px;
   color: #4A4E69;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   text-align: center;
   padding: 16px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .spell-input {
@@ -3604,8 +3690,12 @@ onBackPress(() => {
   font-size: clamp(28px, 8vw, 42px);
   font-weight: bold;
   color: #B85C6F;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
   text-align: center;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .context-card {
@@ -3616,7 +3706,8 @@ onBackPress(() => {
   padding: 24px;
   box-sizing: border-box;
   box-shadow: 0 4px 20px rgba(255, 133, 161, 0.12);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  overflow: hidden;
 }
 
 .context-sentence {
@@ -3625,6 +3716,11 @@ onBackPress(() => {
   color: #4A4E69;
   text-align: center;
   min-height: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .generating-indicator {
@@ -3637,7 +3733,9 @@ onBackPress(() => {
 .input-area {
   width: 100%;
   max-width: 400px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
 }
 
 .translation-input {
@@ -3668,9 +3766,10 @@ onBackPress(() => {
   max-width: 400px;
   border-radius: 16px;
   padding: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   box-sizing: border-box;
   animation: fadeIn 0.3s ease;
+  overflow: hidden;
 }
 
 @keyframes fadeIn {
@@ -3715,10 +3814,16 @@ onBackPress(() => {
   font-size: 14px;
   color: #4A4E69;
   line-height: 1.6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .btn-submit {
-  width: 85%;
+  width: 100%;
+  max-width: 400px;
   height: 56px;
   background-color: #FF85A1;
   color: white;
@@ -3731,6 +3836,10 @@ onBackPress(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 16px;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 .btn-submit:active {
@@ -3745,13 +3854,14 @@ onBackPress(() => {
 .action-buttons {
   display: flex;
   gap: 12px;
-  margin-top: 40px;
+  margin-top: 20px;
   width: 100%;
   max-width: 400px;
-  padding: 0 20px;
+  padding: 0 16px 16px 16px;
   box-sizing: border-box;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .action-btn {

@@ -335,7 +335,7 @@ if (uni.restoreGlobal) {
     }
     async addWord(word) {
       if (!word.english)
-        return Promise.reject("单词不能为空");
+        throw new Error("单词不能为空");
       const words = getH5Words$1();
       const newWord = {
         ...word,
@@ -353,11 +353,11 @@ if (uni.restoreGlobal) {
     }
     async updateWord(id, updates) {
       if (!id)
-        return Promise.reject("无效 id");
+        throw new Error("无效 id");
       const words = getH5Words$1();
       const idx = words.findIndex((w2) => w2.id === id);
       if (idx === -1)
-        return Promise.reject("未找到单词");
+        throw new Error("未找到单词");
       words[idx] = {
         ...words[idx],
         ...updates,
@@ -368,7 +368,7 @@ if (uni.restoreGlobal) {
     }
     async deleteWord(id) {
       if (!id)
-        return Promise.reject("无效 id");
+        throw new Error("无效 id");
       const words = getH5Words$1().filter((w2) => w2.id !== id);
       setH5Words$1(words);
       return Promise.resolve();
@@ -390,8 +390,11 @@ if (uni.restoreGlobal) {
     }
     async getRandomDistractors(excludeId, count = 3) {
       const words = getH5Words$1().filter((w2) => w2.id !== excludeId);
-      const shuffled = words.sort(() => Math.random() - 0.5);
-      return Promise.resolve(shuffled.slice(0, count).map((w2) => w2.chinese));
+      for (let i2 = words.length - 1; i2 > 0; i2--) {
+        const j2 = Math.floor(Math.random() * (i2 + 1));
+        [words[i2], words[j2]] = [words[j2], words[i2]];
+      }
+      return Promise.resolve(words.slice(0, count).map((w2) => w2.chinese));
     }
     async getWordsByTag(tag, excludeId) {
       if (!tag || !tag.trim())
@@ -410,27 +413,27 @@ if (uni.restoreGlobal) {
       this.isOpen = false;
     }
     async init() {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:148", "[AppAdapter] init() 被调用");
+      formatAppLog("log", "at src/utils/databaseAdapter.js:154", "[AppAdapter] init() 被调用");
       if (this.isOpen) {
-        formatAppLog("log", "at src/utils/databaseAdapter.js:150", "[AppAdapter] 数据库已打开，跳过初始化");
+        formatAppLog("log", "at src/utils/databaseAdapter.js:156", "[AppAdapter] 数据库已打开，跳过初始化");
         return Promise.resolve();
       }
       try {
-        formatAppLog("log", "at src/utils/databaseAdapter.js:155", "[AppAdapter] 检查数据库是否已打开...");
-        formatAppLog("log", "at src/utils/databaseAdapter.js:156", "[AppAdapter] plus:", typeof plus);
-        formatAppLog("log", "at src/utils/databaseAdapter.js:157", "[AppAdapter] plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
+        formatAppLog("log", "at src/utils/databaseAdapter.js:161", "[AppAdapter] 检查数据库是否已打开...");
+        formatAppLog("log", "at src/utils/databaseAdapter.js:162", "[AppAdapter] plus:", typeof plus);
+        formatAppLog("log", "at src/utils/databaseAdapter.js:163", "[AppAdapter] plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
         if (plus && plus.sqlite && plus.sqlite.isOpenDatabase({ name: this.dbName, path: this.dbPath })) {
-          formatAppLog("log", "at src/utils/databaseAdapter.js:160", "[AppAdapter] 数据库已打开");
+          formatAppLog("log", "at src/utils/databaseAdapter.js:166", "[AppAdapter] 数据库已打开");
           this.isOpen = true;
           return Promise.resolve();
         }
-        formatAppLog("log", "at src/utils/databaseAdapter.js:165", "[AppAdapter] 打开数据库...");
+        formatAppLog("log", "at src/utils/databaseAdapter.js:171", "[AppAdapter] 打开数据库...");
         await this.openDatabase();
         this.isOpen = true;
-        formatAppLog("log", "at src/utils/databaseAdapter.js:168", "[AppAdapter] 数据库打开成功");
+        formatAppLog("log", "at src/utils/databaseAdapter.js:174", "[AppAdapter] 数据库打开成功");
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/databaseAdapter.js:171", "[AppAdapter] 初始化失败:", error);
+        formatAppLog("error", "at src/utils/databaseAdapter.js:177", "[AppAdapter] 初始化失败:", error);
         throw error;
       }
     }
@@ -440,11 +443,11 @@ if (uni.restoreGlobal) {
           name: this.dbName,
           path: this.dbPath,
           success: () => {
-            formatAppLog("log", "at src/utils/databaseAdapter.js:182", "[AppAdapter] 数据库打开成功");
+            formatAppLog("log", "at src/utils/databaseAdapter.js:188", "[AppAdapter] 数据库打开成功");
             resolve();
           },
           fail: (e2) => {
-            formatAppLog("error", "at src/utils/databaseAdapter.js:186", "[AppAdapter] 数据库打开失败:", e2);
+            formatAppLog("error", "at src/utils/databaseAdapter.js:192", "[AppAdapter] 数据库打开失败:", e2);
             reject(e2);
           }
         });
@@ -458,7 +461,7 @@ if (uni.restoreGlobal) {
           sql: bindSql(sql, params),
           success: (data) => resolve(data || []),
           fail: (e2) => {
-            formatAppLog("error", "at src/utils/databaseAdapter.js:202", "[AppAdapter] 查询失败:", e2);
+            formatAppLog("error", "at src/utils/databaseAdapter.js:208", "[AppAdapter] 查询失败:", e2);
             resolve([]);
           }
         });
@@ -588,16 +591,16 @@ if (uni.restoreGlobal) {
     }
   }
   function createDatabaseAdapter() {
-    formatAppLog("log", "at src/utils/databaseAdapter.js:357", "[databaseAdapter] 检查运行环境...");
-    formatAppLog("log", "at src/utils/databaseAdapter.js:358", "[databaseAdapter] typeof plus:", typeof plus);
-    formatAppLog("log", "at src/utils/databaseAdapter.js:359", "[databaseAdapter] typeof plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
+    formatAppLog("log", "at src/utils/databaseAdapter.js:363", "[databaseAdapter] 检查运行环境...");
+    formatAppLog("log", "at src/utils/databaseAdapter.js:364", "[databaseAdapter] typeof plus:", typeof plus);
+    formatAppLog("log", "at src/utils/databaseAdapter.js:365", "[databaseAdapter] typeof plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
     const isApp2 = typeof plus !== "undefined" && typeof plus.sqlite !== "undefined";
-    formatAppLog("log", "at src/utils/databaseAdapter.js:363", "[databaseAdapter] isApp:", isApp2);
+    formatAppLog("log", "at src/utils/databaseAdapter.js:369", "[databaseAdapter] isApp:", isApp2);
     if (isApp2) {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:366", "[databaseAdapter] 使用 AppDatabaseAdapter");
+      formatAppLog("log", "at src/utils/databaseAdapter.js:372", "[databaseAdapter] 使用 AppDatabaseAdapter");
       return new AppDatabaseAdapter();
     } else {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:369", "[databaseAdapter] 使用 H5DatabaseAdapter");
+      formatAppLog("log", "at src/utils/databaseAdapter.js:375", "[databaseAdapter] 使用 H5DatabaseAdapter");
       return new H5DatabaseAdapter();
     }
   }
@@ -665,33 +668,37 @@ if (uni.restoreGlobal) {
         formatAppLog("log", "at src/utils/db_v2.js:92", "[db] 调用 adapter.init()...");
         if (typeof plus === "undefined") {
           formatAppLog("warn", "at src/utils/db_v2.js:97", "[db] plus 对象未就绪，等待 plusready 事件...");
-          await new Promise((resolve) => {
-            const checkPlus = () => {
-              if (typeof plus !== "undefined") {
-                formatAppLog("log", "at src/utils/db_v2.js:101", "[db] plus 对象已就绪");
-                resolve();
-              } else {
-                setTimeout(checkPlus, 100);
-              }
-            };
-            checkPlus();
-            setTimeout(resolve, 2e3);
-          });
+          await Promise.race([
+            new Promise((resolve) => {
+              const checkPlus = () => {
+                if (typeof plus !== "undefined") {
+                  formatAppLog("log", "at src/utils/db_v2.js:102", "[db] plus 对象已就绪");
+                  resolve();
+                } else {
+                  setTimeout(checkPlus, 100);
+                }
+              };
+              checkPlus();
+            }),
+            new Promise(
+              (_2, reject) => setTimeout(() => reject(new Error("[db] plus 初始化超时（5秒）")), 5e3)
+            )
+          ]);
         }
         this.isH5 = typeof plus === "undefined";
-        formatAppLog("log", "at src/utils/db_v2.js:115", "[db] isH5:", this.isH5);
+        formatAppLog("log", "at src/utils/db_v2.js:118", "[db] isH5:", this.isH5);
         await this.adapter.init();
-        formatAppLog("log", "at src/utils/db_v2.js:118", "[db] adapter.init() 完成");
+        formatAppLog("log", "at src/utils/db_v2.js:121", "[db] adapter.init() 完成");
         if (!this.isH5) {
-          formatAppLog("log", "at src/utils/db_v2.js:121", "[db] 设置数据库架构...");
+          formatAppLog("log", "at src/utils/db_v2.js:124", "[db] 设置数据库架构...");
           await this.setupSchema();
-          formatAppLog("log", "at src/utils/db_v2.js:123", "[db] 数据库架构设置完成");
+          formatAppLog("log", "at src/utils/db_v2.js:126", "[db] 数据库架构设置完成");
         } else {
-          formatAppLog("log", "at src/utils/db_v2.js:125", "[db] H5 环境，跳过架构设置");
+          formatAppLog("log", "at src/utils/db_v2.js:128", "[db] H5 环境，跳过架构设置");
         }
-        formatAppLog("log", "at src/utils/db_v2.js:127", "[db] 数据库初始化完成");
+        formatAppLog("log", "at src/utils/db_v2.js:130", "[db] 数据库初始化完成");
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:129", "[db] 初始化失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:132", "[db] 初始化失败:", error);
         throw error;
       }
     }
@@ -769,9 +776,9 @@ if (uni.restoreGlobal) {
           await this.adapter.execute(sql).catch(() => {
           });
         }
-        formatAppLog("log", "at src/utils/db_v2.js:214", "[db] 数据库架构初始化完成");
+        formatAppLog("log", "at src/utils/db_v2.js:217", "[db] 数据库架构初始化完成");
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:216", "[db] 设置架构失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:219", "[db] 设置架构失败:", error);
       }
     }
     /**
@@ -812,7 +819,7 @@ if (uni.restoreGlobal) {
       try {
         return await this.adapter.query(sql, params);
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:267", "[db] getWordsForList 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:270", "[db] getWordsForList 失败:", error);
         return [];
       }
     }
@@ -921,7 +928,7 @@ if (uni.restoreGlobal) {
         await this.adapter.execute(sql, params);
         return Promise.resolve({ ...word, id: wordId });
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:386", "[db] addWord 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:389", "[db] addWord 失败:", error);
         throw error;
       }
     }
@@ -938,7 +945,7 @@ if (uni.restoreGlobal) {
         const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC");
         return Promise.resolve((data || []).map(parseWord));
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:406", "[db] getWords 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:409", "[db] getWords 失败:", error);
         return Promise.resolve([]);
       }
     }
@@ -958,7 +965,7 @@ if (uni.restoreGlobal) {
         const data = await this.adapter.query("SELECT * FROM words WHERE id = ?", [id]);
         return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:429", "[db] getWordById 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:432", "[db] getWordById 失败:", error);
         return Promise.resolve(null);
       }
     }
@@ -978,7 +985,7 @@ if (uni.restoreGlobal) {
         const data = await this.adapter.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
         return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:453", "[db] getWordByEnglish 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:456", "[db] getWordByEnglish 失败:", error);
         return Promise.resolve(null);
       }
     }
@@ -1006,7 +1013,7 @@ if (uni.restoreGlobal) {
         await this.adapter.updateWord(id, updates);
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:484", "[db] updateWord 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:487", "[db] updateWord 失败:", error);
         throw error;
       }
     }
@@ -1026,7 +1033,7 @@ if (uni.restoreGlobal) {
         await this.adapter.deleteWord(id);
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:507", "[db] deleteWord 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:510", "[db] deleteWord 失败:", error);
         throw error;
       }
     }
@@ -1075,7 +1082,7 @@ if (uni.restoreGlobal) {
         });
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:562", "[db] updateErrorRate 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:565", "[db] updateErrorRate 失败:", error);
         return Promise.resolve();
       }
     }
@@ -1118,7 +1125,7 @@ if (uni.restoreGlobal) {
         }
         return Promise.resolve(words.slice(0, count));
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:613", "[db] getReviewWords 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:616", "[db] getReviewWords 失败:", error);
         return Promise.resolve([]);
       }
     }
@@ -1203,7 +1210,7 @@ if (uni.restoreGlobal) {
         });
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:692", "[db] masterWord 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:695", "[db] masterWord 失败:", error);
         throw error;
       }
     }
@@ -1219,7 +1226,7 @@ if (uni.restoreGlobal) {
         const data = await this.adapter.query("SELECT * FROM mastered_words ORDER BY mastered_at DESC");
         return Promise.resolve((data || []).map(parseWord));
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:711", "[db] getMasteredWords 失败:", error);
+        formatAppLog("error", "at src/utils/db_v2.js:714", "[db] getMasteredWords 失败:", error);
         return Promise.resolve([]);
       }
     }
@@ -2758,7 +2765,12 @@ if (uni.restoreGlobal) {
      * 添加日志监听器
      */
     addListener(callback) {
-      this.listeners.push(callback);
+      if (!this.listeners.includes(callback)) {
+        this.listeners.push(callback);
+      }
+      if (this.listeners.length > 100) {
+        formatAppLog("warn", "at src/utils/errorHandler.js:37", "[Logger] 监听器数量过多（>100），可能存在内存泄漏");
+      }
     }
     /**
      * 移除日志监听器
@@ -2788,7 +2800,7 @@ if (uni.restoreGlobal) {
         try {
           listener(logEntry);
         } catch (e2) {
-          formatAppLog("error", "at src/utils/errorHandler.js:68", "[Logger] 监听器执行失败:", e2);
+          formatAppLog("error", "at src/utils/errorHandler.js:75", "[Logger] 监听器执行失败:", e2);
         }
       });
       this.printToConsole(level, tag, message, data);
@@ -2800,9 +2812,9 @@ if (uni.restoreGlobal) {
       const levelName = Object.keys(LogLevel).find((k) => LogLevel[k] === level) || "UNKNOWN";
       const prefix = `[${levelName}] [${tag}]`;
       if (data !== null && data !== void 0) {
-        formatAppLog("log", "at src/utils/errorHandler.js:84", `${prefix} ${message}`, data);
+        formatAppLog("log", "at src/utils/errorHandler.js:91", `${prefix} ${message}`, data);
       } else {
-        formatAppLog("log", "at src/utils/errorHandler.js:86", `${prefix} ${message}`);
+        formatAppLog("log", "at src/utils/errorHandler.js:93", `${prefix} ${message}`);
       }
     }
     /**
@@ -3030,9 +3042,10 @@ if (uni.restoreGlobal) {
         this.timestamps.delete(key);
         return void 0;
       }
+      const value = this.cache.get(key);
       this.cache.delete(key);
-      this.cache.set(key, this.cache.get(key));
-      return this.cache.get(key);
+      this.cache.set(key, value);
+      return value;
     }
     /**
      * 设置缓存值
@@ -6448,6 +6461,10 @@ ${existingWordsStr}${examBlock}
     setup(__props, { expose: __expose }) {
       __expose();
       const showSettings = vue.ref(false);
+      const showModeSelector = vue.ref(false);
+      const showSortSelector = vue.ref(false);
+      const showCountSelector = vue.ref(false);
+      const showDifficultySelector = vue.ref(false);
       const reviewStarted = vue.ref(false);
       const reviewFinished = vue.ref(false);
       const settings = vue.ref({
@@ -6688,7 +6705,9 @@ ${existingWordsStr}${examBlock}
         totalReviewedWords.value = Number(plan.completed || 0);
         learnedUniqueWords.value = plan.learnedKeys.length;
         todayReviewed.value = plan.todayKey === getTodayKey() ? plan.todayKeys.length : 0;
-        await refreshDashboardSnapshot();
+        refreshDashboardSnapshot().catch(() => {
+          dashboardSnapshot.value = { dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 };
+        });
       };
       const resetCurrentPlan = () => {
         savePlanEntry(getCurrentBookId(), {
@@ -7020,17 +7039,36 @@ ${existingWordsStr}${examBlock}
       const onModeChange = (e2) => {
         const map = ["choice", "choice_en", "fill", "ai", "spell"];
         settings.value.mode = map[e2.detail.value] || "choice";
+        saveSettings();
       };
       const onSortChange = (e2) => {
         const map = ["smart", "error", "new"];
         settings.value.sortBy = map[e2.detail.value];
+        saveSettings();
       };
       const onCountChange = (e2) => {
         settings.value.count = countOptions[e2.detail.value];
+        saveSettings();
       };
       const setDailyTarget = (n2) => {
         settings.value.count = Number(n2);
         saveSettings();
+      };
+      const onDifficultyChange = (difficulty) => {
+        settings.value.difficulty = difficulty;
+        saveSettings();
+      };
+      const openModeSelector = () => {
+        showModeSelector.value = true;
+      };
+      const openSortSelector = () => {
+        showSortSelector.value = true;
+      };
+      const openCountSelector = () => {
+        showCountSelector.value = true;
+      };
+      const openDifficultySelector = () => {
+        showDifficultySelector.value = true;
       };
       onLoad((options) => {
         reviewPreset.value = options && options.preset ? String(options.preset) : "default";
@@ -7040,12 +7078,16 @@ ${existingWordsStr}${examBlock}
         loadLastReviewResult();
         checkProgress();
         syncDashboardProgress();
-        refreshPlanStats();
+        setTimeout(() => {
+          refreshPlanStats();
+        }, 350);
       });
       onShow(() => {
         loadLastReviewResult();
         checkProgress();
-        refreshPlanStats();
+        setTimeout(() => {
+          refreshPlanStats();
+        }, 350);
       });
       onHide(() => {
         if (reviewStarted.value && !reviewFinished.value) {
@@ -7127,7 +7169,7 @@ ${existingWordsStr}${examBlock}
               return !masteredSet.has(english);
             });
           } catch (e2) {
-            formatAppLog("error", "at pages/review/review.vue:1225", "buildBookReviewQueue: 过滤已斯单词失败", e2);
+            formatAppLog("error", "at pages/review/review.vue:1268", "buildBookReviewQueue: 过滤已斯单词失败", e2);
           }
         }
         return shuffleList(filteredList).slice(0, count);
@@ -7139,6 +7181,9 @@ ${existingWordsStr}${examBlock}
       };
       const startReviewInternal = async (forceCount = null) => {
         ensureDictWords();
+        const bookId = getCurrentBookId();
+        const oldPlanEntry = getPlanEntry(bookId);
+        oldPlanEntry.todayKey === getTodayKey() ? oldPlanEntry.todayKeys : [];
         clearReviewProgress();
         const count = forceCount != null ? Number(forceCount) : Number(settings.value.count || 20);
         if (isSelfWordbook()) {
@@ -7192,11 +7237,11 @@ ${existingWordsStr}${examBlock}
       };
       const startRecommendedReview = async () => {
         reviewPreset.value = recommendedPreset.value;
-        await startReview();
+        await startReviewInternal(null);
       };
       const startPresetReview = async (preset) => {
         reviewPreset.value = preset;
-        await startReview();
+        await startReviewInternal(null);
       };
       const prefetchNextWordDetail = (nextIndex) => {
         const nextWord = reviewWords.value[nextIndex];
@@ -7302,7 +7347,7 @@ ${existingWordsStr}${examBlock}
             }
           }
         } catch (e2) {
-          formatAppLog("error", "at pages/review/review.vue:1430", "获取当前单词释义失败:", e2);
+          formatAppLog("error", "at pages/review/review.vue:1483", "获取当前单词释义失败:", e2);
         }
         const distractorOptions = [];
         for (const d2 of distractors) {
@@ -7317,7 +7362,7 @@ ${existingWordsStr}${examBlock}
               };
             }
           } catch (e2) {
-            formatAppLog("error", "at pages/review/review.vue:1447", "获取干扰项释义失败:", e2);
+            formatAppLog("error", "at pages/review/review.vue:1500", "获取干扰项释义失败:", e2);
           }
           distractorOptions.push(option);
         }
@@ -7461,7 +7506,7 @@ ${existingWordsStr}${examBlock}
           const response = await aiService.callAPI(prompt);
           aiSentence.value = response.trim();
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1597", "生成例句失败:", error);
+          formatAppLog("error", "at pages/review/review.vue:1650", "生成例句失败:", error);
           aiSentence.value = "生成例句失败，请重试";
         } finally {
           isGenerating.value = false;
@@ -7540,7 +7585,7 @@ ${existingWordsStr}${examBlock}
             });
           }
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1686", "提交答案失败:", error);
+          formatAppLog("error", "at pages/review/review.vue:1739", "提交答案失败:", error);
           uni.showToast({
             title: "AI判卷失败，请重试",
             icon: "none"
@@ -7664,7 +7709,7 @@ ${existingWordsStr}${examBlock}
         uni.navigateTo({
           url: `/pages/word-detail/word-detail?english=${encodeURIComponent(currentWord.value.english)}&source=masterdb`,
           fail: (err) => {
-            formatAppLog("error", "at pages/review/review.vue:1830", "跳转失败:", err);
+            formatAppLog("error", "at pages/review/review.vue:1883", "跳转失败:", err);
             uni.showToast({ title: "跳转失败", icon: "none" });
           }
         });
@@ -7678,23 +7723,23 @@ ${existingWordsStr}${examBlock}
         try {
           const bookId = getCurrentBookId();
           if (currentWord.value.id) {
-            formatAppLog("log", "at pages/review/review.vue:1849", "markCurrentWordAsMastered: 自用词库单词，使用id斯掉");
+            formatAppLog("log", "at pages/review/review.vue:1902", "markCurrentWordAsMastered: 自用词库单词，使用id斯掉");
             await db.masterWord(currentWord.value.id);
           } else if (bookId && bookId !== "self") {
-            formatAppLog("log", "at pages/review/review.vue:1853", "markCurrentWordAsMastered: 词书单词，存储到本地");
+            formatAppLog("log", "at pages/review/review.vue:1906", "markCurrentWordAsMastered: 词书单词，存储到本地");
             addMasteredWordbookWord(bookId, currentWord.value.english);
           } else {
-            formatAppLog("log", "at pages/review/review.vue:1857", "markCurrentWordAsMastered: 其他情况，使用english斯掉");
+            formatAppLog("log", "at pages/review/review.vue:1910", "markCurrentWordAsMastered: 其他情况，使用english斯掉");
             await db.masterWordByEnglish(currentWord.value.english);
           }
-          formatAppLog("log", "at pages/review/review.vue:1861", "markCurrentWordAsMastered: 斯掉成功");
+          formatAppLog("log", "at pages/review/review.vue:1914", "markCurrentWordAsMastered: 斯掉成功");
           uni.showToast({ title: "已斯掉！", icon: "success" });
           showMasteredConfirm.value = false;
           setTimeout(() => {
             nextQuestion();
           }, 500);
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1870", "markCurrentWordAsMastered: 斯掉失败", error);
+          formatAppLog("error", "at pages/review/review.vue:1923", "markCurrentWordAsMastered: 斯掉失败", error);
           uni.showToast({ title: "斯掉失败: " + (error.message || "未知错误"), icon: "none" });
           showMasteredConfirm.value = false;
         }
@@ -7717,7 +7762,7 @@ ${existingWordsStr}${examBlock}
         }
         return false;
       });
-      const __returned__ = { showSettings, reviewStarted, reviewFinished, settings, reviewWords, currentIndex, currentWord, currentOptions, fillOptions, currentFillSentenceChinese, spellInput, escapeRegExp, formatHighlight, currentSentence, fillAnswer, aiSentence, userTranslation, aiResult, isGenerating, isSubmitting, formatAIPhighlight, selectedOption, showResult, showWrongFeedback, correctCount, wrongCount, wrongWords, lastReviewResult, showResumeModal, hasProgress, activeSettingCard, dashboardDone, dashboardTotal, bookTotalWords, totalReviewedWords, todayReviewed, learnedUniqueWords, dashboardSnapshot, showMasteredConfirm, reviewPreset, sessionNewCount, sessionOldCount, REVIEW_PLAN_KEY, getReviewProgressKey, getSettingsKey, getLastReviewResultKey, getWordKey, uniqueWordKeys, saveReviewProgress, clearReviewProgress, loadReviewProgress, resumeReview, discardReview, checkProgress, getTodayKey, normalizePlanEntry, loadPlanStore, savePlanStore, getCurrentBookId, getPlanEntry, savePlanEntry, getCurrentBookTotalWords, getCurrentBookWordPool: getCurrentBookWordPool2, filterWordsByKeys, refreshDashboardSnapshot, refreshPlanStats, resetCurrentPlan, markWordsReviewed, getOldReviewQuota, shuffleList, interleaveOldWords, syncDashboardProgress, dashboardTarget, dashboardPercent, formatRelativeReviewTime, currentReviewInsight, applyReviewPreview, finishedReviewInsight, completedInRound, currentRound, currentProgressPercent, oldReviewDailyTarget, dailyNewTarget, remainDays, remainingNewWords, estimatedFinishDate, dailyPlanText, isTodayTargetDone, primaryStartText, todayProgressPercent, recommendedPreset, recommendedPresetIcon, recommendedPresetTitle, recommendedPresetDesc, otherPresets, currentWordbookName, openSettings, sortByText, isLastQuestion, modeOptions, sortOptions, countOptions, dailyQuickOptions, modeIndex, modeDisplayText, sortIndex, countIndex, onModeChange, onSortChange, onCountChange, setDailyTarget, loadSettings, saveSettings, loadLastReviewResult, saveReviewResult, buildPresetQueue, buildBookReviewQueue, saveSettingsAndStart, startReviewInternal, startReview, startExtraRound20, onPrimaryStartClick, startRecommendedReview, startPresetReview, prefetchNextWordDetail, loadCurrentQuestion, get _dictWordsCache() {
+      const __returned__ = { showSettings, showModeSelector, showSortSelector, showCountSelector, showDifficultySelector, reviewStarted, reviewFinished, settings, reviewWords, currentIndex, currentWord, currentOptions, fillOptions, currentFillSentenceChinese, spellInput, escapeRegExp, formatHighlight, currentSentence, fillAnswer, aiSentence, userTranslation, aiResult, isGenerating, isSubmitting, formatAIPhighlight, selectedOption, showResult, showWrongFeedback, correctCount, wrongCount, wrongWords, lastReviewResult, showResumeModal, hasProgress, activeSettingCard, dashboardDone, dashboardTotal, bookTotalWords, totalReviewedWords, todayReviewed, learnedUniqueWords, dashboardSnapshot, showMasteredConfirm, reviewPreset, sessionNewCount, sessionOldCount, REVIEW_PLAN_KEY, getReviewProgressKey, getSettingsKey, getLastReviewResultKey, getWordKey, uniqueWordKeys, saveReviewProgress, clearReviewProgress, loadReviewProgress, resumeReview, discardReview, checkProgress, getTodayKey, normalizePlanEntry, loadPlanStore, savePlanStore, getCurrentBookId, getPlanEntry, savePlanEntry, getCurrentBookTotalWords, getCurrentBookWordPool: getCurrentBookWordPool2, filterWordsByKeys, refreshDashboardSnapshot, refreshPlanStats, resetCurrentPlan, markWordsReviewed, getOldReviewQuota, shuffleList, interleaveOldWords, syncDashboardProgress, dashboardTarget, dashboardPercent, formatRelativeReviewTime, currentReviewInsight, applyReviewPreview, finishedReviewInsight, completedInRound, currentRound, currentProgressPercent, oldReviewDailyTarget, dailyNewTarget, remainDays, remainingNewWords, estimatedFinishDate, dailyPlanText, isTodayTargetDone, primaryStartText, todayProgressPercent, recommendedPreset, recommendedPresetIcon, recommendedPresetTitle, recommendedPresetDesc, otherPresets, currentWordbookName, openSettings, sortByText, isLastQuestion, modeOptions, sortOptions, countOptions, dailyQuickOptions, modeIndex, modeDisplayText, sortIndex, countIndex, onModeChange, onSortChange, onCountChange, setDailyTarget, onDifficultyChange, openModeSelector, openSortSelector, openCountSelector, openDifficultySelector, loadSettings, saveSettings, loadLastReviewResult, saveReviewResult, buildPresetQueue, buildBookReviewQueue, saveSettingsAndStart, startReviewInternal, startReview, startExtraRound20, onPrimaryStartClick, startRecommendedReview, startPresetReview, prefetchNextWordDetail, loadCurrentQuestion, get _dictWordsCache() {
         return _dictWordsCache;
       }, set _dictWordsCache(v2) {
         _dictWordsCache = v2;
@@ -7941,11 +7986,11 @@ ${existingWordsStr}${examBlock}
       $setup.showSettings ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 2,
         class: "modal-overlay",
-        onClick: _cache[18] || (_cache[18] = ($event) => $setup.showSettings = false)
+        onClick: _cache[14] || (_cache[14] = ($event) => $setup.showSettings = false)
       }, [
         vue.createElementVNode("view", {
           class: "settings-modal",
-          onClick: _cache[17] || (_cache[17] = vue.withModifiers(() => {
+          onClick: _cache[13] || (_cache[13] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("view", { class: "modal-header" }, [
@@ -7958,7 +8003,7 @@ ${existingWordsStr}${examBlock}
           vue.createElementVNode("view", { class: "settings-cards-grid" }, [
             vue.createElementVNode("view", {
               class: "settings-card",
-              onClick: _cache[2] || (_cache[2] = (...args) => _ctx.openModeSelector && _ctx.openModeSelector(...args))
+              onClick: $setup.openModeSelector
             }, [
               vue.createElementVNode("text", { class: "card-title" }, "复习模式"),
               vue.createElementVNode(
@@ -7972,7 +8017,7 @@ ${existingWordsStr}${examBlock}
             ]),
             vue.createElementVNode("view", {
               class: "settings-card",
-              onClick: _cache[3] || (_cache[3] = (...args) => _ctx.openSortSelector && _ctx.openSortSelector(...args))
+              onClick: $setup.openSortSelector
             }, [
               vue.createElementVNode("text", { class: "card-title" }, "排序方式"),
               vue.createElementVNode(
@@ -7986,7 +8031,7 @@ ${existingWordsStr}${examBlock}
             ]),
             vue.createElementVNode("view", {
               class: "settings-card",
-              onClick: _cache[4] || (_cache[4] = (...args) => _ctx.openCountSelector && _ctx.openCountSelector(...args))
+              onClick: $setup.openCountSelector
             }, [
               vue.createElementVNode("text", { class: "card-title" }, "复习数量"),
               vue.createElementVNode(
@@ -8000,7 +8045,7 @@ ${existingWordsStr}${examBlock}
             ]),
             vue.createElementVNode("view", {
               class: "settings-card",
-              onClick: _cache[5] || (_cache[5] = (...args) => _ctx.openDifficultySelector && _ctx.openDifficultySelector(...args))
+              onClick: $setup.openDifficultySelector
             }, [
               vue.createElementVNode("text", { class: "card-title" }, "复习难度"),
               vue.createElementVNode(
@@ -8013,14 +8058,14 @@ ${existingWordsStr}${examBlock}
               vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
             ])
           ]),
-          _ctx.showModeSelector ? (vue.openBlock(), vue.createElementBlock("view", {
+          $setup.showModeSelector ? (vue.openBlock(), vue.createElementBlock("view", {
             key: 0,
             class: "selector-overlay",
-            onClick: _cache[7] || (_cache[7] = ($event) => _ctx.showModeSelector = false)
+            onClick: _cache[3] || (_cache[3] = ($event) => $setup.showModeSelector = false)
           }, [
             vue.createElementVNode("view", {
               class: "selector-modal",
-              onClick: _cache[6] || (_cache[6] = vue.withModifiers(() => {
+              onClick: _cache[2] || (_cache[2] = vue.withModifiers(() => {
               }, ["stop"]))
             }, [
               vue.createElementVNode("text", { class: "selector-title" }, "选择复习模式"),
@@ -8034,7 +8079,7 @@ ${existingWordsStr}${examBlock}
                       class: vue.normalizeClass(["selector-item", { active: $setup.modeIndex === idx }]),
                       onClick: ($event) => {
                         $setup.onModeChange({ detail: { value: idx } });
-                        _ctx.showModeSelector = false;
+                        $setup.showModeSelector = false;
                       }
                     }, vue.toDisplayString(name), 11, ["onClick"]);
                   }),
@@ -8044,14 +8089,14 @@ ${existingWordsStr}${examBlock}
               ])
             ])
           ])) : vue.createCommentVNode("v-if", true),
-          _ctx.showSortSelector ? (vue.openBlock(), vue.createElementBlock("view", {
+          $setup.showSortSelector ? (vue.openBlock(), vue.createElementBlock("view", {
             key: 1,
             class: "selector-overlay",
-            onClick: _cache[9] || (_cache[9] = ($event) => _ctx.showSortSelector = false)
+            onClick: _cache[5] || (_cache[5] = ($event) => $setup.showSortSelector = false)
           }, [
             vue.createElementVNode("view", {
               class: "selector-modal",
-              onClick: _cache[8] || (_cache[8] = vue.withModifiers(() => {
+              onClick: _cache[4] || (_cache[4] = vue.withModifiers(() => {
               }, ["stop"]))
             }, [
               vue.createElementVNode("text", { class: "selector-title" }, "选择排序方式"),
@@ -8065,7 +8110,7 @@ ${existingWordsStr}${examBlock}
                       class: vue.normalizeClass(["selector-item", { active: $setup.sortIndex === idx }]),
                       onClick: ($event) => {
                         $setup.onSortChange({ detail: { value: idx } });
-                        _ctx.showSortSelector = false;
+                        $setup.showSortSelector = false;
                       }
                     }, vue.toDisplayString(name), 11, ["onClick"]);
                   }),
@@ -8075,14 +8120,14 @@ ${existingWordsStr}${examBlock}
               ])
             ])
           ])) : vue.createCommentVNode("v-if", true),
-          _ctx.showCountSelector ? (vue.openBlock(), vue.createElementBlock("view", {
+          $setup.showCountSelector ? (vue.openBlock(), vue.createElementBlock("view", {
             key: 2,
             class: "selector-overlay",
-            onClick: _cache[11] || (_cache[11] = ($event) => _ctx.showCountSelector = false)
+            onClick: _cache[7] || (_cache[7] = ($event) => $setup.showCountSelector = false)
           }, [
             vue.createElementVNode("view", {
               class: "selector-modal",
-              onClick: _cache[10] || (_cache[10] = vue.withModifiers(() => {
+              onClick: _cache[6] || (_cache[6] = vue.withModifiers(() => {
               }, ["stop"]))
             }, [
               vue.createElementVNode("text", { class: "selector-title" }, "选择复习数量"),
@@ -8096,7 +8141,7 @@ ${existingWordsStr}${examBlock}
                       class: vue.normalizeClass(["selector-item", { active: $setup.settings.count === n2 }]),
                       onClick: ($event) => {
                         $setup.setDailyTarget(n2);
-                        _ctx.showCountSelector = false;
+                        $setup.showCountSelector = false;
                       }
                     }, vue.toDisplayString(n2) + " 个 ", 11, ["onClick"]);
                   }),
@@ -8106,14 +8151,14 @@ ${existingWordsStr}${examBlock}
               ])
             ])
           ])) : vue.createCommentVNode("v-if", true),
-          _ctx.showDifficultySelector ? (vue.openBlock(), vue.createElementBlock("view", {
+          $setup.showDifficultySelector ? (vue.openBlock(), vue.createElementBlock("view", {
             key: 3,
             class: "selector-overlay",
-            onClick: _cache[15] || (_cache[15] = ($event) => _ctx.showDifficultySelector = false)
+            onClick: _cache[11] || (_cache[11] = ($event) => $setup.showDifficultySelector = false)
           }, [
             vue.createElementVNode("view", {
               class: "selector-modal",
-              onClick: _cache[14] || (_cache[14] = vue.withModifiers(() => {
+              onClick: _cache[10] || (_cache[10] = vue.withModifiers(() => {
               }, ["stop"]))
             }, [
               vue.createElementVNode("text", { class: "selector-title" }, "选择复习难度"),
@@ -8122,9 +8167,9 @@ ${existingWordsStr}${examBlock}
                   "view",
                   {
                     class: vue.normalizeClass(["selector-item", { active: $setup.settings.difficulty === "normal" }]),
-                    onClick: _cache[12] || (_cache[12] = ($event) => {
-                      $setup.settings.difficulty = "normal";
-                      _ctx.showDifficultySelector = false;
+                    onClick: _cache[8] || (_cache[8] = ($event) => {
+                      $setup.onDifficultyChange("normal");
+                      $setup.showDifficultySelector = false;
                     })
                   },
                   " 标准 ",
@@ -8135,9 +8180,9 @@ ${existingWordsStr}${examBlock}
                   "view",
                   {
                     class: vue.normalizeClass(["selector-item", { active: $setup.settings.difficulty === "hard" }]),
-                    onClick: _cache[13] || (_cache[13] = ($event) => {
-                      $setup.settings.difficulty = "hard";
-                      _ctx.showDifficultySelector = false;
+                    onClick: _cache[9] || (_cache[9] = ($event) => {
+                      $setup.onDifficultyChange("hard");
+                      $setup.showDifficultySelector = false;
                     })
                   },
                   " 困难 ",
@@ -8150,7 +8195,7 @@ ${existingWordsStr}${examBlock}
           vue.createElementVNode("view", { class: "modal-actions" }, [
             vue.createElementVNode("button", {
               class: "modal-btn",
-              onClick: _cache[16] || (_cache[16] = ($event) => $setup.showSettings = false)
+              onClick: _cache[12] || (_cache[12] = ($event) => $setup.showSettings = false)
             }, "关闭")
           ])
         ])
@@ -8162,7 +8207,7 @@ ${existingWordsStr}${examBlock}
       }, [
         vue.createElementVNode("view", {
           class: "resume-modal",
-          onClick: _cache[19] || (_cache[19] = vue.withModifiers(() => {
+          onClick: _cache[15] || (_cache[15] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("text", { class: "modal-title" }, "发现未完成的复习"),
@@ -8182,11 +8227,11 @@ ${existingWordsStr}${examBlock}
       $setup.showMasteredConfirm ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 4,
         class: "modal-overlay",
-        onClick: _cache[22] || (_cache[22] = ($event) => $setup.showMasteredConfirm = false)
+        onClick: _cache[18] || (_cache[18] = ($event) => $setup.showMasteredConfirm = false)
       }, [
         vue.createElementVNode("view", {
           class: "resume-modal",
-          onClick: _cache[21] || (_cache[21] = vue.withModifiers(() => {
+          onClick: _cache[17] || (_cache[17] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("text", { class: "modal-title" }, "斩掉这个单词？"),
@@ -8204,7 +8249,7 @@ ${existingWordsStr}${examBlock}
           vue.createElementVNode("view", { class: "modal-actions" }, [
             vue.createElementVNode("button", {
               class: "modal-btn secondary",
-              onClick: _cache[20] || (_cache[20] = ($event) => $setup.showMasteredConfirm = false)
+              onClick: _cache[16] || (_cache[16] = ($event) => $setup.showMasteredConfirm = false)
             }, "取消"),
             vue.createElementVNode("button", {
               class: "modal-btn primary",
@@ -8216,11 +8261,11 @@ ${existingWordsStr}${examBlock}
       $setup.showMasteredConfirm ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 5,
         class: "modal-overlay",
-        onClick: _cache[25] || (_cache[25] = ($event) => $setup.showMasteredConfirm = false)
+        onClick: _cache[21] || (_cache[21] = ($event) => $setup.showMasteredConfirm = false)
       }, [
         vue.createElementVNode("view", {
           class: "resume-modal",
-          onClick: _cache[24] || (_cache[24] = vue.withModifiers(() => {
+          onClick: _cache[20] || (_cache[20] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("text", { class: "modal-title" }, "斩掉这个单词？"),
@@ -8238,7 +8283,7 @@ ${existingWordsStr}${examBlock}
           vue.createElementVNode("view", { class: "modal-actions" }, [
             vue.createElementVNode("button", {
               class: "modal-btn secondary",
-              onClick: _cache[23] || (_cache[23] = ($event) => $setup.showMasteredConfirm = false)
+              onClick: _cache[19] || (_cache[19] = ($event) => $setup.showMasteredConfirm = false)
             }, "取消"),
             vue.createElementVNode("button", {
               class: "modal-btn primary",
@@ -8280,7 +8325,7 @@ ${existingWordsStr}${examBlock}
         ]),
         vue.createElementVNode("view", {
           class: "stats-action-btn",
-          onClick: _cache[26] || (_cache[26] = ($event) => $setup.showMasteredConfirm = true)
+          onClick: _cache[22] || (_cache[22] = ($event) => $setup.showMasteredConfirm = true)
         }, "斩")
       ])) : vue.createCommentVNode("v-if", true),
       $setup.reviewStarted && !$setup.reviewFinished && $setup.currentReviewInsight ? (vue.openBlock(), vue.createElementBlock("view", {
@@ -8547,7 +8592,7 @@ ${existingWordsStr}${examBlock}
           vue.createElementVNode("view", { class: "input-area" }, [
             vue.withDirectives(vue.createElementVNode("input", {
               type: "text",
-              "onUpdate:modelValue": _cache[27] || (_cache[27] = ($event) => $setup.spellInput = $event),
+              "onUpdate:modelValue": _cache[23] || (_cache[23] = ($event) => $setup.spellInput = $event),
               class: "spell-input",
               placeholder: "输入英文单词",
               disabled: $setup.showResult,
@@ -8613,7 +8658,7 @@ ${existingWordsStr}${examBlock}
           vue.createElementVNode("view", { class: "input-area" }, [
             vue.withDirectives(vue.createElementVNode("input", {
               type: "text",
-              "onUpdate:modelValue": _cache[28] || (_cache[28] = ($event) => $setup.userTranslation = $event),
+              "onUpdate:modelValue": _cache[24] || (_cache[24] = ($event) => $setup.userTranslation = $event),
               class: "translation-input",
               placeholder: $setup.isGenerating ? "等待例句生成..." : "输入该单词在此句中的意思...",
               disabled: $setup.isGenerating || $setup.showResult,
@@ -8662,7 +8707,7 @@ ${existingWordsStr}${examBlock}
             /* CLASS */
           )) : vue.createCommentVNode("v-if", true),
           vue.createElementVNode("button", {
-            onClick: _cache[29] || (_cache[29] = ($event) => $setup.showResult ? $setup.nextQuestion() : $setup.submitAnswer()),
+            onClick: _cache[25] || (_cache[25] = ($event) => $setup.showResult ? $setup.nextQuestion() : $setup.submitAnswer()),
             class: "btn-submit",
             disabled: $setup.isSubmitting || $setup.isGenerating
           }, vue.toDisplayString($setup.isSubmitting ? "AI 判卷中..." : $setup.showResult ? $setup.isLastQuestion ? "查看结果" : "下一题" : "提交答案"), 9, ["disabled"])
@@ -8821,7 +8866,7 @@ ${existingWordsStr}${examBlock}
         vue.createElementVNode("view", { class: "finished-buttons" }, [
           $setup.wrongWords.length > 0 ? (vue.openBlock(), vue.createElementBlock("button", {
             key: 0,
-            onClick: _cache[30] || (_cache[30] = ($event) => {
+            onClick: _cache[26] || (_cache[26] = ($event) => {
               $setup.reviewPreset = "wrong";
               $setup.restartReview();
             }),

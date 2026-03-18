@@ -450,7 +450,7 @@ export const getLearningDashboard = (words = [], bookId = '', options = {}) => {
 export const logStudySession = (session = {}) => {
   const list = getHistoryList();
   list.push({
-    id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}_${Math.floor(Math.random() * 10000)}`,
     created_at: new Date().toISOString(),
     bookId: session.bookId || getCurrentWordbook() || 'self',
     mode: session.mode || '',

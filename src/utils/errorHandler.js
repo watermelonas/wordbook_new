@@ -28,7 +28,14 @@ class Logger {
    * 添加日志监听器
    */
   addListener(callback) {
-    this.listeners.push(callback);
+    // 防止重复添加同一个监听器
+    if (!this.listeners.includes(callback)) {
+      this.listeners.push(callback);
+    }
+    // 监听器数量过多时发出警告
+    if (this.listeners.length > 100) {
+      console.warn('[Logger] 监听器数量过多（>100），可能存在内存泄漏');
+    }
   }
 
   /**

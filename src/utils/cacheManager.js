@@ -30,10 +30,11 @@ export class LRUCache {
       return undefined;
     }
 
-    // 移到最后（最近使用）
+    // 移到最后（最近使用）- 先保存值再操作
+    const value = this.cache.get(key);
     this.cache.delete(key);
-    this.cache.set(key, this.cache.get(key));
-    return this.cache.get(key);
+    this.cache.set(key, value);
+    return value;
   }
 
   /**
