@@ -1787,8 +1787,8 @@ const goToWordDetail = () => {
   if (!currentWord.value) {
     uni.showToast({ title: '无法查看详情', icon: 'none' });
     return;
-	
-  
+  }
+
   // 保存当前复习进度
   saveReviewProgress();
   
