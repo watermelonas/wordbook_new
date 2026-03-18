@@ -580,7 +580,6 @@ const reviewPreset = ref('default');
 const sessionNewCount = ref(0);
 const sessionOldCount = ref(0);
 
-const getReviewProgressKey = () => `reviewProgress_${getCurrentBookId()}`;
 const getSettingsKey = () => `reviewSettings_${getCurrentBookId()}`;
 const getLastReviewResultKey = () => `lastReviewResult_${getCurrentBookId()}`;
 
@@ -647,11 +646,6 @@ const checkProgress = () => {
   syncDashboardProgress();
 };
 
-const filterWordsByKeys = (list, keySet) => {
-  const set = keySet instanceof Set ? keySet : new Set(keySet || []);
-  return (list || []).filter((item) => set.has(getWordKey(item)));
-};
-
 const getCurrentBookTotalWords = async () => {
   const book = getCurrentBookId();
   try {
@@ -693,11 +687,6 @@ const getCurrentBookWordPool = async () => {
     });
   }
   return getWordbookWords(book) || [];
-};
-
-const filterWordsByKeys = (list, keySet) => {
-  const set = keySet instanceof Set ? keySet : new Set(keySet || []);
-  return (list || []).filter((item) => set.has(getWordKey(item)));
 };
 
 const refreshDashboardSnapshot = async () => {
@@ -783,12 +772,6 @@ const markWordsReviewed = (words) => {
   todayReviewed.value = next.todayKeys.length;
   sessionNewCount.value += newWordsCount;
   sessionOldCount.value += oldWordsCount;
-};
-
-const getOldReviewQuota = (count, oldPoolSize, newPoolSize) => {
-  if (oldPoolSize <= 0) return 0;
-  if (newPoolSize <= 0) return Math.min(count, oldPoolSize);
-  return Math.min(oldPoolSize, Math.max(2, Math.min(count - 1, Math.round(count * 0.25))));
 };
 
 
