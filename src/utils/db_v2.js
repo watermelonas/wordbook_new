@@ -690,18 +690,6 @@ class DatabaseManager {
         await this.adapter.deleteWord(id);
       });
 
-      // 异步上传到云端（不阻塞UI）
-      if (typeof uni !== 'undefined' && uni.getStorageSync('uid')) {
-        try {
-          const cloudSync = (await import('./cloudProgressSync.js')).default;
-          cloudSync.uploadMastered([word.english]).catch(e => {
-            console.warn('[db] 已掌握单词同步失败:', e);
-          });
-        } catch (e) {
-          console.warn('[db] 无法加载云端同步模块:', e);
-        }
-      }
-
       return Promise.resolve();
     } catch (error) {
       console.error('[db] masterWord 失败:', error);
@@ -1072,19 +1060,6 @@ class DatabaseManager {
         // 从已掌握表删除
         await this.adapter.execute('DELETE FROM mastered_words WHERE id = ?', [id]);
       });
-
-      // 异步上传到云端（不阻塞UI）
-      if (typeof uni !== 'undefined' && uni.getStorageSync('uid')) {
-        try {
-          const cloudSync = (await import('./cloudProgressSync.js')).default;
-          // 从已掌握列表中移除
-          cloudSync.uploadMastered([]).catch(e => {
-            console.warn('[db] 取消掌握同步失败:', e);
-          });
-        } catch (e) {
-          console.warn('[db] 无法加载云端同步模块:', e);
-        }
-      }
 
       return Promise.resolve();
     } catch (error) {

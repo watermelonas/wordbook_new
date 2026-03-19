@@ -323,18 +323,6 @@ export const recordReviewOutcome = (word, isCorrect, options = {}) => {
     mistakes[key] = oldMistake;
     setMistakesMap(mistakes);
 
-    // 异步上传到云端（不阻塞UI）
-    if (typeof uni !== 'undefined' && uni.getStorageSync('uid')) {
-      try {
-        const cloudSync = (await import('./cloudProgressSync.js')).default;
-        cloudSync.uploadProgress(bookId).catch(e => {
-          console.warn('[learningCenter] 云端同步失败:', e);
-        });
-      } catch (e) {
-        console.warn('[learningCenter] 无法加载云端同步模块:', e);
-      }
-    }
-
     return next;
   } catch (error) {
     console.error('[learningCenter] recordReviewOutcome 失败:', error);
@@ -477,19 +465,6 @@ export const logStudySession = (session = {}) => {
     mistakeCount: Number(session.mistakeCount || 0),
   });
   setHistoryList(list);
-
-  // 异步上传到云端（不阻塞UI）
-  if (typeof uni !== 'undefined' && uni.getStorageSync('uid')) {
-    try {
-      const bookId = session.bookId || getCurrentWordbook() || 'self';
-      const cloudSync = (await import('./cloudProgressSync.js')).default;
-      cloudSync.uploadProgress(bookId).catch(e => {
-        console.warn('[learningCenter] 会话同步失败:', e);
-      });
-    } catch (e) {
-      console.warn('[learningCenter] 无法加载云端同步模块:', e);
-    }
-  }
 };
 
 /**
