@@ -49,7 +49,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { onUnload } from '@dcloudio/uni-app';
-import db from '../../src/utils/db';
+import db from '../../src/utils/db_v2';
 import {
   getWordbookListForUI,
   getCurrentWordbook,

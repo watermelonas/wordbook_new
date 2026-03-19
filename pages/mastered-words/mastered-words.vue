@@ -69,7 +69,7 @@
 import { ref, computed } from 'vue';
 import { onShow, onUnload } from '@dcloudio/uni-app';
 import { getCurrentWordbook } from '../../src/utils/wordbookSource.js';
-import db from '../../src/utils/db';
+import db from '../../src/utils/db_v2';
 import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 import { getMasteredWordbookWords, removeMasteredWordbookWord, addMasteredWordbookWord } from '../../src/utils/masteredWordbookWords.js';

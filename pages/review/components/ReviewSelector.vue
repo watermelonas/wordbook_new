@@ -310,11 +310,11 @@ const onDifficultyChange = (difficulty) => {
   top: 0;
   left: 0;
   right: 0;
-  min-height: 74px;
-  height: calc(74px + constant(safe-area-inset-top));
-  height: calc(74px + env(safe-area-inset-top));
-  padding-top: calc(24px + constant(safe-area-inset-top));
-  padding-top: calc(24px + env(safe-area-inset-top));
+  min-height: 50px;
+  height: calc(50px + constant(safe-area-inset-top));
+  height: calc(50px + env(safe-area-inset-top));
+  padding-top: calc(8px + constant(safe-area-inset-top));
+  padding-top: calc(8px + env(safe-area-inset-top));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -362,25 +362,27 @@ const onDifficultyChange = (difficulty) => {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  padding: 16px;
-  padding-top: max(16px, calc(env(safe-area-inset-top) + 60px));
-  gap: 20px;
+  padding: 8px;
+  padding-top: max(8px, calc(env(safe-area-inset-top) + 58px));
+  gap: 6px;
   overflow-y: auto;
 }
 
 .section-label {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #8D8790;
-  margin-bottom: 8px;
-  margin-top: 12px;
+  margin-bottom: 4px;
+  margin-top: 0px;
+  padding: 0 4px;
 }
 
 .card {
   background: white;
   border-radius: 16px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  flex: 1;
 }
 
 .stat-card-large {
@@ -396,21 +398,21 @@ const onDifficultyChange = (difficulty) => {
 }
 
 .stat-number {
-  font-size: 32px;
+  font-size: 36px;
   font-weight: 700;
   color: #FF85A1;
 }
 
 .stat-sep {
-  font-size: 16px;
+  font-size: 18px;
   color: #A1A1AA;
 }
 
 .stat-bar {
   width: 100%;
-  height: 8px;
+  height: 10px;
   background: #F0F0F0;
-  border-radius: 4px;
+  border-radius: 5px;
   overflow: hidden;
 }
 
@@ -422,8 +424,9 @@ const onDifficultyChange = (difficulty) => {
 }
 
 .stat-detail-row {
-  font-size: 13px;
+  font-size: 14px;
   color: #8D8790;
+  line-height: 1.4;
 }
 
 .stat-header-row {
@@ -433,13 +436,13 @@ const onDifficultyChange = (difficulty) => {
 }
 
 .stat-left-text {
-  font-size: 14px;
+  font-size: 15px;
   color: #2C3E50;
   font-weight: 500;
 }
 
 .stat-right-text {
-  font-size: 14px;
+  font-size: 16px;
   color: #FF85A1;
   font-weight: 600;
 }
@@ -448,7 +451,7 @@ const onDifficultyChange = (difficulty) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .recommend-info {
@@ -467,10 +470,11 @@ const onDifficultyChange = (difficulty) => {
 .recommend-desc {
   font-size: 13px;
   color: #8D8790;
+  line-height: 1.4;
 }
 
 .start-btn {
-  padding: 8px 16px;
+  padding: 10px 18px;
   background: #FF85A1;
   color: white;
   border: none;
@@ -483,7 +487,8 @@ const onDifficultyChange = (difficulty) => {
 .other-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
+  flex: 1;
 }
 
 .other-btn {
@@ -492,7 +497,7 @@ const onDifficultyChange = (difficulty) => {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 16px;
+  padding: 16px 12px;
   text-align: center;
 }
 

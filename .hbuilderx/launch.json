@@ -7,7 +7,7 @@
         },
         {
             "app" : {
-                "launchtype" : "local"
+                "launchtype" : "remote"
             },
             "default" : {
                 "launchtype" : "local"

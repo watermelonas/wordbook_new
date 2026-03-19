@@ -457,7 +457,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { onBackPress, onShow, onHide, onUnload, onLoad } from '@dcloudio/uni-app';
-import db from '../../src/utils/db_v2';
+import db from '../../src/utils/db';
 import aiService from '../../src/utils/aiService';
 import * as masterDb from '../../src/utils/masterDb.js';
 import { getCurrentWordbook, getWordbookListForUI, isSelfWordbook, isLocalWordbookKey, loadLocalWordbook, getWordbookWords } from '../../src/utils/wordbookSource.js';
@@ -1869,11 +1869,11 @@ onBackPress(() => {
   top: 0;
   left: 0;
   right: 0;
-  min-height: 50px;
-  height: calc(50px + constant(safe-area-inset-top));
-  height: calc(50px + env(safe-area-inset-top));
-  padding-top: calc(8px + constant(safe-area-inset-top));
-  padding-top: calc(8px + env(safe-area-inset-top));
+  min-height: 74px;
+  height: calc(74px + constant(safe-area-inset-top));
+  height: calc(74px + env(safe-area-inset-top));
+  padding-top: calc(24px + constant(safe-area-inset-top));
+  padding-top: calc(24px + env(safe-area-inset-top));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1934,14 +1934,25 @@ onBackPress(() => {
 }
 
 .start-review-fixed {
-  padding: calc(50px + constant(safe-area-inset-top)) 16px 20px;
-  padding: calc(50px + env(safe-area-inset-top)) 16px 20px;
+  padding: calc(74px + constant(safe-area-inset-top)) 16px 20px;
+  padding: calc(74px + env(safe-area-inset-top)) 16px 20px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 6px;
+  justify-content: center;
+  gap: 16px;
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.start-review-fixed {
+  padding: calc(74px + constant(safe-area-inset-top)) 16px 16px;
+  padding: calc(74px + env(safe-area-inset-top)) 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -1965,10 +1976,10 @@ onBackPress(() => {
 
 /* 大统计卡片 */
 .stat-card-large {
-  padding: 20px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
 }
 
 .stat-value-large {
@@ -1979,7 +1990,7 @@ onBackPress(() => {
 }
 
 .stat-number {
-  font-size: 48px;
+  font-size: 42px;
   font-weight: 800;
   color: #FF6B9D;
   line-height: 1;
@@ -1993,7 +2004,7 @@ onBackPress(() => {
 
 .stat-bar {
   width: 100%;
-  height: 8px;
+  height: 5px;
   background: #F0E0E8;
   border-radius: 999px;
   overflow: hidden;
@@ -2007,10 +2018,10 @@ onBackPress(() => {
 }
 
 .stat-detail-row {
-  font-size: 13px;
+  font-size: 11px;
   color: #9B7BA8;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .stat-header-row {
@@ -2020,13 +2031,13 @@ onBackPress(() => {
 }
 
 .stat-left-text {
-  font-size: 14px;
+  font-size: 12px;
   color: #666;
   font-weight: 500;
 }
 
 .stat-right-text {
-  font-size: 18px;
+  font-size: 15px;
   color: #FF6B9D;
   font-weight: 700;
 }
@@ -2036,8 +2047,8 @@ onBackPress(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
+  gap: 12px;
+  padding: 14px 16px;
 }
 
 .recommend-info {
@@ -2049,15 +2060,15 @@ onBackPress(() => {
 }
 
 .recommend-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #2D1B2E;
 }
 
 .recommend-desc {
-  font-size: 13px;
+  font-size: 11px;
   color: #9B7BA8;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .start-btn {
@@ -2065,13 +2076,13 @@ onBackPress(() => {
   color: white !important;
   border: none !important;
   border-radius: 10px !important;
-  padding: 0 18px !important;
-  font-size: 14px !important;
+  padding: 0 16px !important;
+  font-size: 12px !important;
   font-weight: 700 !important;
   white-space: nowrap;
   flex-shrink: 0;
-  height: 40px !important;
-  line-height: 40px !important;
+  height: 36px !important;
+  line-height: 36px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
@@ -2090,8 +2101,8 @@ onBackPress(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 16px 14px;
+  gap: 6px;
+  padding: 14px 12px;
   transition: all 0.2s ease;
 }
 

@@ -63,7 +63,7 @@
 import { ref, computed, onMounted } from "vue";
 import VocalColorBlockSelector from "../../components/vocal-color-block-selector/vocal-color-block-selector.vue";
 import { onShow, onUnload } from "@dcloudio/uni-app";
-import db from "../../src/utils/db";
+import db from "../../src/utils/db_v2";
 import aiService from "../../src/utils/aiService.js";
 import { formatWordStatsForPrompt } from "../../src/utils/wordStats.js";
 import * as pregenVocab from "../../src/utils/pregenVocab.js";

@@ -330,7 +330,7 @@
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
 import { onLoad, onUnload } from "@dcloudio/uni-app";
-import db from '../../src/utils/db';
+import db from '../../src/utils/db_v2';
 import aiService from '../../src/utils/aiService.js';
 import { formatWordStatsForPrompt } from '../../src/utils/wordStats.js';
 import * as pregenVocab from '../../src/utils/pregenVocab.js';

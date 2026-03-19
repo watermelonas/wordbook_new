@@ -104,7 +104,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { onShow, onUnload } from '@dcloudio/uni-app';
-import db from '../../src/utils/db';
+import db from '../../src/utils/db_v2';
 import { getCurrentWordbook, isLocalWordbookKey, loadLocalWordbook, getWordbookWords } from '../../src/utils/wordbookSource.js';
 import { getStudyStats } from '../../src/utils/learningCenter.js';
 import { logger } from '../../src/utils/errorHandler.js';

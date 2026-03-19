@@ -260,7 +260,7 @@ achieve	实现</view>
 <script setup>
 import { ref, computed } from 'vue';
 import { onShow, onUnload } from '@dcloudio/uni-app';
-import db from '../../src/utils/db';
+import db from '../../src/utils/db_v2';
 import aiService from '../../src/utils/aiService';
 import { getWordBriefBatch } from '../../src/utils/masterDb.js';
 import { getLocalWordSnapshot } from '../../src/utils/localWordSnapshot.js';

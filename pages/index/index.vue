@@ -151,7 +151,7 @@
 import { ref, computed, watch } from 'vue';
 import VocalColorBlockSelector from '../../components/vocal-color-block-selector/vocal-color-block-selector.vue';
 import { onLoad, onUnload, onShow, onReady } from '@dcloudio/uni-app';
-import db from '../../src/utils/db';
+import db from '../../src/utils/db_v2';
 import * as pregenVocab from '../../src/utils/pregenVocab.js';
 import * as masterDb from '../../src/utils/masterDb.js';
 import { getCurrentWordbook, isSelfWordbook, isLocalWordbookKey, loadLocalWordbook, getWordbookWords } from '../../src/utils/wordbookSource.js';
