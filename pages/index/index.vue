@@ -111,10 +111,15 @@
       :refresher-enabled="true"
       :refresher-triggered="refreshing"
       refresher-background="#FFF0F3"
+      refresher-default-style="none"
       @refresherrefresh="onListRefresh"
       @scrolltolower="onScrollToLower"
       style="background-color: #FFF0F3;"
     >
+      <!-- 自定义刷新指示器 -->
+      <view v-if="refreshing" class="custom-refresher">
+        <view class="refresher-spinner"></view>
+      </view>
       <view v-if="filteredWords.length === 0" class="empty-state">
         <view class="empty-text">{{ (searchText || (filterType !== 'none' && (filterValue !== '' && filterValue !== undefined))) ? '未找到匹配的单词' : '还没有单词，开始添加吧' }}</view>
         <button v-if="!searchText && (filterType === 'none' || (filterValue === '' || filterValue === undefined))" class="empty-btn" @click="goToQuickAdd">添加单词</button>
@@ -829,6 +834,7 @@ const onSearchConfirm = () => {
   border-radius: 20px;
   padding: 0 18px;
   height: 48px;
+  border: 1px solid #FFB3D9;
 }
 
 .search-input {
@@ -923,6 +929,42 @@ const onSearchConfirm = () => {
   background-color: #FFF0F3 !important;
 }
 
+.custom-refresher {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 60px;
+  background-color: #FFF0F3;
+}
+
+.refresher-spinner {
+  width: 40px;
+  height: 40px;
+  background-color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(255, 133, 161, 0.15);
+}
+
+.refresher-spinner::after {
+  content: '';
+  width: 28px;
+  height: 28px;
+  border: 3px solid #FF85A1;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -963,8 +1005,8 @@ const onSearchConfirm = () => {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  width: 90%;
-  margin: 8px auto;
+  margin: 8px 10px;
+  width: calc(100% - 20px);
 }
 
 .word-content {
@@ -1067,6 +1109,7 @@ const onSearchConfirm = () => {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-bottom: 8px !important;
 }
 
 .filter-header {

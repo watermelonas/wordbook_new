@@ -25,10 +25,9 @@
 
       <!-- 词书进度 -->
       <view class="section-label">词书进度</view>
-      <view class="card stat-card-large">
+      <view class="card stat-card-large stat-card-book">
         <view class="stat-header-row">
           <text class="stat-left-text">已学 {{ learnedUniqueWords }} / {{ bookTotalWords }} 词</text>
-          <text class="stat-right-text">{{ currentProgressPercent }}%</text>
         </view>
         <view class="stat-bar">
           <view class="stat-bar-fill" :style="{ width: currentProgressPercent + '%' }"></view>
@@ -576,9 +575,19 @@ const todayReviewed = ref(0);
 const learnedUniqueWords = ref(0);
 const dashboardSnapshot = ref({ dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 });
 const showMasteredConfirm = ref(false);
-const reviewPreset = ref('default');
+const reviewPreset = ref('due');
 const sessionNewCount = ref(0);
 const sessionOldCount = ref(0);
+const recommendedReviewStage = ref('new'); // 'new' | 'wrong' | 'old' - 推荐复习的当前阶段
+const recommendedReviewState = ref({
+  newWords: [],
+  wrongWords: [],
+  oldWords: [],
+  currentStage: 'new',
+  newCompleted: false,
+  wrongCompleted: false,
+  oldCompleted: false,
+});
 
 const getSettingsKey = () => `reviewSettings_${getCurrentBookId()}`;
 const getLastReviewResultKey = () => `lastReviewResult_${getCurrentBookId()}`;
@@ -598,6 +607,7 @@ const saveReviewProgress = () => {
     reviewPreset: reviewPreset.value,
     sessionNewCount: sessionNewCount.value,
     sessionOldCount: sessionOldCount.value,
+    recommendedReviewState: { ...recommendedReviewState.value },
   });
   hasProgress.value = true;
 };
@@ -625,9 +635,12 @@ const resumeReview = () => {
   wrongCount.value = saved.wrongCount;
   wrongWords.value = saved.wrongWords || [];
   settings.value = saved.settings || settings.value;
-  reviewPreset.value = saved.reviewPreset || 'default';
+  reviewPreset.value = saved.reviewPreset || 'due';
   sessionNewCount.value = Number(saved.sessionNewCount || 0);
   sessionOldCount.value = Number(saved.sessionOldCount || 0);
+  if (saved.recommendedReviewState) {
+    recommendedReviewState.value = saved.recommendedReviewState;
+  }
   reviewStarted.value = true;
   reviewFinished.value = false;
   showResumeModal.value = false;
@@ -920,8 +933,9 @@ const isTodayTargetDone = computed(() => {
 
 const primaryStartText = computed(() => {
   if (reviewPreset.value === 'due') return '开始到期复习';
+  if (reviewPreset.value === 'new') return '开始新词学习';
   if (reviewPreset.value === 'wrong') return '开始错词再练';
-  if (reviewPreset.value === 'firstday') return '开始首日巩固';
+  if (reviewPreset.value === 'old') return '开始旧词复习';
   return isTodayTargetDone.value ? '再来一组20' : '开始复习';
 });
 
@@ -936,10 +950,12 @@ const todayProgressPercent = computed(() => {
 
 // 新增：智能推荐的复习预设
 const recommendedPreset = computed(() => {
-  if (dashboardSnapshot.value.dueCount > 0) return 'due';
+  // 推荐复习流程：新词 > 错词 > 旧词
+  const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
+  if (newWordsNeeded > 0) return 'new';
   if (dashboardSnapshot.value.mistakeCount > 0) return 'wrong';
-  if (dashboardSnapshot.value.firstDayDue > 0) return 'firstday';
-  return 'default';
+  if (dashboardSnapshot.value.dueCount > 0) return 'old';
+  return 'new';
 });
 
 const recommendedPresetIcon = computed(() => {
@@ -947,27 +963,38 @@ const recommendedPresetIcon = computed(() => {
 });
 
 const recommendedPresetTitle = computed(() => {
-  const titles = { due: '今日到期', wrong: '错词本', firstday: '首日巩固', default: '随机复习' };
-  return titles[recommendedPreset.value] || '随机复习';
+  const titles = { new: '今日新词', wrong: '错词本', old: '复习旧词' };
+  return titles[recommendedPreset.value] || '今日新词';
 });
 
 const recommendedPresetDesc = computed(() => {
   const preset = recommendedPreset.value;
-  if (preset === 'due') return `${dashboardSnapshot.value.dueCount} 个单词需要复习`;
+  const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
+  if (preset === 'new') return `还需学习 ${newWordsNeeded} 个新词`;
   if (preset === 'wrong') return `${dashboardSnapshot.value.mistakeCount} 个单词需要巩固`;
-  if (preset === 'firstday') return `${dashboardSnapshot.value.firstDayDue} 个单词待复习`;
+  if (preset === 'old') return `${dashboardSnapshot.value.dueCount} 个单词待复习`;
   return '从所有单词中随机抽取';
 });
 
-// 新增：其他复习方式列表
+// 新增：其他复习方式列表 - 显示推荐复习之外的两个阶段
 const otherPresets = computed(() => {
-  const all = [
-    { key: 'due', icon: '', title: '今日到期', count: dashboardSnapshot.value.dueCount },
-    { key: 'wrong', icon: '', title: '错词本', count: dashboardSnapshot.value.mistakeCount },
-    { key: 'firstday', icon: '', title: '首日巩固', count: dashboardSnapshot.value.firstDayDue },
-    { key: 'default', icon: '', title: '随机复习', count: 0 },
-  ];
-  return all.filter(p => p.key !== recommendedPreset.value);
+  const preset = recommendedPreset.value;
+  const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
+
+  const allPresets = {
+    new: { key: 'new', icon: '', title: '今日新词', count: newWordsNeeded },
+    wrong: { key: 'wrong', icon: '', title: '错词本', count: dashboardSnapshot.value.mistakeCount },
+    old: { key: 'old', icon: '', title: '复习旧词', count: dashboardSnapshot.value.dueCount },
+  };
+
+  // 返回除了推荐复习之外的两个阶段
+  const all = [];
+  for (const [key, item] of Object.entries(allPresets)) {
+    if (key !== preset) {
+      all.push(item);
+    }
+  }
+  return all;
 });
 
 const currentWordbookName = computed(() => {
@@ -1058,7 +1085,7 @@ const openDifficultySelector = () => {
 };
 
 onLoad((options) => {
-  reviewPreset.value = (options && options.preset) ? String(options.preset) : 'default';
+  reviewPreset.value = (options && options.preset) ? String(options.preset) : 'due';
 });
 
 onMounted(() => {
@@ -1148,20 +1175,39 @@ const saveReviewResult = () => {
 };
 
 const buildPresetQueue = (list, count) => {
-  const preset = reviewPreset.value || 'default';
+  const preset = reviewPreset.value || 'due';
   if (!Array.isArray(list) || !list.length) return [];
+
+  // 今日新词：从未复习过的单词中筛选
+  if (preset === 'new') {
+    const profiles = list.map((item) => getWordProfile(item)).filter(Boolean);
+    const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
+    return shuffleList(newWords.map((p) => ({ english: p.english, chinese: p.chinese }))).slice(0, count);
+  }
+
   if (preset === 'wrong') {
     const wrongSet = new Set(getMistakeWords(getCurrentBookId(), true).map((item) => getWordKey(item)));
     return shuffleList(filterWordsByKeys(list, wrongSet)).slice(0, count);
   }
-  if (preset === 'due' || preset === 'firstday') {
+
+  // 复习旧词：按遗忘曲线，每个单词最多出现3次
+  if (preset === 'old') {
     const dueProfiles = getDueProfilesForWords(list, getCurrentBookId());
-    const filtered = preset === 'firstday'
-      ? dueProfiles.filter((item) => Number(item.first_day_stage || 0) > 0 && Number(item.first_day_stage || 0) < 4)
-      : dueProfiles;
+    // 过滤出复习次数少于3次的单词
+    const filtered = dueProfiles.filter((item) => {
+      const reviewCount = Number(item.review_count || 0);
+      return reviewCount < 3;
+    });
     const dueSet = new Set(filtered.map((item) => getWordKey(item)));
     return shuffleList(filterWordsByKeys(list, dueSet)).slice(0, count);
   }
+
+  if (preset === 'due') {
+    const dueProfiles = getDueProfilesForWords(list, getCurrentBookId());
+    const dueSet = new Set(dueProfiles.map((item) => getWordKey(item)));
+    return shuffleList(filterWordsByKeys(list, dueSet)).slice(0, count);
+  }
+
   return [];
 };
 
@@ -1209,8 +1255,11 @@ const startReviewInternal = async (forceCount = null) => {
 
   const count = forceCount != null ? Number(forceCount) : Number(settings.value.count || 20);
 
-  if (isSelfWordbook()) {
-    if (reviewPreset.value === 'default') {
+  // 如果是推荐复习流程，reviewWords 已经在 startRecommendedReview 或 continueRecommendedReview 中设置
+  if (recommendedReviewState.value.currentStage && reviewWords.value.length > 0) {
+    // 推荐复习流程，直接使用已设置的 reviewWords
+  } else if (isSelfWordbook()) {
+    if (reviewPreset.value === 'due') {
       reviewWords.value = await db.getReviewWords({
         sortBy: settings.value.sortBy,
         count,
@@ -1268,16 +1317,118 @@ const onPrimaryStartClick = async () => {
   await startReview();
 };
 
-// 新增：开始推荐的复习
+// 新增：开始推荐的复习 - 顺序流程：新词 > 错词 > 旧词
 const startRecommendedReview = async () => {
-  reviewPreset.value = recommendedPreset.value;
-  // 直接开始新的复习，startReviewInternal 会处理进度清除
-  await startReviewInternal(null);
+  const count = Number(settings.value.count || 20);
+  const bookId = getCurrentBookId();
+
+  // 初始化推荐复习状态
+  recommendedReviewState.value = {
+    newWords: [],
+    wrongWords: [],
+    oldWords: [],
+    currentStage: 'new',
+    newCompleted: false,
+    wrongCompleted: false,
+    oldCompleted: false,
+  };
+
+  try {
+    // 获取所有单词列表
+    let allWords = [];
+    if (isSelfWordbook()) {
+      allWords = await db.getAllWords();
+    } else {
+      allWords = await getCurrentBookWordPool();
+    }
+
+    // 1. 收集新词
+    const profiles = allWords.map((item) => getWordProfile(item)).filter(Boolean);
+    const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
+    recommendedReviewState.value.newWords = shuffleList(newWords.map((p) => ({ english: p.english, chinese: p.chinese }))).slice(0, count);
+
+    // 2. 收集错词
+    const wrongSet = new Set(getMistakeWords(bookId, true).map((item) => getWordKey(item)));
+    recommendedReviewState.value.wrongWords = shuffleList(filterWordsByKeys(allWords, wrongSet));
+
+    // 3. 收集旧词（复习次数 < 3）
+    const dueProfiles = getDueProfilesForWords(allWords, bookId);
+    const oldWordsFiltered = dueProfiles.filter((item) => {
+      const reviewCount = Number(item.review_count || 0);
+      return reviewCount < 3;
+    });
+    const oldSet = new Set(oldWordsFiltered.map((item) => getWordKey(item)));
+    recommendedReviewState.value.oldWords = shuffleList(filterWordsByKeys(allWords, oldSet));
+
+    // 开始第一阶段：新词
+    reviewPreset.value = 'new';
+    reviewWords.value = recommendedReviewState.value.newWords;
+
+    if (reviewWords.value.length === 0) {
+      // 如果没有新词，跳到错词
+      await continueRecommendedReview('wrong');
+    } else {
+      await startReviewInternal(null);
+    }
+  } catch (e) {
+    console.error('startRecommendedReview 失败:', e);
+    uni.showToast({ title: '加载失败', icon: 'none' });
+  }
+};
+
+// 继续推荐复习的下一阶段
+const continueRecommendedReview = async (nextStage) => {
+  recommendedReviewState.value.currentStage = nextStage;
+
+  if (nextStage === 'wrong') {
+    recommendedReviewState.value.newCompleted = true;
+    reviewPreset.value = 'wrong';
+    reviewWords.value = recommendedReviewState.value.wrongWords;
+
+    if (reviewWords.value.length === 0) {
+      // 如果没有错词，跳到旧词
+      await continueRecommendedReview('old');
+    } else {
+      await startReviewInternal(null);
+    }
+  } else if (nextStage === 'old') {
+    recommendedReviewState.value.wrongCompleted = true;
+    reviewPreset.value = 'old';
+    reviewWords.value = recommendedReviewState.value.oldWords;
+
+    if (reviewWords.value.length === 0) {
+      // 所有阶段完成
+      recommendedReviewState.value.oldCompleted = true;
+      // 重置推荐复习状态，以便下次使用
+      recommendedReviewState.value = {
+        newWords: [],
+        wrongWords: [],
+        oldWords: [],
+        currentStage: '',
+        newCompleted: false,
+        wrongCompleted: false,
+        oldCompleted: false,
+      };
+      uni.showToast({ title: '推荐复习已完成！', icon: 'success' });
+    } else {
+      await startReviewInternal(null);
+    }
+  }
 };
 
 // 新增：开始指定预设的复习
 const startPresetReview = async (preset) => {
   reviewPreset.value = preset;
+  // 重置推荐复习状态，因为用户选择了其他复习方式
+  recommendedReviewState.value = {
+    newWords: [],
+    wrongWords: [],
+    oldWords: [],
+    currentStage: '',
+    newCompleted: false,
+    wrongCompleted: false,
+    oldCompleted: false,
+  };
   // 直接开始新的复习，startReviewInternal 会处理进度清除
   await startReviewInternal(null);
 };
@@ -1756,7 +1907,7 @@ const nextQuestion = () => {
   loadCurrentQuestion();
 };
 
-const finishReview = () => {
+const finishReview = async () => {
   reviewFinished.value = true;
   clearReviewProgress();
   saveReviewResult();
@@ -1772,6 +1923,15 @@ const finishReview = () => {
     mistakeCount: wrongWords.value.length,
   });
   refreshPlanStats();
+
+  // 检查是否在推荐复习流程中，如果是则继续下一阶段
+  if (recommendedReviewState.value.currentStage === 'new' && !recommendedReviewState.value.newCompleted) {
+    // 新词阶段完成，继续错词
+    await continueRecommendedReview('wrong');
+  } else if (recommendedReviewState.value.currentStage === 'wrong' && !recommendedReviewState.value.wrongCompleted) {
+    // 错词阶段完成，继续旧词
+    await continueRecommendedReview('old');
+  }
 };
 
 const restartReview = () => {
@@ -1809,28 +1969,28 @@ const markCurrentWordAsMastered = async () => {
     showMasteredConfirm.value = false;
     return;
   }
-  
+
   try {
     const bookId = getCurrentBookId();
-    
-    if (currentWord.value.id) {
+
+    if (bookId && bookId !== 'self') {
+      // 词书单词：优先处理，没有id，存储到本地存储
+      console.log('markCurrentWordAsMastered: 词书单词，存储到本地');
+      addMasteredWordbookWord(bookId, currentWord.value.english);
+    } else if (currentWord.value.id) {
       // 自用词库单词：有id，直接操作数据库
       console.log('markCurrentWordAsMastered: 自用词库单词，使用id斯掉');
       await db.masterWord(currentWord.value.id);
-    } else if (bookId && bookId !== 'self') {
-      // 词书单词：没有id，存储到本地存储
-      console.log('markCurrentWordAsMastered: 词书单词，存储到本地');
-      addMasteredWordbookWord(bookId, currentWord.value.english);
     } else {
       // 其他情况：尝试用english查询
       console.log('markCurrentWordAsMastered: 其他情况，使用english斯掉');
       await db.masterWordByEnglish(currentWord.value.english);
     }
-    
+
     console.log('markCurrentWordAsMastered: 斯掉成功');
     uni.showToast({ title: '已斯掉！', icon: 'success' });
     showMasteredConfirm.value = false;
-    
+
     // 自动跳到下一题
     setTimeout(() => {
       nextQuestion();
@@ -1934,24 +2094,25 @@ onBackPress(() => {
 }
 
 .start-review-fixed {
-  padding: calc(50px + constant(safe-area-inset-top)) 16px 20px;
-  padding: calc(50px + env(safe-area-inset-top)) 16px 20px;
+  padding: calc(4px + constant(safe-area-inset-top)) 12px 12px;
+  padding: calc(4px + env(safe-area-inset-top)) 12px 12px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 6px;
   flex: 1;
-  overflow-y: auto;
+  overflow-y: hidden;
   box-sizing: border-box;
 }
 
 /* 分类标签 */
 .section-label {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #9B7BA8;
-  margin-bottom: 8px;
+  margin-bottom: 1px;
   padding: 0 4px;
+  flex-shrink: 0;
 }
 
 /* 卡片基础样式 */
@@ -1965,35 +2126,50 @@ onBackPress(() => {
 
 /* 大统计卡片 */
 .stat-card-large {
-  padding: 20px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 28%;
+  min-height: auto;
+  flex-shrink: 0;
+}
+
+.stat-card-book {
+  flex: 0 0 19.6%;
 }
 
 .stat-value-large {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 8px;
+  width: 100%;
 }
 
 .stat-number {
-  font-size: 48px;
+  font-size: 56px;
   font-weight: 800;
   color: #FF6B9D;
-  line-height: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
 }
 
 .stat-sep {
-  font-size: 16px;
+  font-size: 24px;
   color: #D4D4D8;
   font-weight: 400;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
 }
 
 .stat-bar {
   width: 100%;
-  height: 8px;
+  height: 5px;
   background: #F0E0E8;
   border-radius: 999px;
   overflow: hidden;
@@ -2007,10 +2183,10 @@ onBackPress(() => {
 }
 
 .stat-detail-row {
-  font-size: 13px;
+  font-size: 10px;
   color: #9B7BA8;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.1;
 }
 
 .stat-header-row {
@@ -2020,13 +2196,13 @@ onBackPress(() => {
 }
 
 .stat-left-text {
-  font-size: 14px;
+  font-size: 12px;
   color: #666;
   font-weight: 500;
 }
 
 .stat-right-text {
-  font-size: 18px;
+  font-size: 16px;
   color: #FF6B9D;
   font-weight: 700;
 }
@@ -2036,8 +2212,11 @@ onBackPress(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
+  gap: 10px;
+  padding: 10px 14px;
+  flex: 0 0 18%;
+  min-height: auto;
+  flex-shrink: 0;
 }
 
 .recommend-info {
@@ -2049,22 +2228,22 @@ onBackPress(() => {
 }
 
 .recommend-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #2D1B2E;
 }
 
 .recommend-desc {
-  font-size: 13px;
+  font-size: 11px;
   color: #9B7BA8;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 .start-btn {
   background: #FF6B9D !important;
   color: white !important;
   border: none !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   padding: 0 18px !important;
   font-size: 14px !important;
   font-weight: 700 !important;
@@ -2081,8 +2260,9 @@ onBackPress(() => {
 .other-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  flex: 1;
+  gap: 6px;
+  flex: 0 0 18%;
+  flex-shrink: 0;
 }
 
 .other-btn {
@@ -2090,9 +2270,11 @@ onBackPress(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 16px 14px;
+  gap: 0.5px;
+  padding: 2px 4px;
   transition: all 0.2s ease;
+  min-height: auto;
+  flex-shrink: 0;
 }
 
 .other-btn:active {
@@ -2101,15 +2283,15 @@ onBackPress(() => {
 }
 
 .btn-title {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #2D1B2E;
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 
 .btn-count {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
   color: #FF6B9D;
 }

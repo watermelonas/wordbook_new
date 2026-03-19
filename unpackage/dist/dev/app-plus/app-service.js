@@ -2861,7 +2861,7 @@ if (uni.restoreGlobal) {
       first_learned_at: profile.first_learned_at
     };
   };
-  const getWordProfile = (word) => {
+  const getWordProfile$1 = (word) => {
     const key = normalizeWordKey(word);
     if (!key)
       return null;
@@ -2893,7 +2893,7 @@ if (uni.restoreGlobal) {
       return null;
     const now = /* @__PURE__ */ new Date();
     const bookId = options.bookId || getCurrentWordbook() || "self";
-    const prev = getWordProfile(word) || normalizeProfile({
+    const prev = getWordProfile$1(word) || normalizeProfile({
       ...typeof word === "object" ? word : {},
       english: typeof word === "string" ? word : word.english,
       chinese: typeof word === "object" ? word.chinese : "",
@@ -2985,7 +2985,7 @@ if (uni.restoreGlobal) {
   const getDueProfilesForWords = (words = [], bookId = "", now = /* @__PURE__ */ new Date()) => {
     const nowMs = now.getTime();
     return (Array.isArray(words) ? words : []).map((item) => {
-      const profile = getWordProfile(item);
+      const profile = getWordProfile$1(item);
       if (!profile)
         return null;
       if (bookId && Array.isArray(profile.bookIds) && profile.bookIds.length && !profile.bookIds.includes(bookId))
@@ -3006,7 +3006,7 @@ if (uni.restoreGlobal) {
     const now = options.now ? new Date(options.now) : /* @__PURE__ */ new Date();
     const dueProfiles = getDueProfilesForWords(words, bookId, now);
     const mistakes = getMistakeWords(bookId, true);
-    const profiles = (Array.isArray(words) ? words : []).map((item) => getWordProfile(item)).filter(Boolean);
+    const profiles = (Array.isArray(words) ? words : []).map((item) => getWordProfile$1(item)).filter(Boolean);
     const masteryBuckets = {
       strong: 0,
       normal: 0,
@@ -3915,7 +3915,7 @@ if (uni.restoreGlobal) {
             allExternalWords = [];
             allExternalWordsLength.value = 0;
             enrichWordbookListInBackground(words.value, book, words);
-            formatAppLog("log", "at pages/index/index.vue:555", "极速加载：自用分页成功，数量:", words.value.length);
+            formatAppLog("log", "at pages/index/index.vue:560", "极速加载：自用分页成功，数量:", words.value.length);
             await loadLearningSnapshot();
             return;
           }
@@ -3929,18 +3929,18 @@ if (uni.restoreGlobal) {
           allExternalWordsLength.value = allExternalWords.length;
           words.value = allExternalWords.slice(0, PAGE_SIZE);
           displayLimit.value = PAGE_SIZE;
-          formatAppLog("log", "at pages/index/index.vue:572", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
+          formatAppLog("log", "at pages/index/index.vue:577", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
           enrichWordbookListInBackground(words.value, book, words);
           await loadLearningSnapshot();
         } catch (error) {
-          formatAppLog("error", "at pages/index/index.vue:577", "加载失败:", error);
+          formatAppLog("error", "at pages/index/index.vue:582", "加载失败:", error);
           words.value = [];
         } finally {
           loadWordsInProgress = false;
         }
       };
       onLoad(() => {
-        formatAppLog("log", "at pages/index/index.vue:585", "首页 onLoad - 开始加载");
+        formatAppLog("log", "at pages/index/index.vue:590", "首页 onLoad - 开始加载");
         try {
           const v2 = uni.getStorageSync(SHOW_CHINESE_KEY);
           if (v2 === false || v2 === "false" || v2 === 0 || v2 === "0")
@@ -3948,7 +3948,7 @@ if (uni.restoreGlobal) {
         } catch (_2) {
         }
         loadWords().catch((error) => {
-          formatAppLog("error", "at pages/index/index.vue:593", "首页加载单词失败:", error);
+          formatAppLog("error", "at pages/index/index.vue:598", "首页加载单词失败:", error);
           uni.showToast({
             title: "加载失败，请重试",
             icon: "error"
@@ -4450,12 +4450,19 @@ if (uni.restoreGlobal) {
         "refresher-enabled": true,
         "refresher-triggered": $setup.refreshing,
         "refresher-background": "#FFF0F3",
+        "refresher-default-style": "none",
         onRefresherrefresh: $setup.onListRefresh,
         onScrolltolower: $setup.onScrollToLower,
         style: { "background-color": "#FFF0F3" }
       }, [
-        $setup.filteredWords.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+        $setup.refreshing ? (vue.openBlock(), vue.createElementBlock("view", {
           key: 0,
+          class: "custom-refresher"
+        }, [
+          vue.createElementVNode("view", { class: "refresher-spinner" })
+        ])) : vue.createCommentVNode("v-if", true),
+        $setup.filteredWords.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 1,
           class: "empty-state"
         }, [
           vue.createElementVNode(
@@ -4585,7 +4592,7 @@ if (uni.restoreGlobal) {
           /* KEYED_FRAGMENT */
         )),
         $setup.hasMoreWords ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 1,
+          key: 2,
           class: "load-more",
           onClick: $setup.onScrollToLower
         }, "加载更多")) : vue.createCommentVNode("v-if", true)
@@ -7000,9 +7007,19 @@ ${existingWordsStr}${examBlock}
       const learnedUniqueWords = vue.ref(0);
       const dashboardSnapshot = vue.ref({ dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 });
       const showMasteredConfirm = vue.ref(false);
-      const reviewPreset = vue.ref("default");
+      const reviewPreset = vue.ref("due");
       const sessionNewCount = vue.ref(0);
       const sessionOldCount = vue.ref(0);
+      const recommendedReviewStage = vue.ref("new");
+      const recommendedReviewState = vue.ref({
+        newWords: [],
+        wrongWords: [],
+        oldWords: [],
+        currentStage: "new",
+        newCompleted: false,
+        wrongCompleted: false,
+        oldCompleted: false
+      });
       const getSettingsKey = () => `reviewSettings_${getCurrentBookId()}`;
       const getLastReviewResultKey = () => `lastReviewResult_${getCurrentBookId()}`;
       const getCurrentBookId = () => getCurrentWordbook() || "self";
@@ -7018,7 +7035,8 @@ ${existingWordsStr}${examBlock}
           settings: { ...settings.value },
           reviewPreset: reviewPreset.value,
           sessionNewCount: sessionNewCount.value,
-          sessionOldCount: sessionOldCount.value
+          sessionOldCount: sessionOldCount.value,
+          recommendedReviewState: { ...recommendedReviewState.value }
         });
         hasProgress.value = true;
       };
@@ -7044,9 +7062,12 @@ ${existingWordsStr}${examBlock}
         wrongCount.value = saved.wrongCount;
         wrongWords.value = saved.wrongWords || [];
         settings.value = saved.settings || settings.value;
-        reviewPreset.value = saved.reviewPreset || "default";
+        reviewPreset.value = saved.reviewPreset || "due";
         sessionNewCount.value = Number(saved.sessionNewCount || 0);
         sessionOldCount.value = Number(saved.sessionOldCount || 0);
+        if (saved.recommendedReviewState) {
+          recommendedReviewState.value = saved.recommendedReviewState;
+        }
         reviewStarted.value = true;
         reviewFinished.value = false;
         showResumeModal.value = false;
@@ -7331,10 +7352,12 @@ ${existingWordsStr}${examBlock}
       const primaryStartText = vue.computed(() => {
         if (reviewPreset.value === "due")
           return "开始到期复习";
+        if (reviewPreset.value === "new")
+          return "开始新词学习";
         if (reviewPreset.value === "wrong")
           return "开始错词再练";
-        if (reviewPreset.value === "firstday")
-          return "开始首日巩固";
+        if (reviewPreset.value === "old")
+          return "开始旧词复习";
         return isTodayTargetDone.value ? "再来一组20" : "开始复习";
       });
       const todayProgressPercent = vue.computed(() => {
@@ -7345,39 +7368,48 @@ ${existingWordsStr}${examBlock}
         return Math.min(100, Math.round(current / target * 100));
       });
       const recommendedPreset = vue.computed(() => {
-        if (dashboardSnapshot.value.dueCount > 0)
-          return "due";
+        const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
+        if (newWordsNeeded > 0)
+          return "new";
         if (dashboardSnapshot.value.mistakeCount > 0)
           return "wrong";
-        if (dashboardSnapshot.value.firstDayDue > 0)
-          return "firstday";
-        return "default";
+        if (dashboardSnapshot.value.dueCount > 0)
+          return "old";
+        return "new";
       });
       const recommendedPresetIcon = vue.computed(() => {
         return "";
       });
       const recommendedPresetTitle = vue.computed(() => {
-        const titles = { due: "今日到期", wrong: "错词本", firstday: "首日巩固", default: "随机复习" };
-        return titles[recommendedPreset.value] || "随机复习";
+        const titles = { new: "今日新词", wrong: "错词本", old: "复习旧词" };
+        return titles[recommendedPreset.value] || "今日新词";
       });
       const recommendedPresetDesc = vue.computed(() => {
         const preset = recommendedPreset.value;
-        if (preset === "due")
-          return `${dashboardSnapshot.value.dueCount} 个单词需要复习`;
+        const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
+        if (preset === "new")
+          return `还需学习 ${newWordsNeeded} 个新词`;
         if (preset === "wrong")
           return `${dashboardSnapshot.value.mistakeCount} 个单词需要巩固`;
-        if (preset === "firstday")
-          return `${dashboardSnapshot.value.firstDayDue} 个单词待复习`;
+        if (preset === "old")
+          return `${dashboardSnapshot.value.dueCount} 个单词待复习`;
         return "从所有单词中随机抽取";
       });
       const otherPresets = vue.computed(() => {
-        const all = [
-          { key: "due", icon: "", title: "今日到期", count: dashboardSnapshot.value.dueCount },
-          { key: "wrong", icon: "", title: "错词本", count: dashboardSnapshot.value.mistakeCount },
-          { key: "firstday", icon: "", title: "首日巩固", count: dashboardSnapshot.value.firstDayDue },
-          { key: "default", icon: "", title: "随机复习", count: 0 }
-        ];
-        return all.filter((p2) => p2.key !== recommendedPreset.value);
+        const preset = recommendedPreset.value;
+        const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
+        const allPresets = {
+          new: { key: "new", icon: "", title: "今日新词", count: newWordsNeeded },
+          wrong: { key: "wrong", icon: "", title: "错词本", count: dashboardSnapshot.value.mistakeCount },
+          old: { key: "old", icon: "", title: "复习旧词", count: dashboardSnapshot.value.dueCount }
+        };
+        const all = [];
+        for (const [key, item] of Object.entries(allPresets)) {
+          if (key !== preset) {
+            all.push(item);
+          }
+        }
+        return all;
       });
       const currentWordbookName = vue.computed(() => {
         const current = getCurrentWordbook();
@@ -7450,7 +7482,7 @@ ${existingWordsStr}${examBlock}
         showDifficultySelector.value = true;
       };
       onLoad((options) => {
-        reviewPreset.value = options && options.preset ? String(options.preset) : "default";
+        reviewPreset.value = options && options.preset ? String(options.preset) : "due";
       });
       vue.onMounted(() => {
         loadSettings();
@@ -7520,17 +7552,30 @@ ${existingWordsStr}${examBlock}
         lastReviewResult.value = result;
       };
       const buildPresetQueue = (list, count) => {
-        const preset = reviewPreset.value || "default";
+        const preset = reviewPreset.value || "due";
         if (!Array.isArray(list) || !list.length)
           return [];
+        if (preset === "new") {
+          const profiles = list.map((item) => getWordProfile(item)).filter(Boolean);
+          const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
+          return shuffleList(newWords.map((p2) => ({ english: p2.english, chinese: p2.chinese }))).slice(0, count);
+        }
         if (preset === "wrong") {
           const wrongSet = new Set(getMistakeWords(getCurrentBookId(), true).map((item) => getWordKey(item)));
           return shuffleList(filterWordsByKeys(list, wrongSet)).slice(0, count);
         }
-        if (preset === "due" || preset === "firstday") {
+        if (preset === "old") {
           const dueProfiles = getDueProfilesForWords(list, getCurrentBookId());
-          const filtered = preset === "firstday" ? dueProfiles.filter((item) => Number(item.first_day_stage || 0) > 0 && Number(item.first_day_stage || 0) < 4) : dueProfiles;
+          const filtered = dueProfiles.filter((item) => {
+            const reviewCount = Number(item.review_count || 0);
+            return reviewCount < 3;
+          });
           const dueSet = new Set(filtered.map((item) => getWordKey(item)));
+          return shuffleList(filterWordsByKeys(list, dueSet)).slice(0, count);
+        }
+        if (preset === "due") {
+          const dueProfiles = getDueProfilesForWords(list, getCurrentBookId());
+          const dueSet = new Set(dueProfiles.map((item) => getWordKey(item)));
           return shuffleList(filterWordsByKeys(list, dueSet)).slice(0, count);
         }
         return [];
@@ -7548,7 +7593,7 @@ ${existingWordsStr}${examBlock}
               return !masteredSet.has(english);
             });
           } catch (e2) {
-            formatAppLog("error", "at pages/review/review.vue:1184", "buildBookReviewQueue: 过滤已斯单词失败", e2);
+            formatAppLog("error", "at pages/review/review.vue:1230", "buildBookReviewQueue: 过滤已斯单词失败", e2);
           }
         }
         return shuffleList(filteredList).slice(0, count);
@@ -7565,8 +7610,10 @@ ${existingWordsStr}${examBlock}
         oldPlanEntry.todayKey === getTodayKey() ? oldPlanEntry.todayKeys : [];
         clearReviewProgress();
         const count = forceCount != null ? Number(forceCount) : Number(settings.value.count || 20);
-        if (isSelfWordbook()) {
-          if (reviewPreset.value === "default") {
+        if (recommendedReviewState.value.currentStage && reviewWords.value.length > 0)
+          ;
+        else if (isSelfWordbook()) {
+          if (reviewPreset.value === "due") {
             reviewWords.value = await db.getReviewWords({
               sortBy: settings.value.sortBy,
               count,
@@ -7615,11 +7662,91 @@ ${existingWordsStr}${examBlock}
         await startReview();
       };
       const startRecommendedReview = async () => {
-        reviewPreset.value = recommendedPreset.value;
-        await startReviewInternal(null);
+        const count = Number(settings.value.count || 20);
+        const bookId = getCurrentBookId();
+        recommendedReviewState.value = {
+          newWords: [],
+          wrongWords: [],
+          oldWords: [],
+          currentStage: "new",
+          newCompleted: false,
+          wrongCompleted: false,
+          oldCompleted: false
+        };
+        try {
+          let allWords = [];
+          if (isSelfWordbook()) {
+            allWords = await db.getAllWords();
+          } else {
+            allWords = await getCurrentBookWordPool2();
+          }
+          const profiles = allWords.map((item) => getWordProfile(item)).filter(Boolean);
+          const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
+          recommendedReviewState.value.newWords = shuffleList(newWords.map((p2) => ({ english: p2.english, chinese: p2.chinese }))).slice(0, count);
+          const wrongSet = new Set(getMistakeWords(bookId, true).map((item) => getWordKey(item)));
+          recommendedReviewState.value.wrongWords = shuffleList(filterWordsByKeys(allWords, wrongSet));
+          const dueProfiles = getDueProfilesForWords(allWords, bookId);
+          const oldWordsFiltered = dueProfiles.filter((item) => {
+            const reviewCount = Number(item.review_count || 0);
+            return reviewCount < 3;
+          });
+          const oldSet = new Set(oldWordsFiltered.map((item) => getWordKey(item)));
+          recommendedReviewState.value.oldWords = shuffleList(filterWordsByKeys(allWords, oldSet));
+          reviewPreset.value = "new";
+          reviewWords.value = recommendedReviewState.value.newWords;
+          if (reviewWords.value.length === 0) {
+            await continueRecommendedReview("wrong");
+          } else {
+            await startReviewInternal(null);
+          }
+        } catch (e2) {
+          formatAppLog("error", "at pages/review/review.vue:1374", "startRecommendedReview 失败:", e2);
+          uni.showToast({ title: "加载失败", icon: "none" });
+        }
+      };
+      const continueRecommendedReview = async (nextStage) => {
+        recommendedReviewState.value.currentStage = nextStage;
+        if (nextStage === "wrong") {
+          recommendedReviewState.value.newCompleted = true;
+          reviewPreset.value = "wrong";
+          reviewWords.value = recommendedReviewState.value.wrongWords;
+          if (reviewWords.value.length === 0) {
+            await continueRecommendedReview("old");
+          } else {
+            await startReviewInternal(null);
+          }
+        } else if (nextStage === "old") {
+          recommendedReviewState.value.wrongCompleted = true;
+          reviewPreset.value = "old";
+          reviewWords.value = recommendedReviewState.value.oldWords;
+          if (reviewWords.value.length === 0) {
+            recommendedReviewState.value.oldCompleted = true;
+            recommendedReviewState.value = {
+              newWords: [],
+              wrongWords: [],
+              oldWords: [],
+              currentStage: "",
+              newCompleted: false,
+              wrongCompleted: false,
+              oldCompleted: false
+            };
+            uni.showToast({ title: "推荐复习已完成！", icon: "success" });
+          } else {
+            await startReviewInternal(null);
+          }
+        }
       };
       const startPresetReview = async (preset) => {
         reviewPreset.value = preset;
+        recommendedReviewState.value = {
+          newWords: [],
+          wrongWords: [],
+          oldWords: [],
+          currentStage: "",
+          newCompleted: false,
+          wrongCompleted: false,
+          oldCompleted: false
+        };
         await startReviewInternal(null);
       };
       const prefetchNextWordDetail = (nextIndex) => {
@@ -7726,7 +7853,7 @@ ${existingWordsStr}${examBlock}
             }
           }
         } catch (e2) {
-          formatAppLog("error", "at pages/review/review.vue:1399", "获取当前单词释义失败:", e2);
+          formatAppLog("error", "at pages/review/review.vue:1550", "获取当前单词释义失败:", e2);
         }
         const distractorOptions = [];
         for (const d2 of distractors) {
@@ -7741,7 +7868,7 @@ ${existingWordsStr}${examBlock}
               };
             }
           } catch (e2) {
-            formatAppLog("error", "at pages/review/review.vue:1416", "获取干扰项释义失败:", e2);
+            formatAppLog("error", "at pages/review/review.vue:1567", "获取干扰项释义失败:", e2);
           }
           distractorOptions.push(option);
         }
@@ -7885,7 +8012,7 @@ ${existingWordsStr}${examBlock}
           const response = await aiService.callAPI(prompt);
           aiSentence.value = response.trim();
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1566", "生成例句失败:", error);
+          formatAppLog("error", "at pages/review/review.vue:1717", "生成例句失败:", error);
           aiSentence.value = "生成例句失败，请重试";
         } finally {
           isGenerating.value = false;
@@ -7964,7 +8091,7 @@ ${existingWordsStr}${examBlock}
             });
           }
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1655", "提交答案失败:", error);
+          formatAppLog("error", "at pages/review/review.vue:1806", "提交答案失败:", error);
           uni.showToast({
             title: "AI判卷失败，请重试",
             icon: "none"
@@ -8056,7 +8183,7 @@ ${existingWordsStr}${examBlock}
         saveReviewProgress();
         loadCurrentQuestion();
       };
-      const finishReview = () => {
+      const finishReview = async () => {
         reviewFinished.value = true;
         clearReviewProgress();
         saveReviewResult();
@@ -8072,6 +8199,11 @@ ${existingWordsStr}${examBlock}
           mistakeCount: wrongWords.value.length
         });
         refreshPlanStats();
+        if (recommendedReviewState.value.currentStage === "new" && !recommendedReviewState.value.newCompleted) {
+          await continueRecommendedReview("wrong");
+        } else if (recommendedReviewState.value.currentStage === "wrong" && !recommendedReviewState.value.wrongCompleted) {
+          await continueRecommendedReview("old");
+        }
       };
       const restartReview = () => {
         onPrimaryStartClick();
@@ -8088,7 +8220,7 @@ ${existingWordsStr}${examBlock}
         uni.navigateTo({
           url: `/pages/word-detail/word-detail?english=${encodeURIComponent(currentWord.value.english)}&source=masterdb`,
           fail: (err) => {
-            formatAppLog("error", "at pages/review/review.vue:1799", "跳转失败:", err);
+            formatAppLog("error", "at pages/review/review.vue:1959", "跳转失败:", err);
             uni.showToast({ title: "跳转失败", icon: "none" });
           }
         });
@@ -8101,24 +8233,24 @@ ${existingWordsStr}${examBlock}
         }
         try {
           const bookId = getCurrentBookId();
-          if (currentWord.value.id) {
-            formatAppLog("log", "at pages/review/review.vue:1818", "markCurrentWordAsMastered: 自用词库单词，使用id斯掉");
-            await db.masterWord(currentWord.value.id);
-          } else if (bookId && bookId !== "self") {
-            formatAppLog("log", "at pages/review/review.vue:1822", "markCurrentWordAsMastered: 词书单词，存储到本地");
+          if (bookId && bookId !== "self") {
+            formatAppLog("log", "at pages/review/review.vue:1978", "markCurrentWordAsMastered: 词书单词，存储到本地");
             addMasteredWordbookWord(bookId, currentWord.value.english);
+          } else if (currentWord.value.id) {
+            formatAppLog("log", "at pages/review/review.vue:1982", "markCurrentWordAsMastered: 自用词库单词，使用id斯掉");
+            await db.masterWord(currentWord.value.id);
           } else {
-            formatAppLog("log", "at pages/review/review.vue:1826", "markCurrentWordAsMastered: 其他情况，使用english斯掉");
+            formatAppLog("log", "at pages/review/review.vue:1986", "markCurrentWordAsMastered: 其他情况，使用english斯掉");
             await db.masterWordByEnglish(currentWord.value.english);
           }
-          formatAppLog("log", "at pages/review/review.vue:1830", "markCurrentWordAsMastered: 斯掉成功");
+          formatAppLog("log", "at pages/review/review.vue:1990", "markCurrentWordAsMastered: 斯掉成功");
           uni.showToast({ title: "已斯掉！", icon: "success" });
           showMasteredConfirm.value = false;
           setTimeout(() => {
             nextQuestion();
           }, 500);
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1839", "markCurrentWordAsMastered: 斯掉失败", error);
+          formatAppLog("error", "at pages/review/review.vue:1999", "markCurrentWordAsMastered: 斯掉失败", error);
           uni.showToast({ title: "斯掉失败: " + (error.message || "未知错误"), icon: "none" });
           showMasteredConfirm.value = false;
         }
@@ -8141,7 +8273,7 @@ ${existingWordsStr}${examBlock}
         }
         return false;
       });
-      const __returned__ = { showSettings, showModeSelector, showSortSelector, showCountSelector, showDifficultySelector, reviewStarted, reviewFinished, settings, reviewWords, currentIndex, currentWord, currentOptions, fillOptions, currentFillSentenceChinese, spellInput, escapeRegExp, formatHighlight, currentSentence, fillAnswer, aiSentence, userTranslation, aiResult, isGenerating, isSubmitting, formatAIPhighlight, selectedOption, showResult, showWrongFeedback, correctCount, wrongCount, wrongWords, lastReviewResult, showResumeModal, hasProgress, activeSettingCard, dashboardDone, dashboardTotal, bookTotalWords, totalReviewedWords, todayReviewed, learnedUniqueWords, dashboardSnapshot, showMasteredConfirm, reviewPreset, sessionNewCount, sessionOldCount, getSettingsKey, getLastReviewResultKey, getCurrentBookId, saveReviewProgress, clearReviewProgress, loadReviewProgress, resumeReview, discardReview, checkProgress, getCurrentBookTotalWords, getCurrentBookWordPool: getCurrentBookWordPool2, refreshDashboardSnapshot, refreshPlanStats, resetCurrentPlan, markWordsReviewed, syncDashboardProgress, dashboardTarget, dashboardPercent, formatRelativeReviewTime, currentReviewInsight, applyReviewPreview, finishedReviewInsight, completedInRound, currentRound, currentProgressPercent, oldReviewDailyTarget, dailyNewTarget, remainDays, remainingNewWords, estimatedFinishDate, dailyPlanText, isTodayTargetDone, primaryStartText, todayProgressPercent, recommendedPreset, recommendedPresetIcon, recommendedPresetTitle, recommendedPresetDesc, otherPresets, currentWordbookName, openSettings, sortByText, isLastQuestion, modeOptions, sortOptions, countOptions, dailyQuickOptions, modeIndex, modeDisplayText, sortIndex, countIndex, onModeChange, onSortChange, onCountChange, setDailyTarget, onDifficultyChange, openModeSelector, openSortSelector, openCountSelector, openDifficultySelector, loadSettings, saveSettings, loadLastReviewResult, saveReviewResult, buildPresetQueue, buildBookReviewQueue, saveSettingsAndStart, startReviewInternal, startReview, startExtraRound20, onPrimaryStartClick, startRecommendedReview, startPresetReview, prefetchNextWordDetail, loadCurrentQuestion, get _dictWordsCache() {
+      const __returned__ = { showSettings, showModeSelector, showSortSelector, showCountSelector, showDifficultySelector, reviewStarted, reviewFinished, settings, reviewWords, currentIndex, currentWord, currentOptions, fillOptions, currentFillSentenceChinese, spellInput, escapeRegExp, formatHighlight, currentSentence, fillAnswer, aiSentence, userTranslation, aiResult, isGenerating, isSubmitting, formatAIPhighlight, selectedOption, showResult, showWrongFeedback, correctCount, wrongCount, wrongWords, lastReviewResult, showResumeModal, hasProgress, activeSettingCard, dashboardDone, dashboardTotal, bookTotalWords, totalReviewedWords, todayReviewed, learnedUniqueWords, dashboardSnapshot, showMasteredConfirm, reviewPreset, sessionNewCount, sessionOldCount, recommendedReviewStage, recommendedReviewState, getSettingsKey, getLastReviewResultKey, getCurrentBookId, saveReviewProgress, clearReviewProgress, loadReviewProgress, resumeReview, discardReview, checkProgress, getCurrentBookTotalWords, getCurrentBookWordPool: getCurrentBookWordPool2, refreshDashboardSnapshot, refreshPlanStats, resetCurrentPlan, markWordsReviewed, syncDashboardProgress, dashboardTarget, dashboardPercent, formatRelativeReviewTime, currentReviewInsight, applyReviewPreview, finishedReviewInsight, completedInRound, currentRound, currentProgressPercent, oldReviewDailyTarget, dailyNewTarget, remainDays, remainingNewWords, estimatedFinishDate, dailyPlanText, isTodayTargetDone, primaryStartText, todayProgressPercent, recommendedPreset, recommendedPresetIcon, recommendedPresetTitle, recommendedPresetDesc, otherPresets, currentWordbookName, openSettings, sortByText, isLastQuestion, modeOptions, sortOptions, countOptions, dailyQuickOptions, modeIndex, modeDisplayText, sortIndex, countIndex, onModeChange, onSortChange, onCountChange, setDailyTarget, onDifficultyChange, openModeSelector, openSortSelector, openCountSelector, openDifficultySelector, loadSettings, saveSettings, loadLastReviewResult, saveReviewResult, buildPresetQueue, buildBookReviewQueue, saveSettingsAndStart, startReviewInternal, startReview, startExtraRound20, onPrimaryStartClick, startRecommendedReview, continueRecommendedReview, startPresetReview, prefetchNextWordDetail, loadCurrentQuestion, get _dictWordsCache() {
         return _dictWordsCache;
       }, set _dictWordsCache(v2) {
         _dictWordsCache = v2;
@@ -8298,19 +8430,12 @@ ${existingWordsStr}${examBlock}
           )
         ]),
         vue.createElementVNode("view", { class: "section-label" }, "词书进度"),
-        vue.createElementVNode("view", { class: "card stat-card-large" }, [
+        vue.createElementVNode("view", { class: "card stat-card-large stat-card-book" }, [
           vue.createElementVNode("view", { class: "stat-header-row" }, [
             vue.createElementVNode(
               "text",
               { class: "stat-left-text" },
               "已学 " + vue.toDisplayString($setup.learnedUniqueWords) + " / " + vue.toDisplayString($setup.bookTotalWords) + " 词",
-              1
-              /* TEXT */
-            ),
-            vue.createElementVNode(
-              "text",
-              { class: "stat-right-text" },
-              vue.toDisplayString($setup.currentProgressPercent) + "%",
               1
               /* TEXT */
             )

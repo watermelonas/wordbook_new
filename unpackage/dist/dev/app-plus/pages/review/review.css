@@ -63,24 +63,25 @@
   padding-top: 0;
 }
 .start-review-fixed[data-v-7018a65d] {
-  padding: calc(50px + constant(safe-area-inset-top)) 16px 20px;
-  padding: calc(50px + env(safe-area-inset-top)) 16px 20px;
+  padding: calc(4px + constant(safe-area-inset-top)) 12px 12px;
+  padding: calc(4px + env(safe-area-inset-top)) 12px 12px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   gap: 6px;
   flex: 1;
-  overflow-y: auto;
+  overflow-y: hidden;
   box-sizing: border-box;
 }
 
 /* 分类标签 */
 .section-label[data-v-7018a65d] {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: #9B7BA8;
-  margin-bottom: 8px;
+  margin-bottom: 1px;
   padding: 0 4px;
+  flex-shrink: 0;
 }
 
 /* 卡片基础样式 */
@@ -94,31 +95,45 @@
 
 /* 大统计卡片 */
 .stat-card-large[data-v-7018a65d] {
-  padding: 20px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 0 0 28%;
+  min-height: auto;
+  flex-shrink: 0;
+}
+.stat-card-book[data-v-7018a65d] {
+  flex: 0 0 19.6%;
 }
 .stat-value-large[data-v-7018a65d] {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 8px;
+  width: 100%;
 }
 .stat-number[data-v-7018a65d] {
-  font-size: 48px;
+  font-size: 56px;
   font-weight: 800;
   color: #FF6B9D;
-  line-height: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
 }
 .stat-sep[data-v-7018a65d] {
-  font-size: 16px;
+  font-size: 24px;
   color: #D4D4D8;
   font-weight: 400;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
 }
 .stat-bar[data-v-7018a65d] {
   width: 100%;
-  height: 8px;
+  height: 5px;
   background: #F0E0E8;
   border-radius: 999px;
   overflow: hidden;
@@ -130,10 +145,10 @@
   transition: width 0.3s ease;
 }
 .stat-detail-row[data-v-7018a65d] {
-  font-size: 13px;
+  font-size: 10px;
   color: #9B7BA8;
   text-align: center;
-  line-height: 1.4;
+  line-height: 1.1;
 }
 .stat-header-row[data-v-7018a65d] {
   display: flex;
@@ -141,12 +156,12 @@
   align-items: center;
 }
 .stat-left-text[data-v-7018a65d] {
-  font-size: 14px;
+  font-size: 12px;
   color: #666;
   font-weight: 500;
 }
 .stat-right-text[data-v-7018a65d] {
-  font-size: 18px;
+  font-size: 16px;
   color: #FF6B9D;
   font-weight: 700;
 }
@@ -156,8 +171,11 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 14px;
-  padding: 18px 20px;
+  gap: 10px;
+  padding: 10px 14px;
+  flex: 0 0 18%;
+  min-height: auto;
+  flex-shrink: 0;
 }
 .recommend-info[data-v-7018a65d] {
   display: flex;
@@ -167,20 +185,20 @@
   min-width: 0;
 }
 .recommend-title[data-v-7018a65d] {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: #2D1B2E;
 }
 .recommend-desc[data-v-7018a65d] {
-  font-size: 13px;
+  font-size: 11px;
   color: #9B7BA8;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 .start-btn[data-v-7018a65d] {
   background: #FF6B9D !important;
   color: white !important;
   border: none !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   padding: 0 18px !important;
   font-size: 14px !important;
   font-weight: 700 !important;
@@ -197,31 +215,34 @@
 .other-buttons[data-v-7018a65d] {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  flex: 1;
+  gap: 6px;
+  flex: 0 0 18%;
+  flex-shrink: 0;
 }
 .other-btn[data-v-7018a65d] {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 16px 14px;
+  gap: 0.5px;
+  padding: 2px 4px;
   transition: all 0.2s ease;
+  min-height: auto;
+  flex-shrink: 0;
 }
 .other-btn[data-v-7018a65d]:active {
   transform: scale(0.98);
   box-shadow: 0 2px 8px rgba(255, 133, 161, 0.1);
 }
 .btn-title[data-v-7018a65d] {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #2D1B2E;
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 .btn-count[data-v-7018a65d] {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
   color: #FF6B9D;
 }

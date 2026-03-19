@@ -3,7 +3,8 @@
     "allow": [
       "Bash(grep -n \"^}$\\\\|^};$\")",
       "Read(//src/utils/**)",
-      "Read(//pages/my/**)"
+      "Read(//pages/my/**)",
+      "Bash(npx vue-tsc:*)"
     ],
     "additionalDirectories": [
       "E:\\vocal\\wordbook_new\\pages\\review"

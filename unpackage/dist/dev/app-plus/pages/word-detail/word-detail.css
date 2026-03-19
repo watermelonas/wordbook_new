@@ -832,9 +832,9 @@ uni-label[data-v-008cde92] {
   margin-top: 0;
 }
 .exam-stats-content[data-v-008cde92] {
-  font-size: 15px;
+  font-size: 13px;
   color: #4A4E69;
-  line-height: 1.7;
+  line-height: 1.4;
   padding: 18px 18px 20px;
   background: #FFFCFD;
   border: 1px solid #F7E8EE;
@@ -860,31 +860,31 @@ uni-label[data-v-008cde92] {
   text-align: left;
 }
 .exam-stats-num[data-v-008cde92] {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #5F6372;
-  line-height: 1.6;
+  line-height: 1.4;
   display: inline-block;
 }
 .exam-stats-unit[data-v-008cde92] {
-  font-size: 15px;
+  font-size: 13px;
   color: #5F6372;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.4;
   display: inline-block;
 }
 .exam-stats-detail[data-v-008cde92] {
   color: #5F6372;
-  line-height: 1.6;
+  line-height: 1.4;
   text-align: left;
 }
 .exam-stats-years-row[data-v-008cde92] {
   margin-bottom: 10px;
 }
 .exam-stats-years[data-v-008cde92] {
-  font-size: 15px;
+  font-size: 13px;
   color: #5F6372;
-  line-height: 1.6;
+  line-height: 1.4;
   text-align: left;
   display: block;
   width: 100%;

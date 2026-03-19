@@ -2200,9 +2200,9 @@ label {
 }
 
 .exam-stats-content {
-  font-size: 15px;
+  font-size: 13px;
   color: #4A4E69;
-  line-height: 1.7;
+  line-height: 1.4;
   padding: 18px 18px 20px;
   background: #FFFCFD;
   border: 1px solid #F7E8EE;
@@ -2232,24 +2232,24 @@ label {
 }
 
 .exam-stats-num {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: #5F6372;
-  line-height: 1.6;
+  line-height: 1.4;
   display: inline-block;
 }
 
 .exam-stats-unit {
-  font-size: 15px;
+  font-size: 13px;
   color: #5F6372;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.4;
   display: inline-block;
 }
 
 .exam-stats-detail {
   color: #5F6372;
-  line-height: 1.6;
+  line-height: 1.4;
   text-align: left;
 }
 
@@ -2258,9 +2258,9 @@ label {
 }
 
 .exam-stats-years {
-  font-size: 15px;
+  font-size: 13px;
   color: #5F6372;
-  line-height: 1.6;
+  line-height: 1.4;
   text-align: left;
   display: block;
   width: 100%;
