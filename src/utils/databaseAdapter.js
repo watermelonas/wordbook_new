@@ -4,6 +4,7 @@
  */
 
 import { bindSql, toJsonString, parseJsonSafe } from './sqlHelper.js';
+import { logger } from './errorHandler.js';
 
 const H5_STORAGE_KEY = 'wordbook_h5_words';
 
@@ -15,7 +16,7 @@ const getH5Words = () => {
     const raw = uni.getStorageSync(H5_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
-    console.error('[H5Adapter] 读取 H5 单词列表失败:', e);
+    logger.error('H5Adapter', '读取 H5 单词列表失败', e);
     return [];
   }
 };
@@ -27,7 +28,7 @@ const setH5Words = (words) => {
   try {
     uni.setStorageSync(H5_STORAGE_KEY, JSON.stringify(words));
   } catch (e) {
-    console.error('[H5Adapter] 保存 H5 单词列表失败:', e);
+    logger.error('H5Adapter', '保存 H5 单词列表失败', e);
   }
 };
 
@@ -151,30 +152,30 @@ export class AppDatabaseAdapter {
   }
 
   async init() {
-    console.log('[AppAdapter] init() 被调用');
+    logger.debug('[AppAdapter] init() 被调用');
     if (this.isOpen) {
-      console.log('[AppAdapter] 数据库已打开，跳过初始化');
+      logger.debug('[AppAdapter] 数据库已打开，跳过初始化');
       return Promise.resolve();
     }
 
     try {
-      console.log('[AppAdapter] 检查数据库是否已打开...');
-      console.log('[AppAdapter] plus:', typeof plus);
-      console.log('[AppAdapter] plus.sqlite:', typeof plus?.sqlite);
+      logger.debug('[AppAdapter] 检查数据库是否已打开...');
+      logger.debug('[AppAdapter] plus:', typeof plus);
+      logger.debug('[AppAdapter] plus.sqlite:', typeof plus?.sqlite);
 
       if (plus && plus.sqlite && plus.sqlite.isOpenDatabase({ name: this.dbName, path: this.dbPath })) {
-        console.log('[AppAdapter] 数据库已打开');
+        logger.debug('[AppAdapter] 数据库已打开');
         this.isOpen = true;
         return Promise.resolve();
       }
 
-      console.log('[AppAdapter] 打开数据库...');
+      logger.debug('[AppAdapter] 打开数据库...');
       await this.openDatabase();
       this.isOpen = true;
-      console.log('[AppAdapter] 数据库打开成功');
+      logger.debug('[AppAdapter] 数据库打开成功');
       return Promise.resolve();
     } catch (error) {
-      console.error('[AppAdapter] 初始化失败:', error);
+      logger.error('[AppAdapter] 初始化失败:', error);
       throw error;
     }
   }
@@ -185,11 +186,11 @@ export class AppDatabaseAdapter {
         name: this.dbName,
         path: this.dbPath,
         success: () => {
-          console.log('[AppAdapter] 数据库打开成功');
+          logger.debug('[AppAdapter] 数据库打开成功');
           resolve();
         },
         fail: (e) => {
-          console.error('[AppAdapter] 数据库打开失败:', e);
+          logger.error('[AppAdapter] 数据库打开失败:', e);
           reject(e);
         }
       });
@@ -205,7 +206,7 @@ export class AppDatabaseAdapter {
         sql: bindSql(sql, params),
         success: (data) => resolve(data || []),
         fail: (e) => {
-          console.error('[AppAdapter] 查询失败:', e);
+          logger.error('[AppAdapter] 查询失败:', e);
           resolve([]);
         }
       });
@@ -360,19 +361,19 @@ export class AppDatabaseAdapter {
  * 数据库工厂 - 根据环境选择适配器
  */
 export function createDatabaseAdapter() {
-  console.log('[databaseAdapter] 检查运行环境...');
-  console.log('[databaseAdapter] typeof plus:', typeof plus);
-  console.log('[databaseAdapter] typeof plus.sqlite:', typeof plus?.sqlite);
+  logger.debug('[databaseAdapter] 检查运行环境...');
+  logger.debug('[databaseAdapter] typeof plus:', typeof plus);
+  logger.debug('[databaseAdapter] typeof plus.sqlite:', typeof plus?.sqlite);
 
   // 在 App 环境中，plus 应该存在
   const isApp = typeof plus !== 'undefined' && typeof plus.sqlite !== 'undefined';
-  console.log('[databaseAdapter] isApp:', isApp);
+  logger.debug('[databaseAdapter] isApp:', isApp);
 
   if (isApp) {
-    console.log('[databaseAdapter] 使用 AppDatabaseAdapter');
+    logger.debug('[databaseAdapter] 使用 AppDatabaseAdapter');
     return new AppDatabaseAdapter();
   } else {
-    console.log('[databaseAdapter] 使用 H5DatabaseAdapter');
+    logger.debug('[databaseAdapter] 使用 H5DatabaseAdapter');
     return new H5DatabaseAdapter();
   }
 }

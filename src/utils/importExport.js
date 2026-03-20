@@ -3,6 +3,7 @@
  * 支持格式：CSV, TXT, JSON, DOCX
  */
 
+import { logger } from './errorHandler.js';
 /**
  * 触发文件选择器并读取文件内容（uni-app 兼容版）
  * @param {string} accept 文件类型，如 '.csv,.txt,.json,.docx'
@@ -362,7 +363,7 @@ export function parseJSON(jsonContent) {
     if (data.words && Array.isArray(data.words)) return data.words;
     return [];
   } catch (error) {
-    console.error('JSON 解析失败:', error);
+    logger.error('JSON 解析失败:', error);
     return [];
   }
 }
@@ -389,10 +390,10 @@ export async function parseDOCX(arrayBuffer) {
     // 这里需要安装 docx 库：npm install docx
     // 由于是前端解析，我们使用 mammoth.js 更合适
     // 但为了简化，这里先返回提示
-    console.warn('DOCX 解析需要安装 mammoth 或 docx 库');
+    logger.warn('DOCX 解析需要安装 mammoth 或 docx 库');
     return [];
   } catch (error) {
-    console.error('DOCX 解析失败:', error);
+    logger.error('DOCX 解析失败:', error);
     return [];
   }
 }
@@ -411,7 +412,7 @@ export async function exportToDOCX(words) {
     
     return new Blob([content], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   } catch (error) {
-    console.error('DOCX 导出失败:', error);
+    logger.error('DOCX 导出失败:', error);
     throw error;
   }
 }

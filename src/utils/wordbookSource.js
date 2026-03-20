@@ -4,6 +4,7 @@
  * - 本地只读：红宝书、红宝书补全版、真题高频词、真题所有词，来自 CSV
  */
 
+import { logger } from './errorHandler.js';
 const STORAGE_KEY = 'currentWordbook';
 const CLOUD_LIST_KEY = 'cloudWordbooks';
 const SELF_ID = 'self';
@@ -232,7 +233,7 @@ export function loadLocalWordbook(key) {
       if (text != null && typeof text !== 'string') text = String(text);
       const list = parseCsvToWordList(text);
       if (list.length === 0 && text != null) {
-        console.warn('[wordbookSource] CSV 解析后为空，key=', key, 'textLen=', (text || '').length);
+        logger.warn('[wordbookSource] CSV 解析后为空，key=', key, 'textLen=', (text || '').length);
       }
       resolve(list);
     };

@@ -4,6 +4,7 @@
  * 来源：trueti/sync_pregen_to_app.py --build-db 生成 pregen_data.db，vocab.english 已建 UNIQUE INDEX。
  */
 
+import { logger } from './errorHandler.js';
 const PREGEN_DB_NAME = 'pregen_db';
 const PREGEN_DB_PATH = '_doc/pregen_data.db';
 const PREGEN_DB_SOURCE = '_www/static/pregen_data.db';
@@ -35,7 +36,7 @@ function isApp() {
 function copyPregenDbToDoc() {
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
-      console.error('[pregenVocab] 复制超时');
+      logger.error('[pregenVocab] 复制超时');
       resolve(false);
     }, 15000);
     const cleanup = (res) => { clearTimeout(timer); resolve(res); };
@@ -43,11 +44,11 @@ function copyPregenDbToDoc() {
     plus.io.resolveLocalFileSystemURL(PREGEN_DB_SOURCE, (entry) => {
       plus.io.resolveLocalFileSystemURL('_doc/', (dir) => {
         entry.copyTo(dir, 'pregen_data.db',
-          () => { console.log('[pregenVocab] copyTo 完成'); cleanup(true); },
-          (err) => { console.error('[pregenVocab] copyTo 失败', err); cleanup(false); }
+          () => { logger.debug('[pregenVocab] copyTo 完成'); cleanup(true); },
+          (err) => { logger.error('[pregenVocab] copyTo 失败', err); cleanup(false); }
         );
-      }, (e) => { console.error('[pregenVocab] 解析 _doc 失败', e); cleanup(false); });
-    }, (e) => { console.error('[pregenVocab] 解析源文件失败', e); cleanup(false); });
+      }, (e) => { logger.error('[pregenVocab] 解析 _doc 失败', e); cleanup(false); });
+    }, (e) => { logger.error('[pregenVocab] 解析源文件失败', e); cleanup(false); });
   });
 }
 
@@ -72,7 +73,7 @@ function ensureOpen() {
         path: PREGEN_DB_PATH,
         success: () => {
           pregenDbOpen = true;
-          console.log('[pregenVocab] pregen_data.db 已打开');
+          logger.debug('[pregenVocab] pregen_data.db 已打开');
           plus.sqlite.executeSql({
             name: PREGEN_DB_NAME,
             sql: 'CREATE UNIQUE INDEX IF NOT EXISTS idx_english ON vocab(english)',
@@ -81,7 +82,7 @@ function ensureOpen() {
           });
         },
         fail: (e) => {
-          console.error('[pregenVocab] openDatabase 失败', e);
+          logger.error('[pregenVocab] openDatabase 失败', e);
           _ensureOpenPromise = null;
           resolve(false);
         },
@@ -142,17 +143,17 @@ export function getPregenWord(english) {
               setPregenCache(key, result);
               resolve(result);
             } catch (err) {
-              console.error('getPregenWord 解析结果异常', err);
+              logger.error('getPregenWord 解析结果异常', err);
               resolve(null);
             }
           },
           fail: (e) => {
-            console.error('pregen selectSql 失败', e);
+            logger.error('pregen selectSql 失败', e);
             resolve(null);
           },
         });
       } catch (err) {
-        console.error('getPregenWord selectSql 调用异常', err);
+        logger.error('getPregenWord selectSql 调用异常', err);
         resolve(null);
       }
     });

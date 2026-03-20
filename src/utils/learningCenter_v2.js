@@ -14,6 +14,7 @@ import {
   calculateMastery,
 } from './reviewAlgo.js';
 import { StorageCache, MemoryCache } from './cacheManager.js';
+import { logger } from './errorHandler.js';
 
 const PROFILE_KEY = 'learning_center_profiles_v2';
 const MISTAKE_KEY = 'learning_center_mistakes_v2';
@@ -45,7 +46,7 @@ const safeRead = (key, fallback) => {
     }
     return raw && typeof raw === 'object' ? raw : fallback;
   } catch (e) {
-    console.error(`[learningCenter] 读取 ${key} 失败:`, e);
+    logger.error('learningCenter', `读取 ${key} 失败`, e);
     return fallback;
   }
 };
@@ -57,7 +58,7 @@ const safeWrite = (key, value) => {
   try {
     uni.setStorageSync(key, JSON.stringify(value));
   } catch (e) {
-    console.error(`[learningCenter] 写入 ${key} 失败:`, e);
+    logger.error('learningCenter', `写入 ${key} 失败`, e);
   }
 };
 
@@ -325,7 +326,7 @@ export const recordReviewOutcome = (word, isCorrect, options = {}) => {
 
     return next;
   } catch (error) {
-    console.error('[learningCenter] recordReviewOutcome 失败:', error);
+    logger.error('[learningCenter] recordReviewOutcome 失败:', error);
     return null;
   }
 };

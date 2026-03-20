@@ -22,17 +22,17 @@ class AppInitializer {
    * 初始化
    */
   async initialize() {
-    console.log('[AppInitializer.initialize] 被调用');
+    logger.debug('[AppInitializer.initialize] 被调用');
     if (this.initialized) {
-      console.log('[AppInitializer.initialize] 已初始化，返回');
+      logger.debug('[AppInitializer.initialize] 已初始化，返回');
       return Promise.resolve();
     }
     if (this.initPromise) {
-      console.log('[AppInitializer.initialize] 初始化中，返回现有 Promise');
+      logger.debug('[AppInitializer.initialize] 初始化中，返回现有 Promise');
       return this.initPromise;
     }
 
-    console.log('[AppInitializer.initialize] 开始新的初始化');
+    logger.debug('[AppInitializer.initialize] 开始新的初始化');
     this.initPromise = this.doInitialize();
     return this.initPromise;
   }
@@ -43,49 +43,49 @@ class AppInitializer {
   async doInitialize() {
     try {
       logger.info('AppInitializer', '开始初始化应用...');
-      console.log('[AppInitializer] 开始初始化应用...');
+      logger.debug('[AppInitializer] 开始初始化应用...');
 
       // 1. 验证配置
-      console.log('[AppInitializer] 验证配置...');
+      logger.debug('[AppInitializer] 验证配置...');
       const validation = validateConfig();
       if (!validation.valid) {
         logger.warn('AppInitializer', '配置验证失败', validation.errors);
-        console.warn('[AppInitializer] 配置验证失败:', validation.errors);
+        logger.warn('[AppInitializer] 配置验证失败:', validation.errors);
       }
-      console.log('[AppInitializer] 配置验证完成');
+      logger.debug('[AppInitializer] 配置验证完成');
 
       // 2. 初始化数据库
-      console.log('[AppInitializer] 开始初始化数据库...');
+      logger.debug('[AppInitializer] 开始初始化数据库...');
       await this.initializeDatabase();
-      console.log('[AppInitializer] 数据库初始化完成');
+      logger.debug('[AppInitializer] 数据库初始化完成');
 
       // 3. 设置全局错误处理
-      console.log('[AppInitializer] 设置全局错误处理...');
+      logger.debug('[AppInitializer] 设置全局错误处理...');
       this.setupErrorHandling();
-      console.log('[AppInitializer] 全局错误处理设置完成');
+      logger.debug('[AppInitializer] 全局错误处理设置完成');
 
       // 4. 启动自动清理
-      console.log('[AppInitializer] 启动自动清理...');
+      logger.debug('[AppInitializer] 启动自动清理...');
       this.startAutoCleanup();
-      console.log('[AppInitializer] 自动清理启动完成');
+      logger.debug('[AppInitializer] 自动清理启动完成');
 
       // 5. 设置性能监控
-      console.log('[AppInitializer] 设置性能监控...');
+      logger.debug('[AppInitializer] 设置性能监控...');
       this.setupPerformanceMonitoring();
-      console.log('[AppInitializer] 性能监控设置完成');
+      logger.debug('[AppInitializer] 性能监控设置完成');
 
       // 6. 检查云端同步状态
-      console.log('[AppInitializer] 检查云端同步状态...');
+      logger.debug('[AppInitializer] 检查云端同步状态...');
       this.checkCloudSyncStatus();
-      console.log('[AppInitializer] 云端同步检查完成');
+      logger.debug('[AppInitializer] 云端同步检查完成');
 
       logger.info('AppInitializer', '应用初始化完成');
-      console.log('[AppInitializer] 应用初始化完成');
+      logger.debug('[AppInitializer] 应用初始化完成');
       this.initialized = true;
       return true;
     } catch (error) {
       logger.error('AppInitializer', '应用初始化失败', error);
-      console.error('[AppInitializer] 应用初始化失败:', error);
+      logger.error('[AppInitializer] 应用初始化失败:', error);
       throw error;
     }
   }
@@ -95,32 +95,32 @@ class AppInitializer {
    */
   async initializeDatabase() {
     try {
-      console.log('[AppInitializer] 初始化数据库开始...');
+      logger.debug('[AppInitializer] 初始化数据库开始...');
       logger.info('AppInitializer', '初始化数据库...');
 
-      console.log('[AppInitializer] 调用 db.init()...');
+      logger.debug('[AppInitializer] 调用 db.init()...');
       await db.init();
 
-      console.log('[AppInitializer] 数据库初始化成功');
+      logger.debug('[AppInitializer] 数据库初始化成功');
       logger.info('AppInitializer', '数据库初始化成功');
     } catch (error) {
-      console.error('[AppInitializer] 数据库初始化失败:', error);
+      logger.error('[AppInitializer] 数据库初始化失败:', error);
       logger.error('AppInitializer', '数据库初始化失败', error);
 
       // 关键修复：检查是否是 plus 未就绪导致的失败
       // 如果是，等待一下后重试
       if (error && (error.message?.includes('plus') || error.message?.includes('sqlite'))) {
-        console.warn('[AppInitializer] 检测到 plus 相关错误，等待 500ms 后重试...');
+        logger.warn('[AppInitializer] 检测到 plus 相关错误，等待 500ms 后重试...');
         await new Promise(resolve => setTimeout(resolve, 500));
 
         try {
-          console.log('[AppInitializer] 重试 db.init()...');
+          logger.debug('[AppInitializer] 重试 db.init()...');
           await db.init();
-          console.log('[AppInitializer] 重试成功');
+          logger.debug('[AppInitializer] 重试成功');
           logger.info('AppInitializer', '数据库初始化重试成功');
           return;
         } catch (retryError) {
-          console.error('[AppInitializer] 重试失败:', retryError);
+          logger.error('[AppInitializer] 重试失败:', retryError);
           logger.error('AppInitializer', '数据库初始化重试失败', retryError);
         }
       }
@@ -133,28 +133,28 @@ class AppInitializer {
    * 设置全局错误处理
    */
   setupErrorHandling() {
-    console.log('[AppInitializer.setupErrorHandling] 开始设置全局错误处理...');
+    logger.debug('[AppInitializer.setupErrorHandling] 开始设置全局错误处理...');
     logger.info('AppInitializer', '设置全局错误处理...');
 
     try {
       // 添加自定义错误处理器
       const handler = globalErrorManager.getErrorHandler();
-      console.log('[AppInitializer.setupErrorHandling] 获取错误处理器成功');
+      logger.debug('[AppInitializer.setupErrorHandling] 获取错误处理器成功');
 
       handler.addHandler((errorInfo) => {
         // 可以在这里添加自定义的错误处理逻辑
         // 例如：上报到服务器、显示用户提示等
         if (errorInfo.context.type === 'UncaughtException') {
           logger.error('AppInitializer', '捕获到未处理的异常', errorInfo);
-          console.error('[AppInitializer] 捕获到未处理的异常:', errorInfo);
+          logger.error('[AppInitializer] 捕获到未处理的异常:', errorInfo);
         }
       });
 
-      console.log('[AppInitializer.setupErrorHandling] 错误处理器添加成功');
+      logger.debug('[AppInitializer.setupErrorHandling] 错误处理器添加成功');
       logger.info('AppInitializer', '全局错误处理设置完成');
-      console.log('[AppInitializer.setupErrorHandling] 全局错误处理设置完成');
+      logger.debug('[AppInitializer.setupErrorHandling] 全局错误处理设置完成');
     } catch (error) {
-      console.error('[AppInitializer.setupErrorHandling] 设置失败:', error);
+      logger.error('[AppInitializer.setupErrorHandling] 设置失败:', error);
       logger.error('AppInitializer', '全局错误处理设置失败', error);
     }
   }
@@ -163,34 +163,34 @@ class AppInitializer {
    * 启动自动清理
    */
   startAutoCleanup() {
-    console.log('[AppInitializer.startAutoCleanup] 检查是否启用自动清理...');
+    logger.debug('[AppInitializer.startAutoCleanup] 检查是否启用自动清理...');
     if (!appConfig.features.ENABLE_AUTO_CLEANUP) {
-      console.log('[AppInitializer.startAutoCleanup] 自动清理已禁用');
+      logger.debug('[AppInitializer.startAutoCleanup] 自动清理已禁用');
       return;
     }
 
     logger.info('AppInitializer', '启动自动清理...');
-    console.log('[AppInitializer.startAutoCleanup] 启动自动清理...');
+    logger.debug('[AppInitializer.startAutoCleanup] 启动自动清理...');
 
     try {
       const interval = appConfig.features.AUTO_CLEANUP_INTERVAL;
-      console.log('[AppInitializer.startAutoCleanup] 清理间隔:', interval);
+      logger.debug('[AppInitializer.startAutoCleanup] 清理间隔:', interval);
 
       this.cleanupInterval = setInterval(() => {
         try {
           cleanupExpiredCaches();
           logger.debug('AppInitializer', '执行自动清理');
-          console.log('[AppInitializer] 执行自动清理');
+          logger.debug('[AppInitializer] 执行自动清理');
         } catch (error) {
           logger.error('AppInitializer', '自动清理失败', error);
-          console.error('[AppInitializer] 自动清理失败:', error);
+          logger.error('[AppInitializer] 自动清理失败:', error);
         }
       }, interval);
 
       logger.info('AppInitializer', `自动清理已启动，间隔: ${interval}ms`);
-      console.log('[AppInitializer.startAutoCleanup] 自动清理已启动，间隔:', interval);
+      logger.debug('[AppInitializer.startAutoCleanup] 自动清理已启动，间隔:', interval);
     } catch (error) {
-      console.error('[AppInitializer.startAutoCleanup] 启动失败:', error);
+      logger.error('[AppInitializer.startAutoCleanup] 启动失败:', error);
       logger.error('AppInitializer', '启动自动清理失败', error);
     }
   }
@@ -199,26 +199,26 @@ class AppInitializer {
    * 设置性能监控
    */
   setupPerformanceMonitoring() {
-    console.log('[AppInitializer.setupPerformanceMonitoring] 检查是否启用性能监控...');
+    logger.debug('[AppInitializer.setupPerformanceMonitoring] 检查是否启用性能监控...');
     if (!appConfig.features.ENABLE_PERFORMANCE_MONITORING) {
-      console.log('[AppInitializer.setupPerformanceMonitoring] 性能监控已禁用');
+      logger.debug('[AppInitializer.setupPerformanceMonitoring] 性能监控已禁用');
       return;
     }
 
     logger.info('AppInitializer', '设置性能监控...');
-    console.log('[AppInitializer.setupPerformanceMonitoring] 设置性能监控...');
+    logger.debug('[AppInitializer.setupPerformanceMonitoring] 设置性能监控...');
 
     try {
       // 监控长操作
       if (typeof performance !== 'undefined' && performance.mark) {
         // 可以在这里添加性能监控逻辑
         logger.info('AppInitializer', '性能监控已启用');
-        console.log('[AppInitializer.setupPerformanceMonitoring] 性能监控已启用');
+        logger.debug('[AppInitializer.setupPerformanceMonitoring] 性能监控已启用');
       } else {
-        console.log('[AppInitializer.setupPerformanceMonitoring] 性能 API 不可用');
+        logger.debug('[AppInitializer.setupPerformanceMonitoring] 性能 API 不可用');
       }
     } catch (error) {
-      console.error('[AppInitializer.setupPerformanceMonitoring] 设置失败:', error);
+      logger.error('[AppInitializer.setupPerformanceMonitoring] 设置失败:', error);
       logger.error('AppInitializer', '性能监控设置失败', error);
     }
   }
@@ -227,18 +227,18 @@ class AppInitializer {
    * 检查云端同步状态
    */
   checkCloudSyncStatus() {
-    console.log('[AppInitializer.checkCloudSyncStatus] 检查云端同步状态...');
+    logger.debug('[AppInitializer.checkCloudSyncStatus] 检查云端同步状态...');
     try {
       const uid = uni.getStorageSync('uid');
       if (!uid) {
-        console.log('[AppInitializer.checkCloudSyncStatus] 用户未登录，跳过同步检查');
+        logger.debug('[AppInitializer.checkCloudSyncStatus] 用户未登录，跳过同步检查');
         return;
       }
 
       // 异步执行同步检查，不阻塞初始化
       setTimeout(async () => {
         try {
-          console.log('[AppInitializer.checkCloudSyncStatus] 开始检查云端同步...');
+          logger.debug('[AppInitializer.checkCloudSyncStatus] 开始检查云端同步...');
           const words = await db.getAllWords();
 
           if (words && words.length > 0) {
@@ -261,16 +261,16 @@ class AppInitializer {
               }
             });
 
-            console.log('✅ 启动时云端同步完成');
+            logger.debug('✅ 启动时云端同步完成');
             logger.info('AppInitializer', '启动时云端同步完成');
           }
         } catch (error) {
-          console.warn('⚠️ 启动时云端同步失败:', error);
+          logger.warn('⚠️ 启动时云端同步失败:', error);
           logger.warn('AppInitializer', '启动时云端同步失败', error);
         }
       }, 2000); // 延迟 2 秒执行，避免影响启动速度
     } catch (error) {
-      console.error('[AppInitializer.checkCloudSyncStatus] 检查失败:', error);
+      logger.error('[AppInitializer.checkCloudSyncStatus] 检查失败:', error);
       logger.error('AppInitializer', '云端同步检查失败', error);
     }
   }

@@ -3575,13 +3575,316 @@ ${i3}
       return fallback;
     }
   };
+  const LogLevel = {
+    DEBUG: 0,
+    INFO: 1,
+    WARN: 2,
+    ERROR: 3
+  };
+  const isDevelopment = () => {
+    if (typeof uni !== "undefined" && uni.getSystemInfoSync) {
+      try {
+        const info = uni.getSystemInfoSync();
+        return info.platform === "devtools" || true;
+      } catch (e2) {
+        return false;
+      }
+    }
+    return true;
+  };
+  class Logger {
+    constructor(minLevel = null, maxLogs = 500) {
+      if (minLevel === null) {
+        this.minLevel = isDevelopment() ? LogLevel.DEBUG : LogLevel.INFO;
+      } else {
+        this.minLevel = minLevel;
+      }
+      this.maxLogs = maxLogs;
+      this.logs = [];
+      this.listeners = [];
+      this.isDev = isDevelopment();
+    }
+    /**
+     * 添加日志监听器
+     */
+    addListener(callback) {
+      if (!this.listeners.includes(callback)) {
+        this.listeners.push(callback);
+      }
+      if (this.listeners.length > 100) {
+        formatAppLog("warn", "at src/utils/errorHandler.js:63", "[Logger] 监听器数量过多（>100），可能存在内存泄漏");
+      }
+    }
+    /**
+     * 移除日志监听器
+     */
+    removeListener(callback) {
+      this.listeners = this.listeners.filter((l2) => l2 !== callback);
+    }
+    /**
+     * 记录日志
+     */
+    log(level, tag, message, data = null) {
+      if (level < this.minLevel)
+        return;
+      const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+      const logEntry = {
+        timestamp,
+        level,
+        tag,
+        message,
+        data
+      };
+      this.logs.push(logEntry);
+      if (this.logs.length > this.maxLogs) {
+        this.logs.shift();
+      }
+      this.listeners.forEach((listener) => {
+        try {
+          listener(logEntry);
+        } catch (e2) {
+          formatAppLog("error", "at src/utils/errorHandler.js:101", "[Logger] 监听器执行失败:", e2);
+        }
+      });
+      if (this.isDev || level >= LogLevel.ERROR) {
+        this.printToConsole(level, tag, message, data);
+      }
+    }
+    /**
+     * 输出到控制台
+     */
+    printToConsole(level, tag, message, data) {
+      const levelName = Object.keys(LogLevel).find((k) => LogLevel[k] === level) || "UNKNOWN";
+      const prefix = `[${levelName}] [${tag}]`;
+      if (data !== null && data !== void 0) {
+        formatAppLog("log", "at src/utils/errorHandler.js:119", `${prefix} ${message}`, data);
+      } else {
+        formatAppLog("log", "at src/utils/errorHandler.js:121", `${prefix} ${message}`);
+      }
+    }
+    /**
+     * 调试日志
+     */
+    debug(tag, message, data) {
+      this.log(LogLevel.DEBUG, tag, message, data);
+    }
+    /**
+     * 信息日志
+     */
+    info(tag, message, data) {
+      this.log(LogLevel.INFO, tag, message, data);
+    }
+    /**
+     * 警告日志
+     */
+    warn(tag, message, data) {
+      this.log(LogLevel.WARN, tag, message, data);
+    }
+    /**
+     * 错误日志
+     */
+    error(tag, message, data) {
+      this.log(LogLevel.ERROR, tag, message, data);
+    }
+    /**
+     * 获取所有日志
+     */
+    getLogs(level = null) {
+      if (level === null)
+        return [...this.logs];
+      return this.logs.filter((log) => log.level >= level);
+    }
+    /**
+     * 清空日志
+     */
+    clear() {
+      this.logs = [];
+    }
+    /**
+     * 导出日志为 JSON
+     */
+    exportAsJson() {
+      return JSON.stringify(this.logs, null, 2);
+    }
+    /**
+     * 导出日志为 CSV
+     */
+    exportAsCsv() {
+      const headers = ["Timestamp", "Level", "Tag", "Message", "Data"];
+      const rows = this.logs.map((log) => [
+        log.timestamp,
+        Object.keys(LogLevel).find((k) => LogLevel[k] === log.level),
+        log.tag,
+        log.message,
+        typeof log.data === "object" ? JSON.stringify(log.data) : log.data
+      ]);
+      const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+      return csv;
+    }
+    /**
+     * 设置日志级别
+     */
+    setLevel(level) {
+      this.minLevel = level;
+    }
+    /**
+     * 获取当前日志级别
+     */
+    getLevel() {
+      return this.minLevel;
+    }
+  }
+  class ErrorHandler {
+    constructor(logger2) {
+      this.logger = logger2;
+      this.errorHandlers = [];
+    }
+    /**
+     * 添加错误处理器
+     */
+    addHandler(handler) {
+      this.errorHandlers.push(handler);
+    }
+    /**
+     * 处理错误
+     */
+    handle(error, context = {}) {
+      const errorInfo = {
+        message: error.message || String(error),
+        stack: error.stack || "",
+        type: error.constructor.name,
+        context,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      this.logger.error("ErrorHandler", `${errorInfo.type}: ${errorInfo.message}`, errorInfo);
+      this.errorHandlers.forEach((handler) => {
+        try {
+          handler(errorInfo);
+        } catch (e2) {
+          this.logger.error("ErrorHandler", "错误处理器执行失败", e2);
+        }
+      });
+      return errorInfo;
+    }
+    /**
+     * 处理 Promise 拒绝
+     */
+    handleRejection(reason, context = {}) {
+      const error = reason instanceof Error ? reason : new Error(String(reason));
+      return this.handle(error, { ...context, type: "UnhandledRejection" });
+    }
+    /**
+     * 处理异常
+     */
+    handleException(error, context = {}) {
+      return this.handle(error, { ...context, type: "UncaughtException" });
+    }
+  }
+  class GlobalErrorManager {
+    constructor() {
+      this.logger = new Logger();
+      this.errorHandler = new ErrorHandler(this.logger);
+      this.setupGlobalHandlers();
+    }
+    /**
+     * 设置全局错误处理
+     */
+    setupGlobalHandlers() {
+      if (typeof window !== "undefined") {
+        window.addEventListener("unhandledrejection", (event) => {
+          this.errorHandler.handleRejection(event.reason, { source: "unhandledrejection" });
+        });
+        window.addEventListener("error", (event) => {
+          this.errorHandler.handleException(event.error, { source: "error" });
+        });
+      }
+      if (typeof uni !== "undefined" && uni.onError) {
+        uni.onError((error) => {
+          this.errorHandler.handleException(error, { source: "uni.onError" });
+        });
+      }
+    }
+    /**
+     * 获取日志器
+     */
+    getLogger() {
+      return this.logger;
+    }
+    /**
+     * 获取错误处理器
+     */
+    getErrorHandler() {
+      return this.errorHandler;
+    }
+    /**
+     * 记录性能指标
+     */
+    logPerformance(tag, duration, metadata = {}) {
+      this.logger.info(tag, `性能指标: ${duration}ms`, { duration, ...metadata });
+    }
+    /**
+     * 记录用户操作
+     */
+    logUserAction(action, data = {}) {
+      this.logger.info("UserAction", action, data);
+    }
+    /**
+     * 记录数据库操作
+     */
+    logDatabaseOperation(operation, duration, success = true, error = null) {
+      if (success) {
+        this.logger.info("Database", `${operation} 成功 (${duration}ms)`);
+      } else {
+        this.logger.error("Database", `${operation} 失败 (${duration}ms)`, error);
+      }
+    }
+    /**
+     * 获取诊断信息
+     */
+    getDiagnostics() {
+      return {
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        logs: this.logger.getLogs(),
+        logCount: this.logger.logs.length,
+        memoryUsage: this.getMemoryUsage()
+      };
+    }
+    /**
+     * 获取内存使用情况
+     */
+    getMemoryUsage() {
+      if (typeof performance !== "undefined" && performance.memory) {
+        return {
+          usedJSHeapSize: performance.memory.usedJSHeapSize,
+          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
+        };
+      }
+      return null;
+    }
+    /**
+     * 导出诊断信息
+     */
+    exportDiagnostics(format = "json") {
+      const diagnostics = this.getDiagnostics();
+      if (format === "json") {
+        return JSON.stringify(diagnostics, null, 2);
+      } else if (format === "csv") {
+        return this.logger.exportAsCsv();
+      }
+      return diagnostics;
+    }
+  }
+  const globalErrorManager = new GlobalErrorManager();
+  const logger = globalErrorManager.getLogger();
+  const errorHandler = globalErrorManager.getErrorHandler();
   const H5_STORAGE_KEY$1 = "wordbook_h5_words";
   const getH5Words$1 = () => {
     try {
       const raw = uni.getStorageSync(H5_STORAGE_KEY$1);
       return raw ? JSON.parse(raw) : [];
     } catch (e2) {
-      formatAppLog("error", "at src/utils/databaseAdapter.js:18", "[H5Adapter] 读取 H5 单词列表失败:", e2);
+      logger.error("H5Adapter", "读取 H5 单词列表失败", e2);
       return [];
     }
   };
@@ -3589,7 +3892,7 @@ ${i3}
     try {
       uni.setStorageSync(H5_STORAGE_KEY$1, JSON.stringify(words));
     } catch (e2) {
-      formatAppLog("error", "at src/utils/databaseAdapter.js:30", "[H5Adapter] 保存 H5 单词列表失败:", e2);
+      logger.error("H5Adapter", "保存 H5 单词列表失败", e2);
     }
   };
   class H5DatabaseAdapter {
@@ -3685,27 +3988,27 @@ ${i3}
       this.isOpen = false;
     }
     async init() {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:154", "[AppAdapter] init() 被调用");
+      logger.debug("[AppAdapter] init() 被调用");
       if (this.isOpen) {
-        formatAppLog("log", "at src/utils/databaseAdapter.js:156", "[AppAdapter] 数据库已打开，跳过初始化");
+        logger.debug("[AppAdapter] 数据库已打开，跳过初始化");
         return Promise.resolve();
       }
       try {
-        formatAppLog("log", "at src/utils/databaseAdapter.js:161", "[AppAdapter] 检查数据库是否已打开...");
-        formatAppLog("log", "at src/utils/databaseAdapter.js:162", "[AppAdapter] plus:", typeof plus);
-        formatAppLog("log", "at src/utils/databaseAdapter.js:163", "[AppAdapter] plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
+        logger.debug("[AppAdapter] 检查数据库是否已打开...");
+        logger.debug("[AppAdapter] plus:", typeof plus);
+        logger.debug("[AppAdapter] plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
         if (plus && plus.sqlite && plus.sqlite.isOpenDatabase({ name: this.dbName, path: this.dbPath })) {
-          formatAppLog("log", "at src/utils/databaseAdapter.js:166", "[AppAdapter] 数据库已打开");
+          logger.debug("[AppAdapter] 数据库已打开");
           this.isOpen = true;
           return Promise.resolve();
         }
-        formatAppLog("log", "at src/utils/databaseAdapter.js:171", "[AppAdapter] 打开数据库...");
+        logger.debug("[AppAdapter] 打开数据库...");
         await this.openDatabase();
         this.isOpen = true;
-        formatAppLog("log", "at src/utils/databaseAdapter.js:174", "[AppAdapter] 数据库打开成功");
+        logger.debug("[AppAdapter] 数据库打开成功");
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/databaseAdapter.js:177", "[AppAdapter] 初始化失败:", error);
+        logger.error("[AppAdapter] 初始化失败:", error);
         throw error;
       }
     }
@@ -3715,11 +4018,11 @@ ${i3}
           name: this.dbName,
           path: this.dbPath,
           success: () => {
-            formatAppLog("log", "at src/utils/databaseAdapter.js:188", "[AppAdapter] 数据库打开成功");
+            logger.debug("[AppAdapter] 数据库打开成功");
             resolve();
           },
           fail: (e2) => {
-            formatAppLog("error", "at src/utils/databaseAdapter.js:192", "[AppAdapter] 数据库打开失败:", e2);
+            logger.error("[AppAdapter] 数据库打开失败:", e2);
             reject(e2);
           }
         });
@@ -3733,7 +4036,7 @@ ${i3}
           sql: bindSql(sql, params),
           success: (data) => resolve(data || []),
           fail: (e2) => {
-            formatAppLog("error", "at src/utils/databaseAdapter.js:208", "[AppAdapter] 查询失败:", e2);
+            logger.error("[AppAdapter] 查询失败:", e2);
             resolve([]);
           }
         });
@@ -3863,16 +4166,16 @@ ${i3}
     }
   }
   function createDatabaseAdapter() {
-    formatAppLog("log", "at src/utils/databaseAdapter.js:363", "[databaseAdapter] 检查运行环境...");
-    formatAppLog("log", "at src/utils/databaseAdapter.js:364", "[databaseAdapter] typeof plus:", typeof plus);
-    formatAppLog("log", "at src/utils/databaseAdapter.js:365", "[databaseAdapter] typeof plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
+    logger.debug("[databaseAdapter] 检查运行环境...");
+    logger.debug("[databaseAdapter] typeof plus:", typeof plus);
+    logger.debug("[databaseAdapter] typeof plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
     const isApp2 = typeof plus !== "undefined" && typeof plus.sqlite !== "undefined";
-    formatAppLog("log", "at src/utils/databaseAdapter.js:369", "[databaseAdapter] isApp:", isApp2);
+    logger.debug("[databaseAdapter] isApp:", isApp2);
     if (isApp2) {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:372", "[databaseAdapter] 使用 AppDatabaseAdapter");
+      logger.debug("[databaseAdapter] 使用 AppDatabaseAdapter");
       return new AppDatabaseAdapter();
     } else {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:375", "[databaseAdapter] 使用 H5DatabaseAdapter");
+      logger.debug("[databaseAdapter] 使用 H5DatabaseAdapter");
       return new H5DatabaseAdapter();
     }
   }
@@ -3899,7 +4202,7 @@ ${i3}
       const raw = uni.getStorageSync(H5_STORAGE_KEY);
       return raw ? JSON.parse(raw) : [];
     } catch (e2) {
-      formatAppLog("error", "at src/utils/db_v2.js:46", "[db] 读取 H5 单词列表失败:", e2);
+      logger.error("db", "读取 H5 单词列表失败", e2);
       return [];
     }
   };
@@ -3907,7 +4210,7 @@ ${i3}
     try {
       uni.setStorageSync(H5_STORAGE_KEY, JSON.stringify(words));
     } catch (e2) {
-      formatAppLog("error", "at src/utils/db_v2.js:55", "[db] 保存 H5 单词列表失败:", e2);
+      logger.error("db", "保存 H5 单词列表失败", e2);
     }
   };
   const getH5MasteredWords = () => {
@@ -3926,25 +4229,25 @@ ${i3}
   };
   class DatabaseManager {
     constructor() {
-      formatAppLog("log", "at src/utils/db_v2.js:79", "[db] DatabaseManager 构造函数被调用");
+      logger.debug("db", "DatabaseManager 构造函数被调用");
       this.adapter = createDatabaseAdapter();
       this.isH5 = null;
-      formatAppLog("log", "at src/utils/db_v2.js:83", "[db] adapter 类型:", this.adapter.constructor.name);
+      logger.debug("db", "adapter 类型", { type: this.adapter.constructor.name });
     }
     /**
      * 初始化数据库
      */
     async init() {
       try {
-        formatAppLog("log", "at src/utils/db_v2.js:91", "[db] 开始初始化数据库...");
-        formatAppLog("log", "at src/utils/db_v2.js:92", "[db] 调用 adapter.init()...");
+        logger.debug("db", "开始初始化数据库");
+        logger.debug("db", "调用 adapter.init()");
         if (typeof plus === "undefined") {
-          formatAppLog("warn", "at src/utils/db_v2.js:97", "[db] plus 对象未就绪，等待 plusready 事件...");
+          logger.warn("db", "plus 对象未就绪，等待 plusready 事件");
           await Promise.race([
             new Promise((resolve) => {
               const checkPlus = () => {
                 if (typeof plus !== "undefined") {
-                  formatAppLog("log", "at src/utils/db_v2.js:102", "[db] plus 对象已就绪");
+                  logger.debug("db", "plus 对象已就绪");
                   resolve();
                 } else {
                   setTimeout(checkPlus, 100);
@@ -3958,19 +4261,19 @@ ${i3}
           ]);
         }
         this.isH5 = typeof plus === "undefined";
-        formatAppLog("log", "at src/utils/db_v2.js:118", "[db] isH5:", this.isH5);
+        logger.debug("db", "isH5", { isH5: this.isH5 });
         await this.adapter.init();
-        formatAppLog("log", "at src/utils/db_v2.js:121", "[db] adapter.init() 完成");
+        logger.debug("db", "adapter.init() 完成");
         if (!this.isH5) {
-          formatAppLog("log", "at src/utils/db_v2.js:124", "[db] 设置数据库架构...");
+          logger.debug("db", "设置数据库架构");
           await this.setupSchema();
-          formatAppLog("log", "at src/utils/db_v2.js:126", "[db] 数据库架构设置完成");
+          logger.debug("db", "数据库架构设置完成");
         } else {
-          formatAppLog("log", "at src/utils/db_v2.js:128", "[db] H5 环境，跳过架构设置");
+          logger.debug("db", "H5 环境，跳过架构设置");
         }
-        formatAppLog("log", "at src/utils/db_v2.js:130", "[db] 数据库初始化完成");
+        logger.debug("db", "数据库初始化完成");
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:132", "[db] 初始化失败:", error);
+        logger.error("db", "初始化失败", error);
         throw error;
       }
     }
@@ -4052,9 +4355,9 @@ ${i3}
           await this.adapter.execute(sql).catch(() => {
           });
         }
-        formatAppLog("log", "at src/utils/db_v2.js:223", "[db] 数据库架构初始化完成");
+        logger.debug("db", "数据库架构初始化完成");
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:225", "[db] 设置架构失败:", error);
+        logger.error("db", "设置架构失败", error);
       }
     }
     /**
@@ -4064,13 +4367,13 @@ ${i3}
       try {
         await this.adapter.execute(`ALTER TABLE ${tableName} ADD COLUMN "${columnName}" ${columnType}`).catch((error) => {
           if (error && error.message && error.message.includes("duplicate column")) {
-            formatAppLog("log", "at src/utils/db_v2.js:238", `[db] 列 ${tableName}.${columnName} 已存在，跳过添加`);
+            logger.debug("db", `列 ${tableName}.${columnName} 已存在，跳过添加`);
             return;
           }
           throw error;
         });
       } catch (error) {
-        formatAppLog("warn", "at src/utils/db_v2.js:244", `[db] 添加列 ${tableName}.${columnName} 失败:`, error);
+        logger.warn("db", `添加列 ${tableName}.${columnName} 失败`, error);
       }
     }
     /**
@@ -4111,7 +4414,7 @@ ${i3}
       try {
         return await this.adapter.query(sql, params);
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:295", "[db] getWordsForList 失败:", error);
+        logger.error("db", "getWordsForList 失败", error);
         return [];
       }
     }
@@ -4220,7 +4523,7 @@ ${i3}
         await this.adapter.execute(sql, params);
         return Promise.resolve({ ...word, id: wordId });
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:414", "[db] addWord 失败:", error);
+        logger.error("db", "addWord 失败", error);
         throw error;
       }
     }
@@ -4237,7 +4540,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC");
         return Promise.resolve((data || []).map(parseWord));
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:434", "[db] getWords 失败:", error);
+        logger.error("db", "getWords 失败", error);
         return Promise.resolve([]);
       }
     }
@@ -4257,7 +4560,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM words WHERE id = ?", [id]);
         return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:457", "[db] getWordById 失败:", error);
+        logger.error("db", "getWordById 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -4277,7 +4580,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
         return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:481", "[db] getWordByEnglish 失败:", error);
+        logger.error("db", "getWordByEnglish 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -4305,7 +4608,7 @@ ${i3}
         await this.adapter.updateWord(id, updates);
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:512", "[db] updateWord 失败:", error);
+        logger.error("db", "updateWord 失败", error);
         throw error;
       }
     }
@@ -4325,7 +4628,7 @@ ${i3}
         await this.adapter.deleteWord(id);
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:535", "[db] deleteWord 失败:", error);
+        logger.error("db", "deleteWord 失败", error);
         throw error;
       }
     }
@@ -4374,7 +4677,7 @@ ${i3}
         });
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:590", "[db] updateErrorRate 失败:", error);
+        logger.error("db", "updateErrorRate 失败", error);
         return Promise.resolve();
       }
     }
@@ -4417,7 +4720,7 @@ ${i3}
         }
         return Promise.resolve(words.slice(0, count));
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:641", "[db] getReviewWords 失败:", error);
+        logger.error("db", "getReviewWords 失败", error);
         return Promise.resolve([]);
       }
     }
@@ -4502,7 +4805,7 @@ ${i3}
         });
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:720", "[db] masterWord 失败:", error);
+        logger.error("db", "masterWord 失败", error);
         throw error;
       }
     }
@@ -4518,7 +4821,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM mastered_words ORDER BY mastered_at DESC");
         return Promise.resolve((data || []).map(parseWord));
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:739", "[db] getMasteredWords 失败:", error);
+        logger.error("db", "getMasteredWords 失败", error);
         return Promise.resolve([]);
       }
     }
@@ -4554,7 +4857,7 @@ ${i3}
         );
         return Promise.resolve(data && data.length ? data[0] : null);
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:777", "[db] getWordByIdLight 失败:", error);
+        logger.error("db", "getWordByIdLight 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -4590,7 +4893,7 @@ ${i3}
           antonyms: parseJsonSafe$1(row.antonyms, [])
         });
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:815", "[db] getWordByIdHeavy 失败:", error);
+        logger.error("db", "getWordByIdHeavy 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -4663,7 +4966,7 @@ ${i3}
         });
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:881", "[db] masterWordByEnglish 失败:", error);
+        logger.error("db", "masterWordByEnglish 失败", error);
         throw error;
       }
     }
@@ -4673,7 +4976,7 @@ ${i3}
      */
     async clearAndInsertWords(words) {
       if (!Array.isArray(words) || words.length === 0) {
-        formatAppLog("warn", "at src/utils/db_v2.js:892", "[db] clearAndInsertWords: 单词列表为空");
+        logger.warn("db", "clearAndInsertWords: 单词列表为空");
         return Promise.resolve();
       }
       await this.init();
@@ -4689,13 +4992,13 @@ ${i3}
           view_count: w2.view_count != null ? w2.view_count : 0
         }));
         setH5Words(newWords);
-        formatAppLog("log", "at src/utils/db_v2.js:911", "[db] H5 环境：已清空并插入", newWords.length, "个单词");
+        logger.debug("db", `H5 环境：已清空并插入 ${newWords.length} 个单词`);
         return Promise.resolve();
       }
       try {
         await this.adapter.transaction(async () => {
           await this.adapter.execute("DELETE FROM words");
-          formatAppLog("log", "at src/utils/db_v2.js:920", "[db] 已清空 words 表");
+          logger.debug("db", "已清空 words 表");
           const now = (/* @__PURE__ */ new Date()).toISOString();
           for (const word of words) {
             const wordId = word.id || Date.now().toString() + Math.random();
@@ -4731,11 +5034,11 @@ ${i3}
             ];
             await this.adapter.execute(sql, params);
           }
-          formatAppLog("log", "at src/utils/db_v2.js:962", "[db] 已插入", words.length, "个单词");
+          logger.debug("db", `已插入 ${words.length} 个单词`);
         });
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:967", "[db] clearAndInsertWords 失败:", error);
+        logger.error("db", "clearAndInsertWords 失败", error);
         throw error;
       }
     }
@@ -4758,7 +5061,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC LIMIT 1");
         return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:994", "[db] getLastWord 失败:", error);
+        logger.error("db", "getLastWord 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -4787,7 +5090,7 @@ ${i3}
         await this.updateWord(id, { view_count: newViewCount });
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:1026", "[db] incrementViewCount 失败:", error);
+        logger.error("db", "incrementViewCount 失败", error);
         return Promise.resolve();
       }
     }
@@ -4858,7 +5161,7 @@ ${i3}
         });
         return Promise.resolve();
       } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:1091", "[db] unmasterWord 失败:", error);
+        logger.error("db", "unmasterWord 失败", error);
         throw error;
       }
     }
@@ -4934,7 +5237,7 @@ ${i3}
   function copyPregenDbToDoc() {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
-        formatAppLog("error", "at src/utils/pregenVocab.js:38", "[pregenVocab] 复制超时");
+        logger.error("[pregenVocab] 复制超时");
         resolve(false);
       }, 15e3);
       const cleanup = (res) => {
@@ -4949,20 +5252,20 @@ ${i3}
             dir,
             "pregen_data.db",
             () => {
-              formatAppLog("log", "at src/utils/pregenVocab.js:46", "[pregenVocab] copyTo 完成");
+              logger.debug("[pregenVocab] copyTo 完成");
               cleanup(true);
             },
             (err) => {
-              formatAppLog("error", "at src/utils/pregenVocab.js:47", "[pregenVocab] copyTo 失败", err);
+              logger.error("[pregenVocab] copyTo 失败", err);
               cleanup(false);
             }
           );
         }, (e2) => {
-          formatAppLog("error", "at src/utils/pregenVocab.js:49", "[pregenVocab] 解析 _doc 失败", e2);
+          logger.error("[pregenVocab] 解析 _doc 失败", e2);
           cleanup(false);
         });
       }, (e2) => {
-        formatAppLog("error", "at src/utils/pregenVocab.js:50", "[pregenVocab] 解析源文件失败", e2);
+        logger.error("[pregenVocab] 解析源文件失败", e2);
         cleanup(false);
       });
     });
@@ -4991,7 +5294,7 @@ ${i3}
           path: PREGEN_DB_PATH,
           success: () => {
             pregenDbOpen = true;
-            formatAppLog("log", "at src/utils/pregenVocab.js:75", "[pregenVocab] pregen_data.db 已打开");
+            logger.debug("[pregenVocab] pregen_data.db 已打开");
             plus.sqlite.executeSql({
               name: PREGEN_DB_NAME,
               sql: "CREATE UNIQUE INDEX IF NOT EXISTS idx_english ON vocab(english)",
@@ -5006,7 +5309,7 @@ ${i3}
             });
           },
           fail: (e2) => {
-            formatAppLog("error", "at src/utils/pregenVocab.js:84", "[pregenVocab] openDatabase 失败", e2);
+            logger.error("[pregenVocab] openDatabase 失败", e2);
             _ensureOpenPromise = null;
             resolve(false);
           }
@@ -5077,17 +5380,17 @@ ${i3}
                 setPregenCache(key, result);
                 resolve(result);
               } catch (err) {
-                formatAppLog("error", "at src/utils/pregenVocab.js:145", "getPregenWord 解析结果异常", err);
+                logger.error("getPregenWord 解析结果异常", err);
                 resolve(null);
               }
             },
             fail: (e2) => {
-              formatAppLog("error", "at src/utils/pregenVocab.js:150", "pregen selectSql 失败", e2);
+              logger.error("pregen selectSql 失败", e2);
               resolve(null);
             }
           });
         } catch (err) {
-          formatAppLog("error", "at src/utils/pregenVocab.js:155", "getPregenWord selectSql 调用异常", err);
+          logger.error("getPregenWord selectSql 调用异常", err);
           resolve(null);
         }
       });
@@ -5194,7 +5497,7 @@ ${i3}
         sql,
         success: (rows) => resolve(rows || []),
         fail: (e2) => {
-          formatAppLog("error", "at src/utils/masterDb.js:62", "[masterDb] selectSql 失败", e2);
+          logger.error("[masterDb] selectSql 失败", e2);
           resolve({ __error: e2, __rows: [] });
         }
       });
@@ -5219,13 +5522,13 @@ ${i3}
     if (repairPromise)
       return repairPromise;
     repairPromise = (async () => {
-      formatAppLog("warn", "at src/utils/masterDb.js:92", "[masterDb] 检测到主库缺表，开始强制重建 _doc 主库副本");
+      logger.warn("[masterDb] 检测到主库缺表，开始强制重建 _doc 主库副本");
       masterDbOpen = false;
       initPromise = null;
       await closeMasterDbIfOpen();
       const copied = await copyMasterDbToDoc(true);
       if (!copied) {
-        formatAppLog("error", "at src/utils/masterDb.js:98", "[masterDb] 强制重拷贝主库失败");
+        logger.error("[masterDb] 强制重拷贝主库失败");
         return false;
       }
       masterDbOpen = false;
@@ -5235,10 +5538,10 @@ ${i3}
         return false;
       const schemaOk = await validateMasterSchema();
       if (!schemaOk) {
-        formatAppLog("error", "at src/utils/masterDb.js:107", "[masterDb] 重建后仍缺少必要数据表");
+        logger.error("[masterDb] 重建后仍缺少必要数据表");
         return false;
       }
-      formatAppLog("log", "at src/utils/masterDb.js:110", "[masterDb] 主库缺表自愈完成");
+      logger.debug("[masterDb] 主库缺表自愈完成");
       return true;
     })().finally(() => {
       repairPromise = null;
@@ -5292,7 +5595,7 @@ ${i3}
   function copyMasterDbToDoc(forceReplace = false) {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
-        formatAppLog("error", "at src/utils/masterDb.js:168", "[masterDb] 复制操作超时，强制退出");
+        logger.error("[masterDb] 复制操作超时，强制退出");
         resolve(false);
       }, 15e3);
       const cleanup = (res) => {
@@ -5301,23 +5604,23 @@ ${i3}
       };
       if (typeof plus === "undefined" || !plus.io)
         return cleanup(false);
-      formatAppLog("log", "at src/utils/masterDb.js:179", "[masterDb] 准备从:", MASTER_DB_SOURCE);
+      logger.debug("[masterDb] 准备从:", MASTER_DB_SOURCE);
       const doCopy = () => {
         plus.io.resolveLocalFileSystemURL(MASTER_DB_SOURCE, (entry) => {
           plus.io.resolveLocalFileSystemURL("_doc/", (dir) => {
             entry.copyTo(dir, "vocal_master.db", () => {
-              formatAppLog("log", "at src/utils/masterDb.js:184", "[masterDb] 原生 copyTo 物理完成！");
+              logger.debug("[masterDb] 原生 copyTo 物理完成！");
               cleanup(true);
             }, (err) => {
-              formatAppLog("error", "at src/utils/masterDb.js:187", "[masterDb] copyTo 失败:", err);
+              logger.error("[masterDb] copyTo 失败:", err);
               cleanup(false);
             });
           }, (e2) => {
-            formatAppLog("error", "at src/utils/masterDb.js:191", "[masterDb] 解析 _doc 失败", e2);
+            logger.error("[masterDb] 解析 _doc 失败", e2);
             cleanup(false);
           });
         }, (e2) => {
-          formatAppLog("error", "at src/utils/masterDb.js:195", "[masterDb] 解析源文件失败，请确认 MASTER_DB_SOURCE 路径正确:", e2);
+          logger.error("[masterDb] 解析源文件失败，请确认 MASTER_DB_SOURCE 路径正确:", e2);
           cleanup(false);
         });
       };
@@ -5330,38 +5633,38 @@ ${i3}
   }
   function initMasterDb() {
     if (masterDbOpen) {
-      formatAppLog("log", "at src/utils/masterDb.js:217", "[masterDb] 主库已打开，直接返回");
+      logger.debug("[masterDb] 主库已打开，直接返回");
       return Promise.resolve(true);
     }
     if (initPromise) {
-      formatAppLog("log", "at src/utils/masterDb.js:221", "[masterDb] 初始化进行中，等待同一 Promise（避免重复复制）");
+      logger.debug("[masterDb] 初始化进行中，等待同一 Promise（避免重复复制）");
       return initPromise;
     }
     if (!isApp())
       return Promise.resolve(false);
-    formatAppLog("log", "at src/utils/masterDb.js:226", "[masterDb] 首次初始化：复制并打开主库（仅此一次）");
+    logger.debug("[masterDb] 首次初始化：复制并打开主库（仅此一次）");
     const initWork = checkDocDbExists().then((exists) => {
       const shouldForceReplace = getStoredDbVersion() !== MASTER_DB_VERSION;
       if (exists) {
         if (!shouldForceReplace) {
-          formatAppLog("log", "at src/utils/masterDb.js:231", "[masterDb] _doc 下已存在 vocal_master.db 且版本匹配，跳过复制");
+          logger.debug("[masterDb] _doc 下已存在 vocal_master.db 且版本匹配，跳过复制");
           return true;
         }
-        formatAppLog("log", "at src/utils/masterDb.js:234", "[masterDb] 检测到主库版本变更，开始刷新 _doc/vocal_master.db");
+        logger.debug("[masterDb] 检测到主库版本变更，开始刷新 _doc/vocal_master.db");
         return copyMasterDbToDoc(true).then((copied) => {
           if (copied)
-            formatAppLog("log", "at src/utils/masterDb.js:236", "[masterDb] 主库刷新完成");
+            logger.debug("[masterDb] 主库刷新完成");
           else
-            formatAppLog("warn", "at src/utils/masterDb.js:237", "[masterDb] 主库刷新失败");
+            logger.warn("[masterDb] 主库刷新失败");
           return copied;
         });
       }
-      formatAppLog("log", "at src/utils/masterDb.js:241", "[masterDb] 目标文件不存在，开始从 static 复制 22MB...");
+      logger.debug("[masterDb] 目标文件不存在，开始从 static 复制 22MB...");
       return copyMasterDbToDoc().then((copied) => {
         if (copied)
-          formatAppLog("log", "at src/utils/masterDb.js:243", "[masterDb] 复制完成");
+          logger.debug("[masterDb] 复制完成");
         else
-          formatAppLog("warn", "at src/utils/masterDb.js:244", "[masterDb] 复制未成功");
+          logger.warn("[masterDb] 复制未成功");
         return copied;
       });
     }).then((ready) => {
@@ -5373,7 +5676,7 @@ ${i3}
           path: MASTER_DB_PATH
         });
         if (isOpen) {
-          formatAppLog("log", "at src/utils/masterDb.js:255", "[masterDb] 检测到数据库已在打开状态，直接进入查询阶段");
+          logger.debug("[masterDb] 检测到数据库已在打开状态，直接进入查询阶段");
           masterDbOpen = true;
           return resolve(true);
         }
@@ -5382,13 +5685,13 @@ ${i3}
           path: MASTER_DB_PATH,
           success: async () => {
             masterDbOpen = true;
-            formatAppLog("log", "at src/utils/masterDb.js:265", "[masterDb] 数据库真正打开成功！name=", MASTER_DB_NAME, "path=", MASTER_DB_PATH);
-            formatAppLog("log", "at src/utils/masterDb.js:266", "[masterDb] 库已就绪，开始执行挂起的查询");
+            logger.debug("[masterDb] 数据库真正打开成功！name=", MASTER_DB_NAME, "path=", MASTER_DB_PATH);
+            logger.debug("[masterDb] 库已就绪，开始执行挂起的查询");
             plus.sqlite.executeSql({
               name: MASTER_DB_NAME,
               sql: "CREATE UNIQUE INDEX IF NOT EXISTS idx_word ON vocab_master(english)",
               success: async () => {
-                formatAppLog("log", "at src/utils/masterDb.js:271", "[masterDb] idx_word 索引已确保");
+                logger.debug("[masterDb] idx_word 索引已确保");
                 setStoredDbVersion(MASTER_DB_VERSION);
                 const schemaOk = await validateMasterSchema();
                 if (!schemaOk) {
@@ -5399,7 +5702,7 @@ ${i3}
                 resolve(true);
               },
               fail: async (e2) => {
-                formatAppLog("warn", "at src/utils/masterDb.js:282", "[masterDb] 创建索引失败(可忽略)", e2);
+                logger.warn("[masterDb] 创建索引失败(可忽略)", e2);
                 setStoredDbVersion(MASTER_DB_VERSION);
                 const schemaOk = await validateMasterSchema();
                 if (!schemaOk) {
@@ -5415,12 +5718,12 @@ ${i3}
             const code = e2 && e2.code;
             const msg = e2 && (e2.message || e2.errMsg) || "";
             if (code === -1402 || typeof msg === "string" && msg.includes("Already Open")) {
-              formatAppLog("log", "at src/utils/masterDb.js:298", "[masterDb] 忽略 -1402 错误（库已打开），继续执行");
+              logger.debug("[masterDb] 忽略 -1402 错误（库已打开），继续执行");
               masterDbOpen = true;
               setStoredDbVersion(MASTER_DB_VERSION);
               return resolve(true);
             }
-            formatAppLog("error", "at src/utils/masterDb.js:303", "[masterDb] openDatabase 失败", e2);
+            logger.error("[masterDb] openDatabase 失败", e2);
             initPromise = null;
             if (typeof uni !== "undefined" && uni.showModal) {
               uni.showModal({ title: "主库打开失败", content: msg || JSON.stringify(e2), showCancel: false });
@@ -5430,7 +5733,7 @@ ${i3}
         });
       });
     }).catch((e2) => {
-      formatAppLog("error", "at src/utils/masterDb.js:313", "[masterDb] initMasterDb 异常", e2);
+      logger.error("[masterDb] initMasterDb 异常", e2);
       initPromise = null;
       return false;
     });
@@ -5438,7 +5741,7 @@ ${i3}
     const timeoutPromise = new Promise((_2, reject) => {
       setTimeout(() => {
         if (!masterDbOpen) {
-          formatAppLog("error", "at src/utils/masterDb.js:322", "[masterDb] 初始化超时", timeoutMs, "ms");
+          logger.error("[masterDb] 初始化超时", timeoutMs, "ms");
           initPromise = null;
           if (typeof uni !== "undefined" && uni.showModal) {
             uni.showModal({
@@ -5622,12 +5925,12 @@ ${i3}
       return null;
     if (wordDetailCache.has(english))
       return wordDetailCache.get(english);
-    formatAppLog("log", "at src/utils/masterDb.js:516", "[masterDb] 收到查询请求:", english);
+    logger.debug("[masterDb] 收到查询请求:", english);
     try {
       await initMasterDb();
       const isOpen = plus.sqlite.isOpenDatabase && plus.sqlite.isOpenDatabase({ name: MASTER_DB_NAME, path: MASTER_DB_PATH });
       if (!isOpen) {
-        formatAppLog("error", "at src/utils/masterDb.js:521", "[masterDb] 主库未打开");
+        logger.error("[masterDb] 主库未打开");
         return null;
       }
       const safe = sqlLiteralStr(english);
@@ -5636,7 +5939,7 @@ ${i3}
         selectSqlRows(`SELECT * FROM word_exam_stats WHERE english = ${safe} LIMIT 1`),
         selectSqlRows(`SELECT year, section, exam_type, sentence FROM word_exam_sentences WHERE english = ${safe} ORDER BY year, id`)
       ]);
-      formatAppLog("log", "at src/utils/masterDb.js:530", "[masterDb] 查询结果返回！core=", coreRows.length, "stats=", statsRows.length, "sentences=", sentenceRows.length);
+      logger.debug("[masterDb] 查询结果返回！core=", coreRows.length, "stats=", statsRows.length, "sentences=", sentenceRows.length);
       if ((!coreRows || coreRows.length === 0) && (!statsRows || statsRows.length === 0) && (!sentenceRows || sentenceRows.length === 0)) {
         return null;
       }
@@ -5656,7 +5959,7 @@ ${i3}
       setDetailCache(english, result);
       return result;
     } catch (err) {
-      formatAppLog("error", "at src/utils/masterDb.js:550", "[masterDb] 流程中断:", err);
+      logger.error("[masterDb] 流程中断:", err);
       return null;
     }
   }
@@ -5681,7 +5984,7 @@ ${i3}
         examSentences: parseExamSentenceRows(sentenceRows)
       };
     } catch (err) {
-      formatAppLog("error", "at src/utils/masterDb.js:573", "[masterDb] getWordExamData 失败", err);
+      logger.error("[masterDb] getWordExamData 失败", err);
       return { examStats: null, examSentences: [] };
     }
   }
@@ -5714,7 +6017,7 @@ ${i3}
       }
       return out;
     } catch (err) {
-      formatAppLog("error", "at src/utils/masterDb.js:603", "[masterDb] getWordExamStatsBatch 失败", err);
+      logger.error("[masterDb] getWordExamStatsBatch 失败", err);
       return {};
     }
   }
@@ -5765,11 +6068,11 @@ ${i3}
                   };
                 }
               }
-              formatAppLog("log", "at src/utils/masterDb.js:654", "[masterDb] getWordBriefBatch 成功, 条数=", rows ? rows.length : 0);
+              logger.debug("[masterDb] getWordBriefBatch 成功, 条数=", rows ? rows.length : 0);
               resolve(out);
             },
             fail: (e2) => {
-              formatAppLog("error", "at src/utils/masterDb.js:658", "[masterDb] getWordBriefBatch selectSql 失败", e2);
+              logger.error("[masterDb] getWordBriefBatch selectSql 失败", e2);
               resolve({});
             }
           });
@@ -6026,7 +6329,7 @@ ${i3}
           text = String(text);
         const list = parseCsvToWordList(text);
         if (list.length === 0 && text != null) {
-          formatAppLog("warn", "at src/utils/wordbookSource.js:235", "[wordbookSource] CSV 解析后为空，key=", key, "textLen=", (text || "").length);
+          logger.warn("[wordbookSource] CSV 解析后为空，key=", key, "textLen=", (text || "").length);
         }
         resolve(list);
       };
@@ -6217,7 +6520,7 @@ ${i3}
       }
       return raw && typeof raw === "object" ? raw : fallback;
     } catch (e2) {
-      formatAppLog("error", "at src/utils/learningCenter_v2.js:48", `[learningCenter] 读取 ${key} 失败:`, e2);
+      logger.error("learningCenter", `读取 ${key} 失败`, e2);
       return fallback;
     }
   };
@@ -6225,7 +6528,7 @@ ${i3}
     try {
       uni.setStorageSync(key, JSON.stringify(value));
     } catch (e2) {
-      formatAppLog("error", "at src/utils/learningCenter_v2.js:60", `[learningCenter] 写入 ${key} 失败:`, e2);
+      logger.error("learningCenter", `写入 ${key} 失败`, e2);
     }
   };
   const normalizeWordKey = (word) => {
@@ -6417,7 +6720,7 @@ ${i3}
       setMistakesMap(mistakes);
       return next;
     } catch (error) {
-      formatAppLog("error", "at src/utils/learningCenter_v2.js:328", "[learningCenter] recordReviewOutcome 失败:", error);
+      logger.error("[learningCenter] recordReviewOutcome 失败:", error);
       return null;
     }
   };
@@ -6599,279 +6902,6 @@ ${i3}
     profilesMemCache.cleanup();
     mistakesMemCache.cleanup();
   };
-  const LogLevel = {
-    DEBUG: 0,
-    INFO: 1,
-    WARN: 2,
-    ERROR: 3
-  };
-  class Logger {
-    constructor(minLevel = LogLevel.INFO, maxLogs = 500) {
-      this.minLevel = minLevel;
-      this.maxLogs = maxLogs;
-      this.logs = [];
-      this.listeners = [];
-    }
-    /**
-     * 添加日志监听器
-     */
-    addListener(callback) {
-      if (!this.listeners.includes(callback)) {
-        this.listeners.push(callback);
-      }
-      if (this.listeners.length > 100) {
-        formatAppLog("warn", "at src/utils/errorHandler.js:37", "[Logger] 监听器数量过多（>100），可能存在内存泄漏");
-      }
-    }
-    /**
-     * 移除日志监听器
-     */
-    removeListener(callback) {
-      this.listeners = this.listeners.filter((l2) => l2 !== callback);
-    }
-    /**
-     * 记录日志
-     */
-    log(level, tag, message, data = null) {
-      if (level < this.minLevel)
-        return;
-      const timestamp = (/* @__PURE__ */ new Date()).toISOString();
-      const logEntry = {
-        timestamp,
-        level,
-        tag,
-        message,
-        data
-      };
-      this.logs.push(logEntry);
-      if (this.logs.length > this.maxLogs) {
-        this.logs.shift();
-      }
-      this.listeners.forEach((listener) => {
-        try {
-          listener(logEntry);
-        } catch (e2) {
-          formatAppLog("error", "at src/utils/errorHandler.js:75", "[Logger] 监听器执行失败:", e2);
-        }
-      });
-      this.printToConsole(level, tag, message, data);
-    }
-    /**
-     * 输出到控制台
-     */
-    printToConsole(level, tag, message, data) {
-      const levelName = Object.keys(LogLevel).find((k) => LogLevel[k] === level) || "UNKNOWN";
-      const prefix = `[${levelName}] [${tag}]`;
-      if (data !== null && data !== void 0) {
-        formatAppLog("log", "at src/utils/errorHandler.js:91", `${prefix} ${message}`, data);
-      } else {
-        formatAppLog("log", "at src/utils/errorHandler.js:93", `${prefix} ${message}`);
-      }
-    }
-    /**
-     * 调试日志
-     */
-    debug(tag, message, data) {
-      this.log(LogLevel.DEBUG, tag, message, data);
-    }
-    /**
-     * 信息日志
-     */
-    info(tag, message, data) {
-      this.log(LogLevel.INFO, tag, message, data);
-    }
-    /**
-     * 警告日志
-     */
-    warn(tag, message, data) {
-      this.log(LogLevel.WARN, tag, message, data);
-    }
-    /**
-     * 错误日志
-     */
-    error(tag, message, data) {
-      this.log(LogLevel.ERROR, tag, message, data);
-    }
-    /**
-     * 获取所有日志
-     */
-    getLogs(level = null) {
-      if (level === null)
-        return [...this.logs];
-      return this.logs.filter((log) => log.level >= level);
-    }
-    /**
-     * 清空日志
-     */
-    clear() {
-      this.logs = [];
-    }
-    /**
-     * 导出日志为 JSON
-     */
-    exportAsJson() {
-      return JSON.stringify(this.logs, null, 2);
-    }
-    /**
-     * 导出日志为 CSV
-     */
-    exportAsCsv() {
-      const headers = ["Timestamp", "Level", "Tag", "Message", "Data"];
-      const rows = this.logs.map((log) => [
-        log.timestamp,
-        Object.keys(LogLevel).find((k) => LogLevel[k] === log.level),
-        log.tag,
-        log.message,
-        typeof log.data === "object" ? JSON.stringify(log.data) : log.data
-      ]);
-      const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
-      return csv;
-    }
-  }
-  class ErrorHandler {
-    constructor(logger2) {
-      this.logger = logger2;
-      this.errorHandlers = [];
-    }
-    /**
-     * 添加错误处理器
-     */
-    addHandler(handler) {
-      this.errorHandlers.push(handler);
-    }
-    /**
-     * 处理错误
-     */
-    handle(error, context = {}) {
-      const errorInfo = {
-        message: error.message || String(error),
-        stack: error.stack || "",
-        type: error.constructor.name,
-        context,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      this.logger.error("ErrorHandler", `${errorInfo.type}: ${errorInfo.message}`, errorInfo);
-      this.errorHandlers.forEach((handler) => {
-        try {
-          handler(errorInfo);
-        } catch (e2) {
-          this.logger.error("ErrorHandler", "错误处理器执行失败", e2);
-        }
-      });
-      return errorInfo;
-    }
-    /**
-     * 处理 Promise 拒绝
-     */
-    handleRejection(reason, context = {}) {
-      const error = reason instanceof Error ? reason : new Error(String(reason));
-      return this.handle(error, { ...context, type: "UnhandledRejection" });
-    }
-    /**
-     * 处理异常
-     */
-    handleException(error, context = {}) {
-      return this.handle(error, { ...context, type: "UncaughtException" });
-    }
-  }
-  class GlobalErrorManager {
-    constructor() {
-      this.logger = new Logger(LogLevel.DEBUG);
-      this.errorHandler = new ErrorHandler(this.logger);
-      this.setupGlobalHandlers();
-    }
-    /**
-     * 设置全局错误处理
-     */
-    setupGlobalHandlers() {
-      if (typeof window !== "undefined") {
-        window.addEventListener("unhandledrejection", (event) => {
-          this.errorHandler.handleRejection(event.reason, { source: "unhandledrejection" });
-        });
-        window.addEventListener("error", (event) => {
-          this.errorHandler.handleException(event.error, { source: "error" });
-        });
-      }
-      if (typeof uni !== "undefined" && uni.onError) {
-        uni.onError((error) => {
-          this.errorHandler.handleException(error, { source: "uni.onError" });
-        });
-      }
-    }
-    /**
-     * 获取日志器
-     */
-    getLogger() {
-      return this.logger;
-    }
-    /**
-     * 获取错误处理器
-     */
-    getErrorHandler() {
-      return this.errorHandler;
-    }
-    /**
-     * 记录性能指标
-     */
-    logPerformance(tag, duration, metadata = {}) {
-      this.logger.info(tag, `性能指标: ${duration}ms`, { duration, ...metadata });
-    }
-    /**
-     * 记录用户操作
-     */
-    logUserAction(action, data = {}) {
-      this.logger.info("UserAction", action, data);
-    }
-    /**
-     * 记录数据库操作
-     */
-    logDatabaseOperation(operation, duration, success = true, error = null) {
-      if (success) {
-        this.logger.info("Database", `${operation} 成功 (${duration}ms)`);
-      } else {
-        this.logger.error("Database", `${operation} 失败 (${duration}ms)`, error);
-      }
-    }
-    /**
-     * 获取诊断信息
-     */
-    getDiagnostics() {
-      return {
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        logs: this.logger.getLogs(),
-        logCount: this.logger.logs.length,
-        memoryUsage: this.getMemoryUsage()
-      };
-    }
-    /**
-     * 获取内存使用情况
-     */
-    getMemoryUsage() {
-      if (typeof performance !== "undefined" && performance.memory) {
-        return {
-          usedJSHeapSize: performance.memory.usedJSHeapSize,
-          totalJSHeapSize: performance.memory.totalJSHeapSize,
-          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
-        };
-      }
-      return null;
-    }
-    /**
-     * 导出诊断信息
-     */
-    exportDiagnostics(format = "json") {
-      const diagnostics = this.getDiagnostics();
-      if (format === "json") {
-        return JSON.stringify(diagnostics, null, 2);
-      } else if (format === "csv") {
-        return this.logger.exportAsCsv();
-      }
-      return diagnostics;
-    }
-  }
-  const globalErrorManager = new GlobalErrorManager();
-  const logger = globalErrorManager.getLogger();
-  const errorHandler = globalErrorManager.getErrorHandler();
   const MASTERED_WORDBOOK_WORDS_KEY = "mastered_wordbook_words_global_v1";
   const getGlobalMasteredWords = () => {
     try {
@@ -6879,7 +6909,7 @@ ${i3}
       const data = raw ? JSON.parse(raw) : [];
       return new Set(data);
     } catch (e2) {
-      formatAppLog("error", "at src/utils/masteredWordbookWords.js:19", "getGlobalMasteredWords 失败:", e2);
+      logger.error("getGlobalMasteredWords 失败:", e2);
       return /* @__PURE__ */ new Set();
     }
   };
@@ -6891,9 +6921,9 @@ ${i3}
         data.push(english);
       }
       uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(data));
-      formatAppLog("log", "at src/utils/masteredWordbookWords.js:36", "addGlobalMasteredWord: 成功标记", english);
+      logger.debug("addGlobalMasteredWord: 成功标记", english);
     } catch (e2) {
-      formatAppLog("error", "at src/utils/masteredWordbookWords.js:38", "addGlobalMasteredWord 失败:", e2);
+      logger.error("addGlobalMasteredWord 失败:", e2);
     }
   };
   const removeGlobalMasteredWord = (english) => {
@@ -6902,9 +6932,9 @@ ${i3}
       const data = raw ? JSON.parse(raw) : [];
       const filtered = data.filter((w2) => w2 !== english);
       uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(filtered));
-      formatAppLog("log", "at src/utils/masteredWordbookWords.js:52", "removeGlobalMasteredWord: 成功取消", english);
+      logger.debug("removeGlobalMasteredWord: 成功取消", english);
     } catch (e2) {
-      formatAppLog("error", "at src/utils/masteredWordbookWords.js:54", "removeGlobalMasteredWord 失败:", e2);
+      logger.error("removeGlobalMasteredWord 失败:", e2);
     }
   };
   const isGlobalMasteredWord = (english) => {
@@ -8249,7 +8279,7 @@ ${i3}
       this.apiUrl = "https://api.deepseek.com/v1/chat/completions";
     }
     async callAPI(prompt, model = "deepseek-chat") {
-      formatAppLog("log", "at src/utils/aiService.js:14", "开始调用 API:", {
+      logger.debug("开始调用 API:", {
         model,
         prompt: prompt.substring(0, 50) + "...",
         url: this.apiUrl
@@ -8280,24 +8310,24 @@ ${i3}
           },
           success: (response) => {
             var _a;
-            formatAppLog("log", "at src/utils/aiService.js:44", "API 响应状态:", response.statusCode);
-            formatAppLog("log", "at src/utils/aiService.js:45", "API 响应数据:", response.data);
+            logger.debug("API 响应状态:", response.statusCode);
+            logger.debug("API 响应数据:", response.data);
             if (response.statusCode === 200) {
               const data = response.data;
               if (data && data.choices && data.choices[0] && data.choices[0].message) {
-                formatAppLog("log", "at src/utils/aiService.js:50", "API 调用成功，返回内容:", data.choices[0].message.content.substring(0, 100) + "...");
+                logger.debug("API 调用成功，返回内容:", data.choices[0].message.content.substring(0, 100) + "...");
                 resolve(data.choices[0].message.content);
               } else {
-                formatAppLog("error", "at src/utils/aiService.js:53", "API 响应格式错误:", data);
+                logger.error("API 响应格式错误:", data);
                 resolve("错误: API 响应格式错误");
               }
             } else {
-              formatAppLog("error", "at src/utils/aiService.js:57", "API 报错:", response.data);
+              logger.error("API 报错:", response.data);
               resolve(`错误: ${((_a = response.data.error) == null ? void 0 : _a.message) || "未知错误"} (状态码: ${response.statusCode})`);
             }
           },
           fail: (error) => {
-            formatAppLog("error", "at src/utils/aiService.js:62", "网络请求失败:", error);
+            logger.error("网络请求失败:", error);
             resolve("网络请求失败，请检查网络连接或API密钥");
           }
         });
@@ -8599,7 +8629,7 @@ ${existingWordsStr}${examBlock}
   ] 
 }`;
       const result = await this.callAPI(prompt);
-      formatAppLog("log", "at src/utils/aiService.js:301", "AI返回的原始内容:", result);
+      logger.debug("AI返回的原始内容:", result);
       try {
         let jsonStr = result;
         const jsonMatch = result.match(/\{[\s\S]*\}/);
@@ -8614,11 +8644,11 @@ ${existingWordsStr}${examBlock}
           try {
             parsed = JSON.parse(jsonStr);
           } catch (e2) {
-            formatAppLog("error", "at src/utils/aiService.js:321", "替换字段名后仍解析失败:", e2);
+            logger.error("替换字段名后仍解析失败:", e2);
             return { examples: [], synonyms: [] };
           }
         }
-        formatAppLog("log", "at src/utils/aiService.js:326", "解析后的JSON:", parsed);
+        logger.debug("解析后的JSON:", parsed);
         const normalizedSynonyms = (parsed.synonyms || []).map((item) => ({
           synonym: item.synonym || item.word || "",
           chinese: item.chinese || item.translation || "",
@@ -8630,7 +8660,7 @@ ${existingWordsStr}${examBlock}
           synonyms: normalizedSynonyms
         };
       } catch (e2) {
-        formatAppLog("error", "at src/utils/aiService.js:341", "解析JSON失败:", e2);
+        logger.error("解析JSON失败:", e2);
       }
       return {
         examples: [],
@@ -15722,13 +15752,13 @@ ${existingWordsStr}${examBlock}
   const _sfc_main = {
     name: "App",
     onLaunch() {
-      formatAppLog("log", "at App.vue:9", "[App] onLaunch 被触发");
+      logger.info("App", "onLaunch 被触发");
     },
     onShow() {
-      formatAppLog("log", "at App.vue:12", "[App] onShow 被触发");
+      logger.info("App", "onShow 被触发");
     },
     onHide() {
-      formatAppLog("log", "at App.vue:15", "[App] onHide 被触发");
+      logger.info("App", "onHide 被触发");
     }
   };
   function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {

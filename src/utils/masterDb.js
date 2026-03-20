@@ -3,6 +3,7 @@
  * 单例初始化：复制+打开在整个 App 生命周期内只执行一次，避免多点词触发多次复制导致 IO 锁死。
  */
 
+import { logger } from './errorHandler.js';
 /** 查询时 name/path 必须与 openDatabase 完全一致，否则 selectSql 会挂起或报错 */
 const MASTER_DB_NAME = 'master_db';
 const MASTER_DB_PATH = '_doc/vocal_master.db';
@@ -59,7 +60,7 @@ function rawSelectSqlRows(sql) {
       sql,
       success: (rows) => resolve(rows || []),
       fail: (e) => {
-        console.error('[masterDb] selectSql 失败', e);
+        logger.error('[masterDb] selectSql 失败', e);
         resolve({ __error: e, __rows: [] });
       },
     });
@@ -89,13 +90,13 @@ async function validateMasterSchema() {
 async function repairMasterDbFromStatic() {
   if (repairPromise) return repairPromise;
   repairPromise = (async () => {
-    console.warn('[masterDb] 检测到主库缺表，开始强制重建 _doc 主库副本');
+    logger.warn('[masterDb] 检测到主库缺表，开始强制重建 _doc 主库副本');
     masterDbOpen = false;
     initPromise = null;
     await closeMasterDbIfOpen();
     const copied = await copyMasterDbToDoc(true);
     if (!copied) {
-      console.error('[masterDb] 强制重拷贝主库失败');
+      logger.error('[masterDb] 强制重拷贝主库失败');
       return false;
     }
     masterDbOpen = false;
@@ -104,10 +105,10 @@ async function repairMasterDbFromStatic() {
     if (!reopened) return false;
     const schemaOk = await validateMasterSchema();
     if (!schemaOk) {
-      console.error('[masterDb] 重建后仍缺少必要数据表');
+      logger.error('[masterDb] 重建后仍缺少必要数据表');
       return false;
     }
-    console.log('[masterDb] 主库缺表自愈完成');
+    logger.debug('[masterDb] 主库缺表自愈完成');
     return true;
   })().finally(() => {
     repairPromise = null;
@@ -165,7 +166,7 @@ function removeDocDbFile() {
 function copyMasterDbToDoc(forceReplace = false) {
   return new Promise((resolve) => {
     const timer = setTimeout(() => {
-      console.error('[masterDb] 复制操作超时，强制退出');
+      logger.error('[masterDb] 复制操作超时，强制退出');
       resolve(false);
     }, 15000);
 
@@ -176,23 +177,23 @@ function copyMasterDbToDoc(forceReplace = false) {
 
     if (typeof plus === 'undefined' || !plus.io) return cleanup(false);
 
-    console.log('[masterDb] 准备从:', MASTER_DB_SOURCE);
+    logger.debug('[masterDb] 准备从:', MASTER_DB_SOURCE);
     const doCopy = () => {
       plus.io.resolveLocalFileSystemURL(MASTER_DB_SOURCE, (entry) => {
         plus.io.resolveLocalFileSystemURL('_doc/', (dir) => {
           entry.copyTo(dir, 'vocal_master.db', () => {
-            console.log('[masterDb] 原生 copyTo 物理完成！');
+            logger.debug('[masterDb] 原生 copyTo 物理完成！');
             cleanup(true);
           }, (err) => {
-            console.error('[masterDb] copyTo 失败:', err);
+            logger.error('[masterDb] copyTo 失败:', err);
             cleanup(false);
           });
         }, (e) => {
-          console.error('[masterDb] 解析 _doc 失败', e);
+          logger.error('[masterDb] 解析 _doc 失败', e);
           cleanup(false);
         });
       }, (e) => {
-        console.error('[masterDb] 解析源文件失败，请确认 MASTER_DB_SOURCE 路径正确:', e);
+        logger.error('[masterDb] 解析源文件失败，请确认 MASTER_DB_SOURCE 路径正确:', e);
         cleanup(false);
       });
     };
@@ -214,34 +215,34 @@ function copyMasterDbToDoc(forceReplace = false) {
  */
 function initMasterDb() {
   if (masterDbOpen) {
-    console.log('[masterDb] 主库已打开，直接返回');
+    logger.debug('[masterDb] 主库已打开，直接返回');
     return Promise.resolve(true);
   }
   if (initPromise) {
-    console.log('[masterDb] 初始化进行中，等待同一 Promise（避免重复复制）');
+    logger.debug('[masterDb] 初始化进行中，等待同一 Promise（避免重复复制）');
     return initPromise;
   }
   if (!isApp()) return Promise.resolve(false);
 
-  console.log('[masterDb] 首次初始化：复制并打开主库（仅此一次）');
+  logger.debug('[masterDb] 首次初始化：复制并打开主库（仅此一次）');
   const initWork = checkDocDbExists().then((exists) => {
     const shouldForceReplace = getStoredDbVersion() !== MASTER_DB_VERSION;
     if (exists) {
       if (!shouldForceReplace) {
-        console.log('[masterDb] _doc 下已存在 vocal_master.db 且版本匹配，跳过复制');
+        logger.debug('[masterDb] _doc 下已存在 vocal_master.db 且版本匹配，跳过复制');
         return true;
       }
-      console.log('[masterDb] 检测到主库版本变更，开始刷新 _doc/vocal_master.db');
+      logger.debug('[masterDb] 检测到主库版本变更，开始刷新 _doc/vocal_master.db');
       return copyMasterDbToDoc(true).then((copied) => {
-        if (copied) console.log('[masterDb] 主库刷新完成');
-        else console.warn('[masterDb] 主库刷新失败');
+        if (copied) logger.debug('[masterDb] 主库刷新完成');
+        else logger.warn('[masterDb] 主库刷新失败');
         return copied;
       });
     }
-    console.log('[masterDb] 目标文件不存在，开始从 static 复制 22MB...');
+    logger.debug('[masterDb] 目标文件不存在，开始从 static 复制 22MB...');
     return copyMasterDbToDoc().then((copied) => {
-      if (copied) console.log('[masterDb] 复制完成');
-      else console.warn('[masterDb] 复制未成功');
+      if (copied) logger.debug('[masterDb] 复制完成');
+      else logger.warn('[masterDb] 复制未成功');
       return copied;
     });
   }).then((ready) => {
@@ -252,7 +253,7 @@ function initMasterDb() {
         path: MASTER_DB_PATH,
       });
       if (isOpen) {
-        console.log('[masterDb] 检测到数据库已在打开状态，直接进入查询阶段');
+        logger.debug('[masterDb] 检测到数据库已在打开状态，直接进入查询阶段');
         masterDbOpen = true;
         return resolve(true);
       }
@@ -262,13 +263,13 @@ function initMasterDb() {
         path: MASTER_DB_PATH,
         success: async () => {
           masterDbOpen = true;
-          console.log('[masterDb] 数据库真正打开成功！name=', MASTER_DB_NAME, 'path=', MASTER_DB_PATH);
-          console.log('[masterDb] 库已就绪，开始执行挂起的查询');
+          logger.debug('[masterDb] 数据库真正打开成功！name=', MASTER_DB_NAME, 'path=', MASTER_DB_PATH);
+          logger.debug('[masterDb] 库已就绪，开始执行挂起的查询');
           plus.sqlite.executeSql({
             name: MASTER_DB_NAME,
             sql: 'CREATE UNIQUE INDEX IF NOT EXISTS idx_word ON vocab_master(english)',
             success: async () => {
-              console.log('[masterDb] idx_word 索引已确保');
+              logger.debug('[masterDb] idx_word 索引已确保');
               setStoredDbVersion(MASTER_DB_VERSION);
               const schemaOk = await validateMasterSchema();
               if (!schemaOk) {
@@ -279,7 +280,7 @@ function initMasterDb() {
               resolve(true);
             },
             fail: async (e) => {
-              console.warn('[masterDb] 创建索引失败(可忽略)', e);
+              logger.warn('[masterDb] 创建索引失败(可忽略)', e);
               setStoredDbVersion(MASTER_DB_VERSION);
               const schemaOk = await validateMasterSchema();
               if (!schemaOk) {
@@ -295,12 +296,12 @@ function initMasterDb() {
           const code = e && e.code;
           const msg = (e && (e.message || e.errMsg)) || '';
           if (code === -1402 || (typeof msg === 'string' && msg.includes('Already Open'))) {
-            console.log('[masterDb] 忽略 -1402 错误（库已打开），继续执行');
+            logger.debug('[masterDb] 忽略 -1402 错误（库已打开），继续执行');
             masterDbOpen = true;
             setStoredDbVersion(MASTER_DB_VERSION);
             return resolve(true);
           }
-          console.error('[masterDb] openDatabase 失败', e);
+          logger.error('[masterDb] openDatabase 失败', e);
           initPromise = null;
           if (typeof uni !== 'undefined' && uni.showModal) {
             uni.showModal({ title: '主库打开失败', content: msg || JSON.stringify(e), showCancel: false });
@@ -310,7 +311,7 @@ function initMasterDb() {
       });
     });
   }).catch((e) => {
-    console.error('[masterDb] initMasterDb 异常', e);
+    logger.error('[masterDb] initMasterDb 异常', e);
     initPromise = null;
     return false;
   });
@@ -319,7 +320,7 @@ function initMasterDb() {
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => {
       if (!masterDbOpen) {
-        console.error('[masterDb] 初始化超时', timeoutMs, 'ms');
+        logger.error('[masterDb] 初始化超时', timeoutMs, 'ms');
         initPromise = null;
         if (typeof uni !== 'undefined' && uni.showModal) {
           uni.showModal({
@@ -513,12 +514,12 @@ export async function getWordFullDetail(word) {
   if (!isApp()) return null;
   // 内存缓存命中直接返回，避免翻页重复查询
   if (wordDetailCache.has(english)) return wordDetailCache.get(english);
-  console.log('[masterDb] 收到查询请求:', english);
+  logger.debug('[masterDb] 收到查询请求:', english);
   try {
     await initMasterDb();
     const isOpen = plus.sqlite.isOpenDatabase && plus.sqlite.isOpenDatabase({ name: MASTER_DB_NAME, path: MASTER_DB_PATH });
     if (!isOpen) {
-      console.error('[masterDb] 主库未打开');
+      logger.error('[masterDb] 主库未打开');
       return null;
     }
     const safe = sqlLiteralStr(english);
@@ -527,7 +528,7 @@ export async function getWordFullDetail(word) {
       selectSqlRows(`SELECT * FROM word_exam_stats WHERE english = ${safe} LIMIT 1`),
       selectSqlRows(`SELECT year, section, exam_type, sentence FROM word_exam_sentences WHERE english = ${safe} ORDER BY year, id`),
     ]);
-    console.log('[masterDb] 查询结果返回！core=', coreRows.length, 'stats=', statsRows.length, 'sentences=', sentenceRows.length);
+    logger.debug('[masterDb] 查询结果返回！core=', coreRows.length, 'stats=', statsRows.length, 'sentences=', sentenceRows.length);
     if ((!coreRows || coreRows.length === 0) && (!statsRows || statsRows.length === 0) && (!sentenceRows || sentenceRows.length === 0)) {
       return null;
     }
@@ -547,7 +548,7 @@ export async function getWordFullDetail(word) {
     setDetailCache(english, result);
     return result;
   } catch (err) {
-    console.error('[masterDb] 流程中断:', err);
+    logger.error('[masterDb] 流程中断:', err);
     return null;
   }
 }
@@ -570,7 +571,7 @@ export async function getWordExamData(word) {
       examSentences: parseExamSentenceRows(sentenceRows),
     };
   } catch (err) {
-    console.error('[masterDb] getWordExamData 失败', err);
+    logger.error('[masterDb] getWordExamData 失败', err);
     return { examStats: null, examSentences: [] };
   }
 }
@@ -600,7 +601,7 @@ export async function getWordExamStatsBatch(englishList) {
     }
     return out;
   } catch (err) {
-    console.error('[masterDb] getWordExamStatsBatch 失败', err);
+    logger.error('[masterDb] getWordExamStatsBatch 失败', err);
     return {};
   }
 }
@@ -651,11 +652,11 @@ export function getWordBriefBatch(englishList) {
                 };
               }
             }
-            console.log('[masterDb] getWordBriefBatch 成功, 条数=', rows ? rows.length : 0);
+            logger.debug('[masterDb] getWordBriefBatch 成功, 条数=', rows ? rows.length : 0);
             resolve(out);
           },
           fail: (e) => {
-            console.error('[masterDb] getWordBriefBatch selectSql 失败', e);
+            logger.error('[masterDb] getWordBriefBatch selectSql 失败', e);
             resolve({});
           },
         });

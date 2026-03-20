@@ -3,6 +3,7 @@
  * 解决 H5/App 代码混杂、缺少事务保护等问题
  */
 
+import { logger } from './errorHandler.js';
 import {
   REVIEW_DEFAULTS,
   clamp,
@@ -14,7 +15,6 @@ import {
 } from './reviewAlgo.js';
 import { createDatabaseAdapter } from './databaseAdapter.js';
 import { toJsonString, parseJsonSafe } from './sqlHelper.js';
-import { logger } from './errorHandler.js';
 
 const H5_STORAGE_KEY = 'wordbook_h5_words';
 const H5_MASTERED_KEY = 'wordbook_h5_mastered_words';
@@ -44,7 +44,7 @@ const getH5Words = () => {
     const raw = uni.getStorageSync(H5_STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch (e) {
-    logger.error('db', '读取 H5 单词列表失败', e);
+    console.error('[db] 读取 H5 单词列表失败:', e);
     return [];
   }
 };
@@ -53,7 +53,7 @@ const setH5Words = (words) => {
   try {
     uni.setStorageSync(H5_STORAGE_KEY, JSON.stringify(words));
   } catch (e) {
-    logger.error('db', '保存 H5 单词列表失败', e);
+    console.error('[db] 保存 H5 单词列表失败:', e);
   }
 };
 
@@ -77,11 +77,11 @@ const setH5MasteredWords = (words) => {
  */
 class DatabaseManager {
   constructor() {
-    logger.debug('db', 'DatabaseManager 构造函数被调用');
+    console.log('[db] DatabaseManager 构造函数被调用');
     this.adapter = createDatabaseAdapter();
     // 关键修复：不在构造时确定 isH5，而是在 init() 时动态检查
     this.isH5 = null;
-    logger.debug('db', 'adapter 类型', { type: this.adapter.constructor.name });
+    console.log('[db] adapter 类型:', this.adapter.constructor.name);
   }
 
   /**
@@ -89,18 +89,18 @@ class DatabaseManager {
    */
   async init() {
     try {
-      logger.debug('db', '开始初始化数据库');
-      logger.debug('db', '调用 adapter.init()');
+      console.log('[db] 开始初始化数据库...');
+      console.log('[db] 调用 adapter.init()...');
 
       // 关键修复：在调用 adapter.init() 之前，确保 plus 对象已就绪
       // 使用 Promise.race 实现超时机制，防止无限等待
       if (typeof plus === 'undefined') {
-        logger.warn('db', 'plus 对象未就绪，等待 plusready 事件');
+        console.warn('[db] plus 对象未就绪，等待 plusready 事件...');
         await Promise.race([
           new Promise((resolve) => {
             const checkPlus = () => {
               if (typeof plus !== 'undefined') {
-                logger.debug('db', 'plus 对象已就绪');
+                console.log('[db] plus 对象已就绪');
                 resolve();
               } else {
                 setTimeout(checkPlus, 100);
@@ -116,21 +116,21 @@ class DatabaseManager {
 
       // 重新检查 plus 对象，确定是否为 H5 环境
       this.isH5 = typeof plus === 'undefined';
-      logger.debug('db', 'isH5', { isH5: this.isH5 });
+      console.log('[db] isH5:', this.isH5);
 
       await this.adapter.init();
-      logger.debug('db', 'adapter.init() 完成');
+      console.log('[db] adapter.init() 完成');
 
       if (!this.isH5) {
-        logger.debug('db', '设置数据库架构');
+        console.log('[db] 设置数据库架构...');
         await this.setupSchema();
-        logger.debug('db', '数据库架构设置完成');
+        console.log('[db] 数据库架构设置完成');
       } else {
-        logger.debug('db', 'H5 环境，跳过架构设置');
+        console.log('[db] H5 环境，跳过架构设置');
       }
-      logger.debug('db', '数据库初始化完成');
+      console.log('[db] 数据库初始化完成');
     } catch (error) {
-      logger.error('db', '初始化失败', error);
+      console.error('[db] 初始化失败:', error);
       throw error;
     }
   }
@@ -221,9 +221,9 @@ class DatabaseManager {
         await this.adapter.execute(sql).catch(() => {});
       }
 
-      logger.debug('db', '数据库架构初始化完成');
+      console.log('[db] 数据库架构初始化完成');
     } catch (error) {
-      logger.error('db', '设置架构失败', error);
+      console.error('[db] 设置架构失败:', error);
     }
   }
 
@@ -236,13 +236,13 @@ class DatabaseManager {
       await this.adapter.execute(`ALTER TABLE ${tableName} ADD COLUMN "${columnName}" ${columnType}`).catch((error) => {
         // 如果是"duplicate column"错误，说明列已存在，忽略
         if (error && error.message && error.message.includes('duplicate column')) {
-          logger.debug('db', `列 ${tableName}.${columnName} 已存在，跳过添加`);
+          console.log(`[db] 列 ${tableName}.${columnName} 已存在，跳过添加`);
           return;
         }
         throw error;
       });
     } catch (error) {
-      logger.warn('db', `添加列 ${tableName}.${columnName} 失败`, error);
+      logger.warn('db', `[db]error`, error);
     }
   }
 
@@ -293,7 +293,7 @@ class DatabaseManager {
     try {
       return await this.adapter.query(sql, params);
     } catch (error) {
-      logger.error('db', 'getWordsForList 失败', error);
+      console.error('[db] getWordsForList 失败:', error);
       return [];
     }
   }
@@ -412,7 +412,7 @@ class DatabaseManager {
       await this.adapter.execute(sql, params);
       return Promise.resolve({ ...word, id: wordId });
     } catch (error) {
-      logger.error('db', 'addWord 失败', error);
+      console.error('[db] addWord 失败:', error);
       throw error;
     }
   }
@@ -432,7 +432,7 @@ class DatabaseManager {
       const data = await this.adapter.query('SELECT * FROM words ORDER BY create_time DESC');
       return Promise.resolve((data || []).map(parseWord));
     } catch (error) {
-      logger.error('db', 'getWords 失败', error);
+      console.error('[db] getWords 失败:', error);
       return Promise.resolve([]);
     }
   }
@@ -455,7 +455,7 @@ class DatabaseManager {
       const data = await this.adapter.query('SELECT * FROM words WHERE id = ?', [id]);
       return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
     } catch (error) {
-      logger.error('db', 'getWordById 失败', error);
+      console.error('[db] getWordById 失败:', error);
       return Promise.resolve(null);
     }
   }
@@ -479,7 +479,7 @@ class DatabaseManager {
       const data = await this.adapter.query('SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1', [key]);
       return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
     } catch (error) {
-      logger.error('db', 'getWordByEnglish 失败', error);
+      console.error('[db] getWordByEnglish 失败:', error);
       return Promise.resolve(null);
     }
   }
@@ -510,7 +510,7 @@ class DatabaseManager {
       await this.adapter.updateWord(id, updates);
       return Promise.resolve();
     } catch (error) {
-      logger.error('db', 'updateWord 失败', error);
+      console.error('[db] updateWord 失败:', error);
       throw error;
     }
   }
@@ -533,7 +533,7 @@ class DatabaseManager {
       await this.adapter.deleteWord(id);
       return Promise.resolve();
     } catch (error) {
-      logger.error('db', 'deleteWord 失败', error);
+      console.error('[db] deleteWord 失败:', error);
       throw error;
     }
   }
@@ -588,7 +588,7 @@ class DatabaseManager {
 
       return Promise.resolve();
     } catch (error) {
-      logger.error('db', 'updateErrorRate 失败', error);
+      console.error('[db] updateErrorRate 失败:', error);
       return Promise.resolve();
     }
   }
@@ -639,7 +639,7 @@ class DatabaseManager {
 
       return Promise.resolve(words.slice(0, count));
     } catch (error) {
-      logger.error('db', 'getReviewWords 失败', error);
+      console.error('[db] getReviewWords 失败:', error);
       return Promise.resolve([]);
     }
   }
@@ -718,7 +718,7 @@ class DatabaseManager {
 
       return Promise.resolve();
     } catch (error) {
-      logger.error('db', 'masterWord 失败', error);
+      console.error('[db] masterWord 失败:', error);
       throw error;
     }
   }
@@ -737,7 +737,7 @@ class DatabaseManager {
       const data = await this.adapter.query('SELECT * FROM mastered_words ORDER BY mastered_at DESC');
       return Promise.resolve((data || []).map(parseWord));
     } catch (error) {
-      logger.error('db', 'getMasteredWords 失败', error);
+      console.error('[db] getMasteredWords 失败:', error);
       return Promise.resolve([]);
     }
   }
@@ -775,7 +775,7 @@ class DatabaseManager {
       );
       return Promise.resolve(data && data.length ? data[0] : null);
     } catch (error) {
-      logger.error('db', 'getWordByIdLight 失败', error);
+      console.error('[db] getWordByIdLight 失败:', error);
       return Promise.resolve(null);
     }
   }
@@ -813,7 +813,7 @@ class DatabaseManager {
         antonyms: parseJsonSafe(row.antonyms, []),
       });
     } catch (error) {
-      logger.error('db', 'getWordByIdHeavy 失败', error);
+      console.error('[db] getWordByIdHeavy 失败:', error);
       return Promise.resolve(null);
     }
   }
@@ -879,7 +879,7 @@ class DatabaseManager {
 
       return Promise.resolve();
     } catch (error) {
-      logger.error('db', 'masterWordByEnglish 失败', error);
+      console.error('[db] masterWordByEnglish 失败:', error);
       throw error;
     }
   }
@@ -890,7 +890,7 @@ class DatabaseManager {
    */
   async clearAndInsertWords(words) {
     if (!Array.isArray(words) || words.length === 0) {
-      logger.warn('db', 'clearAndInsertWords: 单词列表为空');
+      console.warn('[db] clearAndInsertWords: 单词列表为空');
       return Promise.resolve();
     }
 
@@ -909,7 +909,7 @@ class DatabaseManager {
         view_count: w.view_count != null ? w.view_count : 0,
       }));
       setH5Words(newWords);
-      logger.debug('db', `H5 环境：已清空并插入 ${newWords.length} 个单词`);
+      console.log('[db] H5 环境：已清空并插入', newWords.length, '个单词');
       return Promise.resolve();
     }
 
@@ -918,7 +918,7 @@ class DatabaseManager {
       await this.adapter.transaction(async () => {
         // 1. 删除所有现有单词
         await this.adapter.execute('DELETE FROM words');
-        logger.debug('db', '已清空 words 表');
+        console.log('[db] 已清空 words 表');
 
         // 2. 批量插入新单词
         const now = new Date().toISOString();
@@ -960,12 +960,12 @@ class DatabaseManager {
           await this.adapter.execute(sql, params);
         }
 
-        logger.debug('db', `已插入 ${words.length} 个单词`);
+        console.log('[db] 已插入', words.length, '个单词');
       });
 
       return Promise.resolve();
     } catch (error) {
-      logger.error('db', 'clearAndInsertWords 失败', error);
+      console.error('[db] clearAndInsertWords 失败:', error);
       throw error;
     }
   }
@@ -992,7 +992,7 @@ class DatabaseManager {
       const data = await this.adapter.query('SELECT * FROM words ORDER BY create_time DESC LIMIT 1');
       return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
     } catch (error) {
-      logger.error('db', 'getLastWord 失败', error);
+      console.error('[db] getLastWord 失败:', error);
       return Promise.resolve(null);
     }
   }
@@ -1024,7 +1024,7 @@ class DatabaseManager {
       await this.updateWord(id, { view_count: newViewCount });
       return Promise.resolve();
     } catch (error) {
-      logger.error('db', 'incrementViewCount 失败', error);
+      console.error('[db] incrementViewCount 失败:', error);
       return Promise.resolve();
     }
   }
@@ -1089,7 +1089,7 @@ class DatabaseManager {
 
       return Promise.resolve();
     } catch (error) {
-      logger.error('db', 'unmasterWord 失败', error);
+      console.error('[db] unmasterWord 失败:', error);
       throw error;
     }
   }

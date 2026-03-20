@@ -1,3 +1,4 @@
+import { logger } from './errorHandler.js';
 import config from './config.js';
 
 class AIService {
@@ -8,10 +9,10 @@ class AIService {
 
   async callAPI(prompt, model = 'deepseek-chat') { // 使用 deepseek-chat 模型
     if (!config.aiServiceEnabled) {
-      console.log('[AI 已关闭] 未发起请求');
+      logger.debug('[AI 已关闭] 未发起请求');
       return Promise.resolve('（当前已关闭 AI 服务，仅作测试）');
     }
-    console.log('开始调用 API:', {
+    logger.debug('开始调用 API:', {
       model,
       prompt: prompt.substring(0, 50) + '...',
       url: this.apiUrl
@@ -41,25 +42,25 @@ class AIService {
           stream: false
         },
         success: (response) => {
-          console.log('API 响应状态:', response.statusCode);
-          console.log('API 响应数据:', response.data);
+          logger.debug('API 响应状态:', response.statusCode);
+          logger.debug('API 响应数据:', response.data);
           
           if (response.statusCode === 200) {
             const data = response.data;
             if (data && data.choices && data.choices[0] && data.choices[0].message) {
-              console.log('API 调用成功，返回内容:', data.choices[0].message.content.substring(0, 100) + '...');
+              logger.debug('API 调用成功，返回内容:', data.choices[0].message.content.substring(0, 100) + '...');
               resolve(data.choices[0].message.content);
             } else {
-              console.error('API 响应格式错误:', data);
+              logger.error('API 响应格式错误:', data);
               resolve('错误: API 响应格式错误');
             }
           } else {
-            console.error('API 报错:', response.data);
+            logger.error('API 报错:', response.data);
             resolve(`错误: ${response.data.error?.message || '未知错误'} (状态码: ${response.statusCode})`);
           }
         },
         fail: (error) => {
-          console.error('网络请求失败:', error);
+          logger.error('网络请求失败:', error);
           resolve('网络请求失败，请检查网络连接或API密钥');
         }
       });
@@ -298,7 +299,7 @@ class AIService {
 
     const result = await this.callAPI(prompt);
     
-    console.log('AI返回的原始内容:', result);
+    logger.debug('AI返回的原始内容:', result);
     
     try {
       let jsonStr = result;
@@ -318,12 +319,12 @@ class AIService {
         try {
           parsed = JSON.parse(jsonStr);
         } catch (e2) {
-          console.error('替换字段名后仍解析失败:', e2);
+          logger.error('替换字段名后仍解析失败:', e2);
           return { examples: [], synonyms: [] };
         }
       }
       
-      console.log('解析后的JSON:', parsed);
+      logger.debug('解析后的JSON:', parsed);
       
       // 标准化 synonyms 字段名
       const normalizedSynonyms = (parsed.synonyms || []).map(item => ({
@@ -338,7 +339,7 @@ class AIService {
         synonyms: normalizedSynonyms
       };
     } catch (e) {
-      console.error('解析JSON失败:', e);
+      logger.error('解析JSON失败:', e);
     }
     
     return {

@@ -4,6 +4,7 @@
  * 已斯列表是全局的，斯掉后在所有词书都不会出现
  */
 
+import { logger } from './errorHandler.js';
 const MASTERED_WORDBOOK_WORDS_KEY = 'mastered_wordbook_words_global_v1';
 
 /**
@@ -16,7 +17,7 @@ export const getGlobalMasteredWords = () => {
     const data = raw ? JSON.parse(raw) : [];
     return new Set(data);
   } catch (e) {
-    console.error('getGlobalMasteredWords 失败:', e);
+    logger.error('getGlobalMasteredWords 失败:', e);
     return new Set();
   }
 };
@@ -33,9 +34,9 @@ export const addGlobalMasteredWord = (english) => {
       data.push(english);
     }
     uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(data));
-    console.log('addGlobalMasteredWord: 成功标记', english);
+    logger.debug('addGlobalMasteredWord: 成功标记', english);
   } catch (e) {
-    console.error('addGlobalMasteredWord 失败:', e);
+    logger.error('addGlobalMasteredWord 失败:', e);
   }
 };
 
@@ -49,9 +50,9 @@ export const removeGlobalMasteredWord = (english) => {
     const data = raw ? JSON.parse(raw) : [];
     const filtered = data.filter(w => w !== english);
     uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(filtered));
-    console.log('removeGlobalMasteredWord: 成功取消', english);
+    logger.debug('removeGlobalMasteredWord: 成功取消', english);
   } catch (e) {
-    console.error('removeGlobalMasteredWord 失败:', e);
+    logger.error('removeGlobalMasteredWord 失败:', e);
   }
 };
 

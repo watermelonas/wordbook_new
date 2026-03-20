@@ -10,7 +10,8 @@
       "Bash(grep -r 斯 pages/ src/ --include=*.vue --include=*.js)",
       "Bash(xargs wc:*)",
       "Bash(grep -E \"\\\\.js$\")",
-      "Bash(wc -l ./src/utils/*.js)"
+      "Bash(wc -l ./src/utils/*.js)",
+      "Bash(python3 /tmp/replace_console.py)"
     ],
     "additionalDirectories": [
       "E:\\vocal\\wordbook_new\\pages\\review"

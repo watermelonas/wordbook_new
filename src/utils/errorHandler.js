@@ -1,6 +1,10 @@
 /**
  * 全局错误处理和日志系统
  * 统一处理应用中的错误和日志
+ *
+ * 环境检测：
+ * - 开发环境：记录所有日志（DEBUG 及以上）
+ * - 生产环境：只记录 INFO 及以上日志
  */
 
 /**
@@ -14,14 +18,36 @@ export const LogLevel = {
 };
 
 /**
+ * 检测是否为开发环境
+ */
+const isDevelopment = () => {
+  // uni-app 开发环境检测
+  if (typeof uni !== 'undefined' && uni.getSystemInfoSync) {
+    try {
+      const info = uni.getSystemInfoSync();
+      return info.platform === 'devtools' || process.env.NODE_ENV === 'development';
+    } catch (e) {
+      return false;
+    }
+  }
+  return process.env.NODE_ENV === 'development';
+};
+
+/**
  * 日志管理器
  */
 class Logger {
-  constructor(minLevel = LogLevel.INFO, maxLogs = 500) {
-    this.minLevel = minLevel;
+  constructor(minLevel = null, maxLogs = 500) {
+    // 如果未指定日志级别，根据环境自动选择
+    if (minLevel === null) {
+      this.minLevel = isDevelopment() ? LogLevel.DEBUG : LogLevel.INFO;
+    } else {
+      this.minLevel = minLevel;
+    }
     this.maxLogs = maxLogs;
     this.logs = [];
     this.listeners = [];
+    this.isDev = isDevelopment();
   }
 
   /**
@@ -76,8 +102,10 @@ class Logger {
       }
     });
 
-    // 输出到控制台
-    this.printToConsole(level, tag, message, data);
+    // 输出到控制台（仅在开发环境或 ERROR 级别）
+    if (this.isDev || level >= LogLevel.ERROR) {
+      this.printToConsole(level, tag, message, data);
+    }
   }
 
   /**
@@ -163,6 +191,20 @@ class Logger {
 
     return csv;
   }
+
+  /**
+   * 设置日志级别
+   */
+  setLevel(level) {
+    this.minLevel = level;
+  }
+
+  /**
+   * 获取当前日志级别
+   */
+  getLevel() {
+    return this.minLevel;
+  }
 }
 
 /**
@@ -229,7 +271,8 @@ class ErrorHandler {
  */
 class GlobalErrorManager {
   constructor() {
-    this.logger = new Logger(LogLevel.DEBUG);
+    // 自动根据环境选择日志级别
+    this.logger = new Logger();
     this.errorHandler = new ErrorHandler(this.logger);
     this.setupGlobalHandlers();
   }
@@ -402,5 +445,33 @@ export function withPerformanceMonitoring(asyncFn, tag = 'PerformanceMonitoring'
       globalErrorManager.logPerformance(tag, duration, { success: false, error: error.message });
       throw error;
     }
+  };
+}
+
+/**
+ * 全局 console 兼容层
+ * 将 console.log/warn/error 重定向到 logger
+ * 仅在开发环境启用
+ */
+export function setupConsoleRedirect() {
+  if (!isDevelopment()) return;
+
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+  const originalError = console.error;
+
+  console.log = (...args) => {
+    logger.debug('console', args.join(' '));
+    originalLog.apply(console, args);
+  };
+
+  console.warn = (...args) => {
+    logger.warn('console', args.join(' '));
+    originalWarn.apply(console, args);
+  };
+
+  console.error = (...args) => {
+    logger.error('console', args.join(' '));
+    originalError.apply(console, args);
   };
 }

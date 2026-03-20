@@ -3,16 +3,18 @@
 </template>
 
 <script>
+import { logger } from './src/utils/errorHandler.js';
+
 export default {
 	name: 'App',
 	onLaunch() {
-		console.log('[App] onLaunch 被触发');
+		logger.info('App', 'onLaunch 被触发');
 	},
 	onShow() {
-		console.log('[App] onShow 被触发');
+		logger.info('App', 'onShow 被触发');
 	},
 	onHide() {
-		console.log('[App] onHide 被触发');
+		logger.info('App', 'onHide 被触发');
 	}
 }
 </script>
