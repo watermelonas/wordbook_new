@@ -265,7 +265,7 @@ const saveQuick = async () => {
       } catch (_) {}
     })();
   } catch (error) {
-    console.error("保存失败:", error);
+    logger.error("保存失败:", error);
     uni.showToast({ title: "保存失败，请重试", icon: "none", duration: 2000 });
   } finally {
     isSaving.value = false;
@@ -381,7 +381,7 @@ const saveAndEdit = async () => {
       } catch (_) {}
     })();
   } catch (error) {
-    console.error("保存失败:", error);
+    logger.error("保存失败:", error);
     uni.showToast({ title: "保存失败，请重试", icon: "none", duration: 2000 });
   } finally {
     isSaving.value = false;

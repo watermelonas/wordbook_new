@@ -477,3 +477,34 @@ export function setupConsoleRedirect() {
     originalError.apply(console, args);
   };
 }
+
+/**
+ * 禁用生产环境的 console 输出
+ * 在生产环境中，所有 console 调用都会被禁用
+ */
+export function disableConsoleInProduction() {
+  if (isDevelopment()) return;
+
+  // 禁用所有 console 方法
+  console.log = () => {};
+  console.debug = () => {};
+  console.info = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+  console.trace = () => {};
+  console.time = () => {};
+  console.timeEnd = () => {};
+  console.group = () => {};
+  console.groupEnd = () => {};
+  console.assert = () => {};
+  console.clear = () => {};
+  console.count = () => {};
+  console.dir = () => {};
+  console.dirxml = () => {};
+  console.profile = () => {};
+  console.profileEnd = () => {};
+  console.table = () => {};
+}
+
+// 自动在应用启动时禁用生产环境的 console
+disableConsoleInProduction();

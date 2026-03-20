@@ -376,7 +376,7 @@ const loadLocalWordCount = async () => {
     learningSnapshot.value = getLearningDashboard(currentPool, currentBook);
     studyStats.value = getStudyStats(currentPool, currentBook);
   } catch (e) {
-    console.error('获取本地单词数失败:', e);
+    logger.error('获取本地单词数失败:', e);
     localWordCount.value = 0;
     totalViewCount.value = 0;
     learningSnapshot.value = { dueCount: 0, mistakeCount: 0, firstDayDue: 0 };
@@ -441,7 +441,7 @@ const uploadToCloud = async () => {
       update_time: w.update_time || new Date().toISOString(),
     }));
     
-    console.log('准备上传的轻量单词数据:', lightWords.length);
+    logger.debug('准备上传的轻量单词数据:', lightWords.length);
     
     const result = await uniCloud.callFunction({
       name: 'word-sync',
@@ -470,7 +470,7 @@ const uploadToCloud = async () => {
     }
   } catch (e) {
     uni.hideLoading();
-    console.error('备份失败:', e);
+    logger.error('备份失败:', e);
     uni.showToast({
       title: '备份失败: ' + e.message,
       icon: 'none'
@@ -507,7 +507,7 @@ const performDownload = async () => {
   uni.showLoading({ title: '正在连接云端...' });
 
   try {
-    console.log('🚀 --- 开始向云端要数据, 账号 uid:', uid);
+    logger.debug('🚀 --- 开始向云端要数据, 账号 uid:', uid);
     
     const res = await uniCloud.callFunction({
       name: 'word-sync',
@@ -517,13 +517,13 @@ const performDownload = async () => {
       }
     });
     
-    console.log('📦 云端返回的完整包裹:', res);
+    logger.debug('📦 云端返回的完整包裹:', res);
 
     if (res.result.code === 0) {
       const cloudWords = res.result.words || res.result.data || [];
       
       if (cloudWords && cloudWords.length > 0) {
-        console.log(`✅ 成功拿到 ${cloudWords.length} 个单词！准备写入本地...`);
+        logger.debug(`✅ 成功拿到 ${cloudWords.length} 个单词！准备写入本地...`);
         const englishList = cloudWords.map((w) => (w.english || '').trim()).filter(Boolean);
         const briefMap = await getWordBriefBatch(englishList).catch(() => ({}));
         const restored = [];
@@ -560,12 +560,12 @@ const performDownload = async () => {
         uni.showToast({ title: '您的云端词库是空的', icon: 'none' });
       }
     } else {
-      console.error('❌ 云端拒绝了请求:', res.result.msg);
+      logger.error('❌ 云端拒绝了请求:', res.result.msg);
       uni.showToast({ title: res.result.msg || '恢复失败', icon: 'none' });
     }
 
   } catch (error) {
-    console.error('💥 前端请求崩溃:', error);
+    logger.error('💥 前端请求崩溃:', error);
     uni.showToast({ title: '网络通信异常', icon: 'error' });
   } finally {
     uni.hideLoading();
@@ -767,7 +767,7 @@ function parseAndImport(text, callback) {
         existingSet.add(key);
         count++;
       } catch (e) {
-        console.warn('跳过重复或无效:', w.english, e);
+        logger.warn('跳过重复或无效:', w.english, e);
       }
     }
     callback(null, count);
@@ -800,9 +800,9 @@ const backupProgressToCloud = async () => {
       }
     });
 
-    console.log('学习进度已备份到云端');
+    logger.debug('学习进度已备份到云端');
   } catch (e) {
-    console.warn('备份学习进度失败:', e);
+    logger.warn('备份学习进度失败:', e);
   }
 };
 

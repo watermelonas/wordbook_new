@@ -96,7 +96,7 @@ const logs = ref([]);
 const addLog = (message) => {
   const timestamp = new Date().toLocaleTimeString();
   logs.value.push(`[${timestamp}] ${message}`);
-  console.log(message);
+  logger.debug(message);
 };
 
 const checkEnvironment = () => {

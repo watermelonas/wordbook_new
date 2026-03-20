@@ -230,9 +230,9 @@ async function updateFavoriteWordsSet() {
     const { getWordbookWords } = await import('../../src/utils/wordbookSource.js');
     const favoriteWords = getWordbookWords('favorite') || [];
     favoriteWordsSet = new Set(favoriteWords.map(w => (w.english || '').trim().toLowerCase()));
-    console.log('📍 收藏单词集合已更新，共', favoriteWordsSet.size, '个');
+    logger.info('Index', '收藏单词集合已更新', { count: favoriteWordsSet.size });
   } catch (e) {
-    console.warn('⚠️ 更新收藏单词集合失败:', e);
+    logger.warn('Index', '更新收藏单词集合失败', e);
   }
 }
 
@@ -241,9 +241,9 @@ async function updateMasteredWordsSet() {
   try {
     const masteredWords = getMasteredWordbookWords();
     masteredWordsSet = new Set(Array.from(masteredWords).map(w => (w || '').trim().toLowerCase()));
-    console.log('🎯 已斩单词集合已更新，共', masteredWordsSet.size, '个');
+    logger.info('Index', '已斩单词集合已更新', { count: masteredWordsSet.size });
   } catch (e) {
-    console.warn('⚠️ 更新已斩单词集合失败:', e);
+    logger.warn('Index', '更新已斩单词集合失败', e);
   }
 }
 
@@ -621,7 +621,7 @@ const loadWords = async () => {
       allExternalWords = [];
       allExternalWordsLength.value = 0;
       enrichWordbookListInBackground(words.value, book, words);
-      console.log('极速加载：自用分页成功，数量:', words.value.length);
+      logger.debug('Index', '极速加载：自用分页成功', { count: words.value.length });
     await loadLearningSnapshot();
       return;
     }
@@ -638,12 +638,12 @@ const loadWords = async () => {
 
     words.value = allExternalWords.slice(0, PAGE_SIZE);
     displayLimit.value = PAGE_SIZE;
-    console.log('极速加载：外部单词本首屏成功，响应式数量:', words.value.length, '全量:', allExternalWords.length);
+    logger.debug('Index', '极速加载：外部单词本首屏成功', { count: words.value.length, total: allExternalWords.length });
 
     enrichWordbookListInBackground(words.value, book, words);
     await loadLearningSnapshot();
   } catch (error) {
-    console.error('加载失败:', error);
+    logger.error('Index', '加载失败', error);
     words.value = [];
   } finally {
     loadWordsInProgress = false;
@@ -651,7 +651,7 @@ const loadWords = async () => {
 };
 
 onLoad(() => {
-  console.log('首页 onLoad - 开始加载');
+  logger.debug('Index', '首页 onLoad - 开始加载');
   try {
     const v = uni.getStorageSync(SHOW_CHINESE_KEY);
     if (v === false || v === 'false' || v === 0 || v === '0') showChinese.value = false;
@@ -659,7 +659,7 @@ onLoad(() => {
 
   // 加载单词列表，添加错误处理
   loadWords().catch(error => {
-    console.error('首页加载单词失败:', error);
+    logger.error('Index', '首页加载单词失败', error);
     uni.showToast({
       title: '加载失败，请重试',
       icon: 'error'
@@ -927,7 +927,7 @@ const masterWord = async (word) => {
     delete removingWords.value[wordKey];
 
   } catch (e) {
-    console.error('斩掉单词失败:', e);
+    logger.error('Index', '斩掉单词失败', e);
     delete removingWords.value[wordKey];
     uni.showToast({ title: '操作失败', icon: 'none' });
   }
@@ -952,9 +952,9 @@ const uploadMasteredWordsToCloud = async () => {
       }
     });
 
-    console.log('✅ 已斯单词列表已上传到云端');
+    logger.info('Index', '已斯单词列表已上传到云端');
   } catch (e) {
-    console.warn('⚠️ 上传已斯单词列表失败:', e);
+    logger.warn('Index', '上传已斯单词列表失败', e);
   }
 };
 
@@ -985,9 +985,9 @@ const uploadProgressToCloud = async () => {
       }
     });
 
-    console.log('✅ 个人单词本已上传到云端');
+    logger.info('Index', '个人单词本已上传到云端');
   } catch (e) {
-    console.warn('⚠️ 上传个人单词本失败:', e);
+    logger.warn('Index', '上传个人单词本失败', e);
   }
 };
 
@@ -999,13 +999,13 @@ const isFavorited = (word) => {
 /** 切换收藏状态 */
 const toggleFavorite = async (word) => {
   if (!word || !word.english) {
-    console.log('❌ 收藏失败：单词为空');
+    logger.debug('Index', '收藏失败：单词为空');
     return;
   }
 
   try {
     const isFav = word.is_favorite === true;
-    console.log('🔍 切换收藏:', word.english, '当前状态:', isFav);
+    logger.debug('Index', '切换收藏', { word: word.english, isFavorite: isFav });
 
     // 获取或创建收藏单词本
     const { getCloudWordbooks, setWordbookWords, getWordbookWords, addCloudWordbook } = await import('../../src/utils/wordbookSource.js');
@@ -1015,7 +1015,7 @@ const toggleFavorite = async (word) => {
 
     if (!favoriteWordbook) {
       // 创建收藏单词本
-      console.log('📍 创建收藏单词本');
+      logger.debug('Index', '创建收藏单词本');
       const id = addCloudWordbook('收藏');
       favoriteWordbook = { id, name: '收藏' };
     }
@@ -1026,7 +1026,7 @@ const toggleFavorite = async (word) => {
 
     if (isFav) {
       // 取消收藏 - 从收藏单词本移除
-      console.log('📍 取消收藏:', word.english);
+      logger.debug('Index', '取消收藏', { word: word.english });
       wordbookWords = wordbookWords.filter(w => w.english.toLowerCase() !== word.english.toLowerCase());
       setWordbookWords(favoriteWordbook.id, wordbookWords);
       word.is_favorite = false;
@@ -1034,7 +1034,7 @@ const toggleFavorite = async (word) => {
       uni.showToast({ title: '已取消收藏', icon: 'success' });
     } else {
       // 添加收藏 - 添加到收藏单词本
-      console.log('📍 添加收藏:', word.english);
+      logger.debug('Index', '添加收藏', { word: word.english });
       if (!englishSet.has(word.english.toLowerCase())) {
         wordbookWords.push({
           english: word.english,
@@ -1051,10 +1051,9 @@ const toggleFavorite = async (word) => {
       uni.showToast({ title: '已收藏', icon: 'success' });
     }
 
-    console.log('✅ 收藏操作完成');
+    logger.info('Index', '收藏操作完成');
   } catch (e) {
-    console.error('❌ 切换收藏失败:', e);
-    console.error('❌ 错误堆栈:', e.stack);
+    logger.error('Index', '切换收藏失败', e);
     uni.showToast({ title: '操作失败: ' + e.message, icon: 'none' });
   }
 };

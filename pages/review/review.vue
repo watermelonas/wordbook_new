@@ -1240,7 +1240,7 @@ const filterOutMasteredWords = async (list) => {
       return !masteredSet.has(english);
     });
   } catch (e) {
-    console.warn('filterOutMasteredWords: 过滤已斩单词失败', e);
+    logger.warn('filterOutMasteredWords: 过滤已斩单词失败', e);
     return list;
   }
 };
@@ -1383,7 +1383,7 @@ const startRecommendedReview = async () => {
       await startReviewInternal(null);
     }
   } catch (e) {
-    console.error('startRecommendedReview 失败:', e);
+    logger.error('startRecommendedReview 失败:', e);
     uni.showToast({ title: '加载失败', icon: 'none' });
   }
 };
@@ -1513,7 +1513,7 @@ const loadChoiceQuestion = async () => {
       }
     }
   } catch (e) {
-    console.error('获取当前单词释义失败:', e);
+    logger.error('获取当前单词释义失败:', e);
   }
   
   // 获取所有干扰项的完整释义
@@ -1530,7 +1530,7 @@ const loadChoiceQuestion = async () => {
         };
       }
     } catch (e) {
-      console.error('获取干扰项释义失败:', e);
+      logger.error('获取干扰项释义失败:', e);
     }
     distractorOptions.push(option);
   }
@@ -1680,7 +1680,7 @@ const loadAIQuestion = async () => {
     const response = await aiService.callAPI(prompt);
     aiSentence.value = response.trim();
   } catch (error) {
-    console.error('生成例句失败:', error);
+    logger.error('生成例句失败:', error);
     aiSentence.value = '生成例句失败，请重试';
   } finally {
     isGenerating.value = false;
@@ -1775,7 +1775,7 @@ const submitAnswer = async () => {
       });
     }
   } catch (error) {
-    console.error('提交答案失败:', error);
+    logger.error('提交答案失败:', error);
     uni.showToast({
       title: 'AI判卷失败，请重试',
       icon: 'none'
@@ -1919,7 +1919,7 @@ const goToWordDetail = () => {
   uni.navigateTo({
     url: `/pages/word-detail/word-detail?english=${encodeURIComponent(currentWord.value.english)}&source=masterdb`,
     fail: (err) => {
-      console.error('跳转失败:', err);
+      logger.error('跳转失败:', err);
       uni.showToast({ title: '跳转失败', icon: 'none' });
     }
   });
@@ -1938,19 +1938,19 @@ const markCurrentWordAsMastered = async () => {
 
     if (bookId && bookId !== 'self') {
       // 词书单词：优先处理，没有id，存储到本地存储
-      console.log('markCurrentWordAsMastered: 词书单词，存储到本地');
+      logger.debug('markCurrentWordAsMastered: 词书单词，存储到本地');
       addMasteredWordbookWord(bookId, currentWord.value.english);
     } else if (currentWord.value.id) {
       // 自用词库单词：有id，直接操作数据库
-      console.log('markCurrentWordAsMastered: 自用词库单词，使用id斩掉');
+      logger.debug('markCurrentWordAsMastered: 自用词库单词，使用id斩掉');
       await db.masterWord(currentWord.value.id);
     } else {
       // 其他情况：尝试用english查询
-      console.log('markCurrentWordAsMastered: 其他情况，使用english斩掉');
+      logger.debug('markCurrentWordAsMastered: 其他情况，使用english斩掉');
       await db.masterWordByEnglish(currentWord.value.english);
     }
 
-    console.log('markCurrentWordAsMastered: 斩掉成功');
+    logger.debug('markCurrentWordAsMastered: 斩掉成功');
     uni.showToast({ title: '已斩掉！', icon: 'success' });
     showMasteredConfirm.value = false;
 
@@ -1959,7 +1959,7 @@ const markCurrentWordAsMastered = async () => {
       nextQuestion();
     }, 500);
   } catch (error) {
-    console.error('markCurrentWordAsMastered: 斩掉失败', error);
+    logger.error('markCurrentWordAsMastered: 斩掉失败', error);
     uni.showToast({ title: '斩掉失败: ' + (error.message || '未知错误'), icon: 'none' });
     showMasteredConfirm.value = false;
   }

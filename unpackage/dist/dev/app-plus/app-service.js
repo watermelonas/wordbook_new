@@ -4043,15 +4043,56 @@ ${i3}
     }
   }
   const globalErrorManager = new GlobalErrorManager();
-  const logger = globalErrorManager.getLogger();
+  const logger$1 = globalErrorManager.getLogger();
   const errorHandler = globalErrorManager.getErrorHandler();
+  function disableConsoleInProduction() {
+    if (isDevelopment())
+      return;
+    console.log = () => {
+    };
+    console.debug = () => {
+    };
+    console.info = () => {
+    };
+    console.warn = () => {
+    };
+    console.error = () => {
+    };
+    console.trace = () => {
+    };
+    console.time = () => {
+    };
+    console.timeEnd = () => {
+    };
+    console.group = () => {
+    };
+    console.groupEnd = () => {
+    };
+    console.assert = () => {
+    };
+    console.clear = () => {
+    };
+    console.count = () => {
+    };
+    console.dir = () => {
+    };
+    console.dirxml = () => {
+    };
+    console.profile = () => {
+    };
+    console.profileEnd = () => {
+    };
+    console.table = () => {
+    };
+  }
+  disableConsoleInProduction();
   const H5_STORAGE_KEY$1 = "wordbook_h5_words";
   const getH5Words$1 = () => {
     try {
       const raw = uni.getStorageSync(H5_STORAGE_KEY$1);
       return raw ? JSON.parse(raw) : [];
     } catch (e2) {
-      logger.error("H5Adapter", "读取 H5 单词列表失败", e2);
+      logger$1.error("H5Adapter", "读取 H5 单词列表失败", e2);
       return [];
     }
   };
@@ -4059,7 +4100,7 @@ ${i3}
     try {
       uni.setStorageSync(H5_STORAGE_KEY$1, JSON.stringify(words));
     } catch (e2) {
-      logger.error("H5Adapter", "保存 H5 单词列表失败", e2);
+      logger$1.error("H5Adapter", "保存 H5 单词列表失败", e2);
     }
   };
   class H5DatabaseAdapter {
@@ -4155,27 +4196,27 @@ ${i3}
       this.isOpen = false;
     }
     async init() {
-      logger.debug("[AppAdapter] init() 被调用");
+      logger$1.debug("[AppAdapter] init() 被调用");
       if (this.isOpen) {
-        logger.debug("[AppAdapter] 数据库已打开，跳过初始化");
+        logger$1.debug("[AppAdapter] 数据库已打开，跳过初始化");
         return Promise.resolve();
       }
       try {
-        logger.debug("[AppAdapter] 检查数据库是否已打开...");
-        logger.debug("[AppAdapter] plus:", typeof plus);
-        logger.debug("[AppAdapter] plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
+        logger$1.debug("[AppAdapter] 检查数据库是否已打开...");
+        logger$1.debug("[AppAdapter] plus:", typeof plus);
+        logger$1.debug("[AppAdapter] plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
         if (plus && plus.sqlite && plus.sqlite.isOpenDatabase({ name: this.dbName, path: this.dbPath })) {
-          logger.debug("[AppAdapter] 数据库已打开");
+          logger$1.debug("[AppAdapter] 数据库已打开");
           this.isOpen = true;
           return Promise.resolve();
         }
-        logger.debug("[AppAdapter] 打开数据库...");
+        logger$1.debug("[AppAdapter] 打开数据库...");
         await this.openDatabase();
         this.isOpen = true;
-        logger.debug("[AppAdapter] 数据库打开成功");
+        logger$1.debug("[AppAdapter] 数据库打开成功");
         return Promise.resolve();
       } catch (error) {
-        logger.error("[AppAdapter] 初始化失败:", error);
+        logger$1.error("[AppAdapter] 初始化失败:", error);
         throw error;
       }
     }
@@ -4185,11 +4226,11 @@ ${i3}
           name: this.dbName,
           path: this.dbPath,
           success: () => {
-            logger.debug("[AppAdapter] 数据库打开成功");
+            logger$1.debug("[AppAdapter] 数据库打开成功");
             resolve();
           },
           fail: (e2) => {
-            logger.error("[AppAdapter] 数据库打开失败:", e2);
+            logger$1.error("[AppAdapter] 数据库打开失败:", e2);
             reject(e2);
           }
         });
@@ -4203,7 +4244,7 @@ ${i3}
           sql: bindSql(sql, params),
           success: (data) => resolve(data || []),
           fail: (e2) => {
-            logger.error("[AppAdapter] 查询失败:", e2);
+            logger$1.error("[AppAdapter] 查询失败:", e2);
             resolve([]);
           }
         });
@@ -4333,16 +4374,16 @@ ${i3}
     }
   }
   function createDatabaseAdapter() {
-    logger.debug("[databaseAdapter] 检查运行环境...");
-    logger.debug("[databaseAdapter] typeof plus:", typeof plus);
-    logger.debug("[databaseAdapter] typeof plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
+    logger$1.debug("[databaseAdapter] 检查运行环境...");
+    logger$1.debug("[databaseAdapter] typeof plus:", typeof plus);
+    logger$1.debug("[databaseAdapter] typeof plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
     const isApp2 = typeof plus !== "undefined" && typeof plus.sqlite !== "undefined";
-    logger.debug("[databaseAdapter] isApp:", isApp2);
+    logger$1.debug("[databaseAdapter] isApp:", isApp2);
     if (isApp2) {
-      logger.debug("[databaseAdapter] 使用 AppDatabaseAdapter");
+      logger$1.debug("[databaseAdapter] 使用 AppDatabaseAdapter");
       return new AppDatabaseAdapter();
     } else {
-      logger.debug("[databaseAdapter] 使用 H5DatabaseAdapter");
+      logger$1.debug("[databaseAdapter] 使用 H5DatabaseAdapter");
       return new H5DatabaseAdapter();
     }
   }
@@ -4424,7 +4465,7 @@ ${i3}
       const raw = uni.getStorageSync(H5_STORAGE_KEY);
       return raw ? JSON.parse(raw) : [];
     } catch (e2) {
-      logger.error("db", "读取 H5 单词列表失败", e2);
+      logger$1.error("db", "读取 H5 单词列表失败", e2);
       return [];
     }
   };
@@ -4432,7 +4473,7 @@ ${i3}
     try {
       uni.setStorageSync(H5_STORAGE_KEY, JSON.stringify(words));
     } catch (e2) {
-      logger.error("db", "保存 H5 单词列表失败", e2);
+      logger$1.error("db", "保存 H5 单词列表失败", e2);
     }
   };
   const getH5MasteredWords = () => {
@@ -4451,25 +4492,25 @@ ${i3}
   };
   class DatabaseManager {
     constructor() {
-      logger.debug("db", "DatabaseManager 构造函数被调用");
+      logger$1.debug("db", "DatabaseManager 构造函数被调用");
       this.adapter = createDatabaseAdapter();
       this.isH5 = null;
-      logger.debug("db", "adapter 类型", { type: this.adapter.constructor.name });
+      logger$1.debug("db", "adapter 类型", { type: this.adapter.constructor.name });
     }
     /**
      * 初始化数据库
      */
     async init() {
       try {
-        logger.debug("db", "开始初始化数据库");
-        logger.debug("db", "调用 adapter.init()");
+        logger$1.debug("db", "开始初始化数据库");
+        logger$1.debug("db", "调用 adapter.init()");
         if (typeof plus === "undefined") {
-          logger.warn("db", "plus 对象未就绪，等待 plusready 事件");
+          logger$1.warn("db", "plus 对象未就绪，等待 plusready 事件");
           await Promise.race([
             new Promise((resolve) => {
               const checkPlus = () => {
                 if (typeof plus !== "undefined") {
-                  logger.debug("db", "plus 对象已就绪");
+                  logger$1.debug("db", "plus 对象已就绪");
                   resolve();
                 } else {
                   setTimeout(checkPlus, 100);
@@ -4483,19 +4524,19 @@ ${i3}
           ]);
         }
         this.isH5 = typeof plus === "undefined";
-        logger.debug("db", "isH5", { isH5: this.isH5 });
+        logger$1.debug("db", "isH5", { isH5: this.isH5 });
         await this.adapter.init();
-        logger.debug("db", "adapter.init() 完成");
+        logger$1.debug("db", "adapter.init() 完成");
         if (!this.isH5) {
-          logger.debug("db", "设置数据库架构");
+          logger$1.debug("db", "设置数据库架构");
           await this.setupSchema();
-          logger.debug("db", "数据库架构设置完成");
+          logger$1.debug("db", "数据库架构设置完成");
         } else {
-          logger.debug("db", "H5 环境，跳过架构设置");
+          logger$1.debug("db", "H5 环境，跳过架构设置");
         }
-        logger.debug("db", "数据库初始化完成");
+        logger$1.debug("db", "数据库初始化完成");
       } catch (error) {
-        logger.error("db", "初始化失败", error);
+        logger$1.error("db", "初始化失败", error);
         throw error;
       }
     }
@@ -4577,9 +4618,9 @@ ${i3}
           await this.adapter.execute(sql).catch(() => {
           });
         }
-        logger.debug("db", "数据库架构初始化完成");
+        logger$1.debug("db", "数据库架构初始化完成");
       } catch (error) {
-        logger.error("db", "设置架构失败", error);
+        logger$1.error("db", "设置架构失败", error);
       }
     }
     /**
@@ -4589,13 +4630,13 @@ ${i3}
       try {
         await this.adapter.execute(`ALTER TABLE ${tableName} ADD COLUMN "${columnName}" ${columnType}`).catch((error) => {
           if (error && error.message && error.message.includes("duplicate column")) {
-            logger.debug("db", `列 ${tableName}.${columnName} 已存在，跳过添加`);
+            logger$1.debug("db", `列 ${tableName}.${columnName} 已存在，跳过添加`);
             return;
           }
           throw error;
         });
       } catch (error) {
-        logger.warn("db", `添加列 ${tableName}.${columnName} 失败`, error);
+        logger$1.warn("db", `添加列 ${tableName}.${columnName} 失败`, error);
       }
     }
     /**
@@ -4636,7 +4677,7 @@ ${i3}
       try {
         return await this.adapter.query(sql, params);
       } catch (error) {
-        logger.error("db", "getWordsForList 失败", error);
+        logger$1.error("db", "getWordsForList 失败", error);
         return [];
       }
     }
@@ -4745,7 +4786,7 @@ ${i3}
         await this.adapter.execute(sql, params);
         return Promise.resolve({ ...word, id: wordId });
       } catch (error) {
-        logger.error("db", "addWord 失败", error);
+        logger$1.error("db", "addWord 失败", error);
         throw error;
       }
     }
@@ -4762,7 +4803,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC");
         return Promise.resolve((data || []).map(parseWord));
       } catch (error) {
-        logger.error("db", "getWords 失败", error);
+        logger$1.error("db", "getWords 失败", error);
         return Promise.resolve([]);
       }
     }
@@ -4782,7 +4823,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM words WHERE id = ?", [id]);
         return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
       } catch (error) {
-        logger.error("db", "getWordById 失败", error);
+        logger$1.error("db", "getWordById 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -4802,7 +4843,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
         return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
       } catch (error) {
-        logger.error("db", "getWordByEnglish 失败", error);
+        logger$1.error("db", "getWordByEnglish 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -4830,7 +4871,7 @@ ${i3}
         await this.adapter.updateWord(id, updates);
         return Promise.resolve();
       } catch (error) {
-        logger.error("db", "updateWord 失败", error);
+        logger$1.error("db", "updateWord 失败", error);
         throw error;
       }
     }
@@ -4850,7 +4891,7 @@ ${i3}
         await this.adapter.deleteWord(id);
         return Promise.resolve();
       } catch (error) {
-        logger.error("db", "deleteWord 失败", error);
+        logger$1.error("db", "deleteWord 失败", error);
         throw error;
       }
     }
@@ -4899,7 +4940,7 @@ ${i3}
         });
         return Promise.resolve();
       } catch (error) {
-        logger.error("db", "updateErrorRate 失败", error);
+        logger$1.error("db", "updateErrorRate 失败", error);
         return Promise.resolve();
       }
     }
@@ -4942,7 +4983,7 @@ ${i3}
         }
         return Promise.resolve(words.slice(0, count));
       } catch (error) {
-        logger.error("db", "getReviewWords 失败", error);
+        logger$1.error("db", "getReviewWords 失败", error);
         return Promise.resolve([]);
       }
     }
@@ -5027,7 +5068,7 @@ ${i3}
         });
         return Promise.resolve();
       } catch (error) {
-        logger.error("db", "masterWord 失败", error);
+        logger$1.error("db", "masterWord 失败", error);
         throw error;
       }
     }
@@ -5043,7 +5084,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM mastered_words ORDER BY mastered_at DESC");
         return Promise.resolve((data || []).map(parseWord));
       } catch (error) {
-        logger.error("db", "getMasteredWords 失败", error);
+        logger$1.error("db", "getMasteredWords 失败", error);
         return Promise.resolve([]);
       }
     }
@@ -5079,7 +5120,7 @@ ${i3}
         );
         return Promise.resolve(data && data.length ? data[0] : null);
       } catch (error) {
-        logger.error("db", "getWordByIdLight 失败", error);
+        logger$1.error("db", "getWordByIdLight 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -5115,7 +5156,7 @@ ${i3}
           antonyms: parseJsonSafe$1(row.antonyms, [])
         });
       } catch (error) {
-        logger.error("db", "getWordByIdHeavy 失败", error);
+        logger$1.error("db", "getWordByIdHeavy 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -5188,7 +5229,7 @@ ${i3}
         });
         return Promise.resolve();
       } catch (error) {
-        logger.error("db", "masterWordByEnglish 失败", error);
+        logger$1.error("db", "masterWordByEnglish 失败", error);
         throw error;
       }
     }
@@ -5198,7 +5239,7 @@ ${i3}
      */
     async clearAndInsertWords(words) {
       if (!Array.isArray(words) || words.length === 0) {
-        logger.warn("db", "clearAndInsertWords: 单词列表为空");
+        logger$1.warn("db", "clearAndInsertWords: 单词列表为空");
         return Promise.resolve();
       }
       await this.init();
@@ -5214,13 +5255,13 @@ ${i3}
           view_count: w2.view_count != null ? w2.view_count : 0
         }));
         setH5Words(newWords);
-        logger.debug("db", `H5 环境：已清空并插入 ${newWords.length} 个单词`);
+        logger$1.debug("db", `H5 环境：已清空并插入 ${newWords.length} 个单词`);
         return Promise.resolve();
       }
       try {
         await this.adapter.transaction(async () => {
           await this.adapter.execute("DELETE FROM words");
-          logger.debug("db", "已清空 words 表");
+          logger$1.debug("db", "已清空 words 表");
           const now = (/* @__PURE__ */ new Date()).toISOString();
           for (const word of words) {
             const wordId = word.id || Date.now().toString() + Math.random();
@@ -5256,11 +5297,11 @@ ${i3}
             ];
             await this.adapter.execute(sql, params);
           }
-          logger.debug("db", `已插入 ${words.length} 个单词`);
+          logger$1.debug("db", `已插入 ${words.length} 个单词`);
         });
         return Promise.resolve();
       } catch (error) {
-        logger.error("db", "clearAndInsertWords 失败", error);
+        logger$1.error("db", "clearAndInsertWords 失败", error);
         throw error;
       }
     }
@@ -5283,7 +5324,7 @@ ${i3}
         const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC LIMIT 1");
         return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
       } catch (error) {
-        logger.error("db", "getLastWord 失败", error);
+        logger$1.error("db", "getLastWord 失败", error);
         return Promise.resolve(null);
       }
     }
@@ -5312,7 +5353,7 @@ ${i3}
         await this.updateWord(id, { view_count: newViewCount });
         return Promise.resolve();
       } catch (error) {
-        logger.error("db", "incrementViewCount 失败", error);
+        logger$1.error("db", "incrementViewCount 失败", error);
         return Promise.resolve();
       }
     }
@@ -5383,7 +5424,7 @@ ${i3}
         });
         return Promise.resolve();
       } catch (error) {
-        logger.error("db", "unmasterWord 失败", error);
+        logger$1.error("db", "unmasterWord 失败", error);
         throw error;
       }
     }
@@ -5459,7 +5500,7 @@ ${i3}
   function copyPregenDbToDoc() {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
-        logger.error("[pregenVocab] 复制超时");
+        logger$1.error("[pregenVocab] 复制超时");
         resolve(false);
       }, 15e3);
       const cleanup = (res) => {
@@ -5474,20 +5515,20 @@ ${i3}
             dir,
             "pregen_data.db",
             () => {
-              logger.debug("[pregenVocab] copyTo 完成");
+              logger$1.debug("[pregenVocab] copyTo 完成");
               cleanup(true);
             },
             (err) => {
-              logger.error("[pregenVocab] copyTo 失败", err);
+              logger$1.error("[pregenVocab] copyTo 失败", err);
               cleanup(false);
             }
           );
         }, (e2) => {
-          logger.error("[pregenVocab] 解析 _doc 失败", e2);
+          logger$1.error("[pregenVocab] 解析 _doc 失败", e2);
           cleanup(false);
         });
       }, (e2) => {
-        logger.error("[pregenVocab] 解析源文件失败", e2);
+        logger$1.error("[pregenVocab] 解析源文件失败", e2);
         cleanup(false);
       });
     });
@@ -5516,7 +5557,7 @@ ${i3}
           path: PREGEN_DB_PATH,
           success: () => {
             pregenDbOpen = true;
-            logger.debug("[pregenVocab] pregen_data.db 已打开");
+            logger$1.debug("[pregenVocab] pregen_data.db 已打开");
             plus.sqlite.executeSql({
               name: PREGEN_DB_NAME,
               sql: "CREATE UNIQUE INDEX IF NOT EXISTS idx_english ON vocab(english)",
@@ -5531,7 +5572,7 @@ ${i3}
             });
           },
           fail: (e2) => {
-            logger.error("[pregenVocab] openDatabase 失败", e2);
+            logger$1.error("[pregenVocab] openDatabase 失败", e2);
             _ensureOpenPromise = null;
             resolve(false);
           }
@@ -5602,17 +5643,17 @@ ${i3}
                 setPregenCache(key, result);
                 resolve(result);
               } catch (err) {
-                logger.error("getPregenWord 解析结果异常", err);
+                logger$1.error("getPregenWord 解析结果异常", err);
                 resolve(null);
               }
             },
             fail: (e2) => {
-              logger.error("pregen selectSql 失败", e2);
+              logger$1.error("pregen selectSql 失败", e2);
               resolve(null);
             }
           });
         } catch (err) {
-          logger.error("getPregenWord selectSql 调用异常", err);
+          logger$1.error("getPregenWord selectSql 调用异常", err);
           resolve(null);
         }
       });
@@ -5719,7 +5760,7 @@ ${i3}
         sql,
         success: (rows) => resolve(rows || []),
         fail: (e2) => {
-          logger.error("[masterDb] selectSql 失败", e2);
+          logger$1.error("[masterDb] selectSql 失败", e2);
           resolve({ __error: e2, __rows: [] });
         }
       });
@@ -5744,13 +5785,13 @@ ${i3}
     if (repairPromise)
       return repairPromise;
     repairPromise = (async () => {
-      logger.warn("[masterDb] 检测到主库缺表，开始强制重建 _doc 主库副本");
+      logger$1.warn("[masterDb] 检测到主库缺表，开始强制重建 _doc 主库副本");
       masterDbOpen = false;
       initPromise = null;
       await closeMasterDbIfOpen();
       const copied = await copyMasterDbToDoc(true);
       if (!copied) {
-        logger.error("[masterDb] 强制重拷贝主库失败");
+        logger$1.error("[masterDb] 强制重拷贝主库失败");
         return false;
       }
       masterDbOpen = false;
@@ -5760,10 +5801,10 @@ ${i3}
         return false;
       const schemaOk = await validateMasterSchema();
       if (!schemaOk) {
-        logger.error("[masterDb] 重建后仍缺少必要数据表");
+        logger$1.error("[masterDb] 重建后仍缺少必要数据表");
         return false;
       }
-      logger.debug("[masterDb] 主库缺表自愈完成");
+      logger$1.debug("[masterDb] 主库缺表自愈完成");
       return true;
     })().finally(() => {
       repairPromise = null;
@@ -5817,7 +5858,7 @@ ${i3}
   function copyMasterDbToDoc(forceReplace = false) {
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
-        logger.error("[masterDb] 复制操作超时，强制退出");
+        logger$1.error("[masterDb] 复制操作超时，强制退出");
         resolve(false);
       }, 15e3);
       const cleanup = (res) => {
@@ -5826,23 +5867,23 @@ ${i3}
       };
       if (typeof plus === "undefined" || !plus.io)
         return cleanup(false);
-      logger.debug("[masterDb] 准备从:", MASTER_DB_SOURCE);
+      logger$1.debug("[masterDb] 准备从:", MASTER_DB_SOURCE);
       const doCopy = () => {
         plus.io.resolveLocalFileSystemURL(MASTER_DB_SOURCE, (entry) => {
           plus.io.resolveLocalFileSystemURL("_doc/", (dir) => {
             entry.copyTo(dir, "vocal_master.db", () => {
-              logger.debug("[masterDb] 原生 copyTo 物理完成！");
+              logger$1.debug("[masterDb] 原生 copyTo 物理完成！");
               cleanup(true);
             }, (err) => {
-              logger.error("[masterDb] copyTo 失败:", err);
+              logger$1.error("[masterDb] copyTo 失败:", err);
               cleanup(false);
             });
           }, (e2) => {
-            logger.error("[masterDb] 解析 _doc 失败", e2);
+            logger$1.error("[masterDb] 解析 _doc 失败", e2);
             cleanup(false);
           });
         }, (e2) => {
-          logger.error("[masterDb] 解析源文件失败，请确认 MASTER_DB_SOURCE 路径正确:", e2);
+          logger$1.error("[masterDb] 解析源文件失败，请确认 MASTER_DB_SOURCE 路径正确:", e2);
           cleanup(false);
         });
       };
@@ -5855,38 +5896,38 @@ ${i3}
   }
   function initMasterDb() {
     if (masterDbOpen) {
-      logger.debug("[masterDb] 主库已打开，直接返回");
+      logger$1.debug("[masterDb] 主库已打开，直接返回");
       return Promise.resolve(true);
     }
     if (initPromise) {
-      logger.debug("[masterDb] 初始化进行中，等待同一 Promise（避免重复复制）");
+      logger$1.debug("[masterDb] 初始化进行中，等待同一 Promise（避免重复复制）");
       return initPromise;
     }
     if (!isApp())
       return Promise.resolve(false);
-    logger.debug("[masterDb] 首次初始化：复制并打开主库（仅此一次）");
+    logger$1.debug("[masterDb] 首次初始化：复制并打开主库（仅此一次）");
     const initWork = checkDocDbExists().then((exists) => {
       const shouldForceReplace = getStoredDbVersion() !== MASTER_DB_VERSION;
       if (exists) {
         if (!shouldForceReplace) {
-          logger.debug("[masterDb] _doc 下已存在 vocal_master.db 且版本匹配，跳过复制");
+          logger$1.debug("[masterDb] _doc 下已存在 vocal_master.db 且版本匹配，跳过复制");
           return true;
         }
-        logger.debug("[masterDb] 检测到主库版本变更，开始刷新 _doc/vocal_master.db");
+        logger$1.debug("[masterDb] 检测到主库版本变更，开始刷新 _doc/vocal_master.db");
         return copyMasterDbToDoc(true).then((copied) => {
           if (copied)
-            logger.debug("[masterDb] 主库刷新完成");
+            logger$1.debug("[masterDb] 主库刷新完成");
           else
-            logger.warn("[masterDb] 主库刷新失败");
+            logger$1.warn("[masterDb] 主库刷新失败");
           return copied;
         });
       }
-      logger.debug("[masterDb] 目标文件不存在，开始从 static 复制 22MB...");
+      logger$1.debug("[masterDb] 目标文件不存在，开始从 static 复制 22MB...");
       return copyMasterDbToDoc().then((copied) => {
         if (copied)
-          logger.debug("[masterDb] 复制完成");
+          logger$1.debug("[masterDb] 复制完成");
         else
-          logger.warn("[masterDb] 复制未成功");
+          logger$1.warn("[masterDb] 复制未成功");
         return copied;
       });
     }).then((ready) => {
@@ -5898,7 +5939,7 @@ ${i3}
           path: MASTER_DB_PATH
         });
         if (isOpen) {
-          logger.debug("[masterDb] 检测到数据库已在打开状态，直接进入查询阶段");
+          logger$1.debug("[masterDb] 检测到数据库已在打开状态，直接进入查询阶段");
           masterDbOpen = true;
           return resolve(true);
         }
@@ -5907,13 +5948,13 @@ ${i3}
           path: MASTER_DB_PATH,
           success: async () => {
             masterDbOpen = true;
-            logger.debug("[masterDb] 数据库真正打开成功！name=", MASTER_DB_NAME, "path=", MASTER_DB_PATH);
-            logger.debug("[masterDb] 库已就绪，开始执行挂起的查询");
+            logger$1.debug("[masterDb] 数据库真正打开成功！name=", MASTER_DB_NAME, "path=", MASTER_DB_PATH);
+            logger$1.debug("[masterDb] 库已就绪，开始执行挂起的查询");
             plus.sqlite.executeSql({
               name: MASTER_DB_NAME,
               sql: "CREATE UNIQUE INDEX IF NOT EXISTS idx_word ON vocab_master(english)",
               success: async () => {
-                logger.debug("[masterDb] idx_word 索引已确保");
+                logger$1.debug("[masterDb] idx_word 索引已确保");
                 setStoredDbVersion(MASTER_DB_VERSION);
                 const schemaOk = await validateMasterSchema();
                 if (!schemaOk) {
@@ -5924,7 +5965,7 @@ ${i3}
                 resolve(true);
               },
               fail: async (e2) => {
-                logger.warn("[masterDb] 创建索引失败(可忽略)", e2);
+                logger$1.warn("[masterDb] 创建索引失败(可忽略)", e2);
                 setStoredDbVersion(MASTER_DB_VERSION);
                 const schemaOk = await validateMasterSchema();
                 if (!schemaOk) {
@@ -5940,12 +5981,12 @@ ${i3}
             const code = e2 && e2.code;
             const msg = e2 && (e2.message || e2.errMsg) || "";
             if (code === -1402 || typeof msg === "string" && msg.includes("Already Open")) {
-              logger.debug("[masterDb] 忽略 -1402 错误（库已打开），继续执行");
+              logger$1.debug("[masterDb] 忽略 -1402 错误（库已打开），继续执行");
               masterDbOpen = true;
               setStoredDbVersion(MASTER_DB_VERSION);
               return resolve(true);
             }
-            logger.error("[masterDb] openDatabase 失败", e2);
+            logger$1.error("[masterDb] openDatabase 失败", e2);
             initPromise = null;
             if (typeof uni !== "undefined" && uni.showModal) {
               uni.showModal({ title: "主库打开失败", content: msg || JSON.stringify(e2), showCancel: false });
@@ -5955,7 +5996,7 @@ ${i3}
         });
       });
     }).catch((e2) => {
-      logger.error("[masterDb] initMasterDb 异常", e2);
+      logger$1.error("[masterDb] initMasterDb 异常", e2);
       initPromise = null;
       return false;
     });
@@ -5963,7 +6004,7 @@ ${i3}
     const timeoutPromise = new Promise((_2, reject) => {
       setTimeout(() => {
         if (!masterDbOpen) {
-          logger.error("[masterDb] 初始化超时", timeoutMs, "ms");
+          logger$1.error("[masterDb] 初始化超时", timeoutMs, "ms");
           initPromise = null;
           if (typeof uni !== "undefined" && uni.showModal) {
             uni.showModal({
@@ -6147,12 +6188,12 @@ ${i3}
       return null;
     if (wordDetailCache.has(english))
       return wordDetailCache.get(english);
-    logger.debug("[masterDb] 收到查询请求:", english);
+    logger$1.debug("[masterDb] 收到查询请求:", english);
     try {
       await initMasterDb();
       const isOpen = plus.sqlite.isOpenDatabase && plus.sqlite.isOpenDatabase({ name: MASTER_DB_NAME, path: MASTER_DB_PATH });
       if (!isOpen) {
-        logger.error("[masterDb] 主库未打开");
+        logger$1.error("[masterDb] 主库未打开");
         return null;
       }
       const safe = sqlLiteralStr(english);
@@ -6161,7 +6202,7 @@ ${i3}
         selectSqlRows(`SELECT * FROM word_exam_stats WHERE english = ${safe} LIMIT 1`),
         selectSqlRows(`SELECT year, section, exam_type, sentence FROM word_exam_sentences WHERE english = ${safe} ORDER BY year, id`)
       ]);
-      logger.debug("[masterDb] 查询结果返回！core=", coreRows.length, "stats=", statsRows.length, "sentences=", sentenceRows.length);
+      logger$1.debug("[masterDb] 查询结果返回！core=", coreRows.length, "stats=", statsRows.length, "sentences=", sentenceRows.length);
       if ((!coreRows || coreRows.length === 0) && (!statsRows || statsRows.length === 0) && (!sentenceRows || sentenceRows.length === 0)) {
         return null;
       }
@@ -6181,7 +6222,7 @@ ${i3}
       setDetailCache(english, result);
       return result;
     } catch (err) {
-      logger.error("[masterDb] 流程中断:", err);
+      logger$1.error("[masterDb] 流程中断:", err);
       return null;
     }
   }
@@ -6206,7 +6247,7 @@ ${i3}
         examSentences: parseExamSentenceRows(sentenceRows)
       };
     } catch (err) {
-      logger.error("[masterDb] getWordExamData 失败", err);
+      logger$1.error("[masterDb] getWordExamData 失败", err);
       return { examStats: null, examSentences: [] };
     }
   }
@@ -6239,7 +6280,7 @@ ${i3}
       }
       return out;
     } catch (err) {
-      logger.error("[masterDb] getWordExamStatsBatch 失败", err);
+      logger$1.error("[masterDb] getWordExamStatsBatch 失败", err);
       return {};
     }
   }
@@ -6290,11 +6331,11 @@ ${i3}
                   };
                 }
               }
-              logger.debug("[masterDb] getWordBriefBatch 成功, 条数=", rows ? rows.length : 0);
+              logger$1.debug("[masterDb] getWordBriefBatch 成功, 条数=", rows ? rows.length : 0);
               resolve(out);
             },
             fail: (e2) => {
-              logger.error("[masterDb] getWordBriefBatch selectSql 失败", e2);
+              logger$1.error("[masterDb] getWordBriefBatch selectSql 失败", e2);
               resolve({});
             }
           });
@@ -6551,7 +6592,7 @@ ${i3}
           text = String(text);
         const list = parseCsvToWordList(text);
         if (list.length === 0 && text != null) {
-          logger.warn("[wordbookSource] CSV 解析后为空，key=", key, "textLen=", (text || "").length);
+          logger$1.warn("[wordbookSource] CSV 解析后为空，key=", key, "textLen=", (text || "").length);
         }
         resolve(list);
       };
@@ -6742,7 +6783,7 @@ ${i3}
       }
       return raw && typeof raw === "object" ? raw : fallback;
     } catch (e2) {
-      logger.error("learningCenter", `读取 ${key} 失败`, e2);
+      logger$1.error("learningCenter", `读取 ${key} 失败`, e2);
       return fallback;
     }
   };
@@ -6750,7 +6791,7 @@ ${i3}
     try {
       uni.setStorageSync(key, JSON.stringify(value));
     } catch (e2) {
-      logger.error("learningCenter", `写入 ${key} 失败`, e2);
+      logger$1.error("learningCenter", `写入 ${key} 失败`, e2);
     }
   };
   const normalizeWordKey = (word) => {
@@ -6943,7 +6984,7 @@ ${i3}
       setMistakesMap(mistakes);
       return next;
     } catch (error) {
-      logger.error("[learningCenter] recordReviewOutcome 失败:", error);
+      logger$1.error("[learningCenter] recordReviewOutcome 失败:", error);
       return null;
     }
   };
@@ -7132,7 +7173,7 @@ ${i3}
       const data = raw ? JSON.parse(raw) : [];
       return new Set(data);
     } catch (e2) {
-      logger.error("getGlobalMasteredWords 失败:", e2);
+      logger$1.error("getGlobalMasteredWords 失败:", e2);
       return /* @__PURE__ */ new Set();
     }
   };
@@ -7144,9 +7185,9 @@ ${i3}
         data.push(english);
       }
       uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(data));
-      logger.debug("addGlobalMasteredWord: 成功标记", english);
+      logger$1.debug("addGlobalMasteredWord: 成功标记", english);
     } catch (e2) {
-      logger.error("addGlobalMasteredWord 失败:", e2);
+      logger$1.error("addGlobalMasteredWord 失败:", e2);
     }
   };
   const removeGlobalMasteredWord = (english) => {
@@ -7155,9 +7196,9 @@ ${i3}
       const data = raw ? JSON.parse(raw) : [];
       const filtered = data.filter((w2) => w2 !== english);
       uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(filtered));
-      logger.debug("removeGlobalMasteredWord: 成功取消", english);
+      logger$1.debug("removeGlobalMasteredWord: 成功取消", english);
     } catch (e2) {
-      logger.error("removeGlobalMasteredWord 失败:", e2);
+      logger$1.error("removeGlobalMasteredWord 失败:", e2);
     }
   };
   const isGlobalMasteredWord = (english) => {
@@ -7236,18 +7277,18 @@ ${i3}
           const { getWordbookWords: getWordbookWords2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
           const favoriteWords = getWordbookWords2("favorite") || [];
           favoriteWordsSet = new Set(favoriteWords.map((w2) => (w2.english || "").trim().toLowerCase()));
-          formatAppLog("log", "at pages/index/index.vue:233", "📍 收藏单词集合已更新，共", favoriteWordsSet.size, "个");
+          logger$1.info("Index", "收藏单词集合已更新", { count: favoriteWordsSet.size });
         } catch (e2) {
-          formatAppLog("warn", "at pages/index/index.vue:235", "⚠️ 更新收藏单词集合失败:", e2);
+          logger$1.warn("Index", "更新收藏单词集合失败", e2);
         }
       }
       async function updateMasteredWordsSet() {
         try {
           const masteredWords = getMasteredWordbookWords();
           masteredWordsSet = new Set(Array.from(masteredWords).map((w2) => (w2 || "").trim().toLowerCase()));
-          formatAppLog("log", "at pages/index/index.vue:244", "🎯 已斩单词集合已更新，共", masteredWordsSet.size, "个");
+          logger$1.info("Index", "已斩单词集合已更新", { count: masteredWordsSet.size });
         } catch (e2) {
-          formatAppLog("warn", "at pages/index/index.vue:246", "⚠️ 更新已斩单词集合失败:", e2);
+          logger$1.warn("Index", "更新已斩单词集合失败", e2);
         }
       }
       function getExamCountForSort(word) {
@@ -7626,7 +7667,7 @@ ${i3}
             allExternalWords = [];
             allExternalWordsLength.value = 0;
             enrichWordbookListInBackground(words.value, book, words);
-            formatAppLog("log", "at pages/index/index.vue:624", "极速加载：自用分页成功，数量:", words.value.length);
+            logger$1.debug("Index", "极速加载：自用分页成功", { count: words.value.length });
             await loadLearningSnapshot();
             return;
           }
@@ -7640,18 +7681,18 @@ ${i3}
           allExternalWordsLength.value = allExternalWords.length;
           words.value = allExternalWords.slice(0, PAGE_SIZE);
           displayLimit.value = PAGE_SIZE;
-          formatAppLog("log", "at pages/index/index.vue:641", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
+          logger$1.debug("Index", "极速加载：外部单词本首屏成功", { count: words.value.length, total: allExternalWords.length });
           enrichWordbookListInBackground(words.value, book, words);
           await loadLearningSnapshot();
         } catch (error) {
-          formatAppLog("error", "at pages/index/index.vue:646", "加载失败:", error);
+          logger$1.error("Index", "加载失败", error);
           words.value = [];
         } finally {
           loadWordsInProgress = false;
         }
       };
       onLoad(() => {
-        formatAppLog("log", "at pages/index/index.vue:654", "首页 onLoad - 开始加载");
+        logger$1.debug("Index", "首页 onLoad - 开始加载");
         try {
           const v2 = uni.getStorageSync(SHOW_CHINESE_KEY);
           if (v2 === false || v2 === "false" || v2 === 0 || v2 === "0")
@@ -7659,7 +7700,7 @@ ${i3}
         } catch (_2) {
         }
         loadWords().catch((error) => {
-          formatAppLog("error", "at pages/index/index.vue:662", "首页加载单词失败:", error);
+          logger$1.error("Index", "首页加载单词失败", error);
           uni.showToast({
             title: "加载失败，请重试",
             icon: "error"
@@ -7700,7 +7741,7 @@ ${i3}
             }
           });
         } catch (e2) {
-          logger.warn("index", "计算容器高度失败", e2);
+          logger$1.warn("index", "计算容器高度失败", e2);
         }
       });
       onUnload(() => {
@@ -7717,7 +7758,7 @@ ${i3}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("Index", "清理缓存失败", error);
+          logger$1.warn("Index", "清理缓存失败", error);
         }
       });
       let searchDebounceTimer = null;
@@ -7763,7 +7804,7 @@ ${i3}
         hasMoreSelfWords.value = next.length >= PAGE_SIZE;
       };
       const handleVirtualScroll = (event) => {
-        logger.debug("index", "虚拟滚动", {
+        logger$1.debug("index", "虚拟滚动", {
           scrollTop: event.scrollTop,
           visibleStart: event.visibleStart,
           visibleEnd: event.visibleEnd,
@@ -7885,7 +7926,7 @@ ${i3}
           words.value = words.value.filter((w2) => (w2.english || "").trim().toLowerCase() !== wordKey);
           delete removingWords.value[wordKey];
         } catch (e2) {
-          formatAppLog("error", "at pages/index/index.vue:930", "斩掉单词失败:", e2);
+          logger$1.error("Index", "斩掉单词失败", e2);
           delete removingWords.value[wordKey];
           uni.showToast({ title: "操作失败", icon: "none" });
         }
@@ -7906,9 +7947,9 @@ ${i3}
               mastered: masteredList
             }
           });
-          formatAppLog("log", "at pages/index/index.vue:955", "✅ 已斯单词列表已上传到云端");
+          logger$1.info("Index", "已斯单词列表已上传到云端");
         } catch (e2) {
-          formatAppLog("warn", "at pages/index/index.vue:957", "⚠️ 上传已斯单词列表失败:", e2);
+          logger$1.warn("Index", "上传已斯单词列表失败", e2);
         }
       };
       const uploadProgressToCloud = async () => {
@@ -7935,9 +7976,9 @@ ${i3}
               progress: progressData
             }
           });
-          formatAppLog("log", "at pages/index/index.vue:988", "✅ 个人单词本已上传到云端");
+          logger$1.info("Index", "个人单词本已上传到云端");
         } catch (e2) {
-          formatAppLog("warn", "at pages/index/index.vue:990", "⚠️ 上传个人单词本失败:", e2);
+          logger$1.warn("Index", "上传个人单词本失败", e2);
         }
       };
       const isFavorited = (word) => {
@@ -7945,31 +7986,31 @@ ${i3}
       };
       const toggleFavorite = async (word) => {
         if (!word || !word.english) {
-          formatAppLog("log", "at pages/index/index.vue:1002", "❌ 收藏失败：单词为空");
+          logger$1.debug("Index", "收藏失败：单词为空");
           return;
         }
         try {
           const isFav = word.is_favorite === true;
-          formatAppLog("log", "at pages/index/index.vue:1008", "🔍 切换收藏:", word.english, "当前状态:", isFav);
+          logger$1.debug("Index", "切换收藏", { word: word.english, isFavorite: isFav });
           const { getCloudWordbooks: getCloudWordbooks2, setWordbookWords: setWordbookWords2, getWordbookWords: getWordbookWords2, addCloudWordbook: addCloudWordbook2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
           let wordbooks = getCloudWordbooks2();
           let favoriteWordbook = wordbooks.find((wb) => wb.name === "收藏");
           if (!favoriteWordbook) {
-            formatAppLog("log", "at pages/index/index.vue:1018", "📍 创建收藏单词本");
+            logger$1.debug("Index", "创建收藏单词本");
             const id = addCloudWordbook2("收藏");
             favoriteWordbook = { id, name: "收藏" };
           }
           let wordbookWords = getWordbookWords2(favoriteWordbook.id) || [];
           const englishSet = new Set(wordbookWords.map((w2) => w2.english.toLowerCase()));
           if (isFav) {
-            formatAppLog("log", "at pages/index/index.vue:1029", "📍 取消收藏:", word.english);
+            logger$1.debug("Index", "取消收藏", { word: word.english });
             wordbookWords = wordbookWords.filter((w2) => w2.english.toLowerCase() !== word.english.toLowerCase());
             setWordbookWords2(favoriteWordbook.id, wordbookWords);
             word.is_favorite = false;
             favoriteWordsSet.delete(word.english.toLowerCase());
             uni.showToast({ title: "已取消收藏", icon: "success" });
           } else {
-            formatAppLog("log", "at pages/index/index.vue:1037", "📍 添加收藏:", word.english);
+            logger$1.debug("Index", "添加收藏", { word: word.english });
             if (!englishSet.has(word.english.toLowerCase())) {
               wordbookWords.push({
                 english: word.english,
@@ -7985,10 +8026,9 @@ ${i3}
             favoriteWordsSet.add(word.english.toLowerCase());
             uni.showToast({ title: "已收藏", icon: "success" });
           }
-          formatAppLog("log", "at pages/index/index.vue:1054", "✅ 收藏操作完成");
+          logger$1.info("Index", "收藏操作完成");
         } catch (e2) {
-          formatAppLog("error", "at pages/index/index.vue:1056", "❌ 切换收藏失败:", e2);
-          formatAppLog("error", "at pages/index/index.vue:1057", "❌ 错误堆栈:", e2.stack);
+          logger$1.error("Index", "切换收藏失败", e2);
           uni.showToast({ title: "操作失败: " + e2.message, icon: "none" });
         }
       };
@@ -8062,7 +8102,7 @@ ${i3}
       }, get getLatestSession() {
         return getLatestSession;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get errorHandler() {
         return errorHandler;
       }, get cleanupExpiredCaches() {
@@ -8509,7 +8549,7 @@ ${i3}
       this.apiUrl = "https://api.deepseek.com/v1/chat/completions";
     }
     async callAPI(prompt, model = "deepseek-chat") {
-      logger.debug("开始调用 API:", {
+      logger$1.debug("开始调用 API:", {
         model,
         prompt: prompt.substring(0, 50) + "...",
         url: this.apiUrl
@@ -8540,24 +8580,24 @@ ${i3}
           },
           success: (response) => {
             var _a;
-            logger.debug("API 响应状态:", response.statusCode);
-            logger.debug("API 响应数据:", response.data);
+            logger$1.debug("API 响应状态:", response.statusCode);
+            logger$1.debug("API 响应数据:", response.data);
             if (response.statusCode === 200) {
               const data = response.data;
               if (data && data.choices && data.choices[0] && data.choices[0].message) {
-                logger.debug("API 调用成功，返回内容:", data.choices[0].message.content.substring(0, 100) + "...");
+                logger$1.debug("API 调用成功，返回内容:", data.choices[0].message.content.substring(0, 100) + "...");
                 resolve(data.choices[0].message.content);
               } else {
-                logger.error("API 响应格式错误:", data);
+                logger$1.error("API 响应格式错误:", data);
                 resolve("错误: API 响应格式错误");
               }
             } else {
-              logger.error("API 报错:", response.data);
+              logger$1.error("API 报错:", response.data);
               resolve(`错误: ${((_a = response.data.error) == null ? void 0 : _a.message) || "未知错误"} (状态码: ${response.statusCode})`);
             }
           },
           fail: (error) => {
-            logger.error("网络请求失败:", error);
+            logger$1.error("网络请求失败:", error);
             resolve("网络请求失败，请检查网络连接或API密钥");
           }
         });
@@ -8859,7 +8899,7 @@ ${existingWordsStr}${examBlock}
   ] 
 }`;
       const result = await this.callAPI(prompt);
-      logger.debug("AI返回的原始内容:", result);
+      logger$1.debug("AI返回的原始内容:", result);
       try {
         let jsonStr = result;
         const jsonMatch = result.match(/\{[\s\S]*\}/);
@@ -8874,11 +8914,11 @@ ${existingWordsStr}${examBlock}
           try {
             parsed = JSON.parse(jsonStr);
           } catch (e2) {
-            logger.error("替换字段名后仍解析失败:", e2);
+            logger$1.error("替换字段名后仍解析失败:", e2);
             return { examples: [], synonyms: [] };
           }
         }
-        logger.debug("解析后的JSON:", parsed);
+        logger$1.debug("解析后的JSON:", parsed);
         const normalizedSynonyms = (parsed.synonyms || []).map((item) => ({
           synonym: item.synonym || item.word || "",
           chinese: item.chinese || item.translation || "",
@@ -8890,7 +8930,7 @@ ${existingWordsStr}${examBlock}
           synonyms: normalizedSynonyms
         };
       } catch (e2) {
-        logger.error("解析JSON失败:", e2);
+        logger$1.error("解析JSON失败:", e2);
       }
       return {
         examples: [],
@@ -9121,7 +9161,7 @@ ${existingWordsStr}${examBlock}
           }
           examSentences.value = Array.isArray(detail.examSentences) ? detail.examSentences : [];
         } catch (e2) {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:528", "[详情页-masterdb] 加载失败:", e2);
+          logger$1.error("[详情页-masterdb] 加载失败:", e2);
           word.value.chinese = "";
         } finally {
           detailHeavyLoading.value = false;
@@ -9234,7 +9274,7 @@ ${existingWordsStr}${examBlock}
         };
         loadExtraPanels();
         getWordFullDetail(english).then((detail) => {
-          formatAppLog("log", "at pages/word-detail/word-detail.vue:643", "[详情页] getWordFullDetail 回调执行, detail=", detail ? "有数据" : "null");
+          logger$1.debug("[详情页] getWordFullDetail 回调执行, detail=", detail ? "有数据" : "null");
           detailHeavyLoading.value = false;
           examStatsLoading.value = false;
           examSentencesLoading.value = false;
@@ -9277,7 +9317,7 @@ ${existingWordsStr}${examBlock}
             examStatsTags.value = detail.examStats && Array.isArray(detail.examStats.tags) ? detail.examStats.tags : [];
             if (examStatsTags.value.length > 0)
               word.value = { ...word.value, tags: examStatsTags.value.join(",") };
-            formatAppLog("log", "at pages/word-detail/word-detail.vue:681", "[详情页] 已赋值 examples.length=", examples.length);
+            logger$1.debug("[详情页] 已赋值 examples.length=", examples.length);
             const needPregen = examples.length === 0 && synonyms.length === 0 && antonyms.length === 0;
             if (needPregen) {
               getPregenWord(english).then((pregen) => {
@@ -9290,7 +9330,7 @@ ${existingWordsStr}${examBlock}
                   word.value = { ...word.value, examples: ex, synonyms: sy, antonyms: an2 };
                   if (!word.value.chinese && pregen.chinese)
                     word.value = { ...word.value, chinese: pregen.chinese };
-                  formatAppLog("log", "at pages/word-detail/word-detail.vue:693", "[详情页] 已从 pregen 补全 例句/近义/反义");
+                  logger$1.debug("[详情页] 已从 pregen 补全 例句/近义/反义");
                 }
               });
             }
@@ -9313,11 +9353,11 @@ ${existingWordsStr}${examBlock}
                 antonyms: an2
               };
               if (ex.length || sy.length || an2.length)
-                formatAppLog("log", "at pages/word-detail/word-detail.vue:714", "[详情页] 已从 pregen 补全(主库无该词)");
+                logger$1.debug("[详情页] 已从 pregen 补全(主库无该词)");
             });
           }
         }).catch((e2) => {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:718", "[详情页] getWordFullDetail catch", e2);
+          logger$1.error("[详情页] getWordFullDetail catch", e2);
           detailHeavyLoading.value = false;
           examStatsLoading.value = false;
           examSentencesLoading.value = false;
@@ -9328,11 +9368,11 @@ ${existingWordsStr}${examBlock}
       const loadWord = async () => {
         const id = wordId.value;
         const t0 = Date.now();
-        formatAppLog("log", "at pages/word-detail/word-detail.vue:729", "[详情-自用] 入口 id=", id, "t0=", t0);
+        logger$1.debug("[详情-自用] 入口 id=", id, "t0=", t0);
         clearExamFallbackTimer();
         const tLight = Date.now();
         const result = await db.getWordByIdLight(id);
-        formatAppLog("log", "at pages/word-detail/word-detail.vue:734", "[详情-自用] getWordByIdLight", Date.now() - tLight, "ms");
+        logger$1.debug("[详情-自用] getWordByIdLight", Date.now() - tLight, "ms");
         if (!result)
           return;
         if (result.chinese)
@@ -9343,7 +9383,7 @@ ${existingWordsStr}${examBlock}
         increaseRepeatCount();
         const tSameTag = Date.now();
         loadSameTagWords();
-        formatAppLog("log", "at pages/word-detail/word-detail.vue:745", "[详情-自用] loadSameTagWords 已触发(未await)", Date.now() - tSameTag, "ms");
+        logger$1.debug("[详情-自用] loadSameTagWords 已触发(未await)", Date.now() - tSameTag, "ms");
         const english = result.english;
         showAllExamSentences.value = false;
         examStatsLoading.value = true;
@@ -9354,7 +9394,7 @@ ${existingWordsStr}${examBlock}
         const tHeavy = Date.now();
         db.getWordByIdHeavy(id).then((heavy) => {
           var _a;
-          formatAppLog("log", "at pages/word-detail/word-detail.vue:757", "[详情-自用] getWordByIdHeavy", Date.now() - tHeavy, "ms");
+          logger$1.debug("[详情-自用] getWordByIdHeavy", Date.now() - tHeavy, "ms");
           if (!heavy || ((_a = word.value) == null ? void 0 : _a.id) !== id)
             return;
           word.value = {
@@ -9363,7 +9403,7 @@ ${existingWordsStr}${examBlock}
             synonyms: heavy.synonyms || [],
             antonyms: heavy.antonyms || []
           };
-          formatAppLog("log", "at pages/word-detail/word-detail.vue:765", "[详情-自用] 重型字段补全完成", Date.now() - t0, "ms");
+          logger$1.debug("[详情-自用] 重型字段补全完成", Date.now() - t0, "ms");
         });
         getWordFullDetail(english).then((detail) => {
           var _a;
@@ -9506,7 +9546,7 @@ ${existingWordsStr}${examBlock}
         word.value.tags = list.concat(tag).join(",");
       };
       onLoad((options) => {
-        formatAppLog("log", "at pages/word-detail/word-detail.vue:908", "onLoad 获取到的参数:", options);
+        logger$1.debug("onLoad 获取到的参数:", options);
         if (options && options.id) {
           wordId.value = options.id;
           loadWord();
@@ -9534,7 +9574,7 @@ ${existingWordsStr}${examBlock}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("WordDetail", "清理缓存失败", error);
+          logger$1.warn("WordDetail", "清理缓存失败", error);
         }
       });
       const save = async () => {
@@ -9625,7 +9665,7 @@ ${existingWordsStr}${examBlock}
             });
           }
         } catch (error) {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:1048", "生成例句失败:", error);
+          logger$1.error("生成例句失败:", error);
           example.value = "生成例句失败，请重试";
         }
       };
@@ -9665,7 +9705,7 @@ ${existingWordsStr}${examBlock}
             });
           }
         } catch (error) {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:1097", "生成近义词失败:", error);
+          logger$1.error("生成近义词失败:", error);
           uni.showToast({
             title: "生成近义词失败，请重试",
             duration: 2e3
@@ -9716,7 +9756,7 @@ ${existingWordsStr}${examBlock}
             uni.showToast({ title: "反义词已生成", duration: 2e3 });
           }
         } catch (error) {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:1149", "生成反义词失败:", error);
+          logger$1.error("生成反义词失败:", error);
           uni.showToast({ title: "生成反义词失败", duration: 2e3 });
         } finally {
           antonymLoading.value = false;
@@ -9833,7 +9873,7 @@ ${existingWordsStr}${examBlock}
       }, get saveWordExtra() {
         return saveWordExtra;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get errorHandler() {
         return errorHandler;
       }, get cleanupExpiredCaches() {
@@ -11348,7 +11388,7 @@ ${existingWordsStr}${examBlock}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("Review", "清理缓存失败", error);
+          logger$1.warn("Review", "清理缓存失败", error);
         }
       });
       const loadSettings = () => {
@@ -11429,7 +11469,7 @@ ${existingWordsStr}${examBlock}
             return !masteredSet.has(english);
           });
         } catch (e2) {
-          formatAppLog("warn", "at pages/review/review.vue:1243", "filterOutMasteredWords: 过滤已斩单词失败", e2);
+          logger$1.warn("filterOutMasteredWords: 过滤已斩单词失败", e2);
           return list;
         }
       };
@@ -11531,7 +11571,7 @@ ${existingWordsStr}${examBlock}
             await startReviewInternal(null);
           }
         } catch (e2) {
-          formatAppLog("error", "at pages/review/review.vue:1386", "startRecommendedReview 失败:", e2);
+          logger$1.error("startRecommendedReview 失败:", e2);
           uni.showToast({ title: "加载失败", icon: "none" });
         }
       };
@@ -11645,7 +11685,7 @@ ${existingWordsStr}${examBlock}
             }
           }
         } catch (e2) {
-          formatAppLog("error", "at pages/review/review.vue:1516", "获取当前单词释义失败:", e2);
+          logger$1.error("获取当前单词释义失败:", e2);
         }
         const distractorOptions = [];
         for (const d2 of distractors) {
@@ -11660,7 +11700,7 @@ ${existingWordsStr}${examBlock}
               };
             }
           } catch (e2) {
-            formatAppLog("error", "at pages/review/review.vue:1533", "获取干扰项释义失败:", e2);
+            logger$1.error("获取干扰项释义失败:", e2);
           }
           distractorOptions.push(option);
         }
@@ -11804,7 +11844,7 @@ ${existingWordsStr}${examBlock}
           const response = await aiService.callAPI(prompt);
           aiSentence.value = response.trim();
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1683", "生成例句失败:", error);
+          logger$1.error("生成例句失败:", error);
           aiSentence.value = "生成例句失败，请重试";
         } finally {
           isGenerating.value = false;
@@ -11885,7 +11925,7 @@ ${existingWordsStr}${examBlock}
             });
           }
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1778", "提交答案失败:", error);
+          logger$1.error("提交答案失败:", error);
           uni.showToast({
             title: "AI判卷失败，请重试",
             icon: "none"
@@ -12009,7 +12049,7 @@ ${existingWordsStr}${examBlock}
         uni.navigateTo({
           url: `/pages/word-detail/word-detail?english=${encodeURIComponent(currentWord.value.english)}&source=masterdb`,
           fail: (err) => {
-            formatAppLog("error", "at pages/review/review.vue:1922", "跳转失败:", err);
+            logger$1.error("跳转失败:", err);
             uni.showToast({ title: "跳转失败", icon: "none" });
           }
         });
@@ -12023,23 +12063,23 @@ ${existingWordsStr}${examBlock}
         try {
           const bookId = getCurrentBookId();
           if (bookId && bookId !== "self") {
-            formatAppLog("log", "at pages/review/review.vue:1941", "markCurrentWordAsMastered: 词书单词，存储到本地");
+            logger$1.debug("markCurrentWordAsMastered: 词书单词，存储到本地");
             addMasteredWordbookWord(bookId, currentWord.value.english);
           } else if (currentWord.value.id) {
-            formatAppLog("log", "at pages/review/review.vue:1945", "markCurrentWordAsMastered: 自用词库单词，使用id斩掉");
+            logger$1.debug("markCurrentWordAsMastered: 自用词库单词，使用id斩掉");
             await db.masterWord(currentWord.value.id);
           } else {
-            formatAppLog("log", "at pages/review/review.vue:1949", "markCurrentWordAsMastered: 其他情况，使用english斩掉");
+            logger$1.debug("markCurrentWordAsMastered: 其他情况，使用english斩掉");
             await db.masterWordByEnglish(currentWord.value.english);
           }
-          formatAppLog("log", "at pages/review/review.vue:1953", "markCurrentWordAsMastered: 斩掉成功");
+          logger$1.debug("markCurrentWordAsMastered: 斩掉成功");
           uni.showToast({ title: "已斩掉！", icon: "success" });
           showMasteredConfirm.value = false;
           setTimeout(() => {
             nextQuestion();
           }, 500);
         } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1962", "markCurrentWordAsMastered: 斩掉失败", error);
+          logger$1.error("markCurrentWordAsMastered: 斩掉失败", error);
           uni.showToast({ title: "斩掉失败: " + (error.message || "未知错误"), icon: "none" });
           showMasteredConfirm.value = false;
         }
@@ -12113,7 +12153,7 @@ ${existingWordsStr}${examBlock}
       }, get getWordProfile() {
         return getWordProfile;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get errorHandler() {
         return errorHandler;
       }, get cleanupExpiredCaches() {
@@ -13507,7 +13547,7 @@ ${existingWordsStr}${examBlock}
             }
           })();
         } catch (error) {
-          formatAppLog("error", "at pages/quick-add/quick-add.vue:268", "保存失败:", error);
+          logger$1.error("保存失败:", error);
           uni.showToast({ title: "保存失败，请重试", icon: "none", duration: 2e3 });
         } finally {
           isSaving.value = false;
@@ -13622,7 +13662,7 @@ ${existingWordsStr}${examBlock}
             }
           })();
         } catch (error) {
-          formatAppLog("error", "at pages/quick-add/quick-add.vue:384", "保存失败:", error);
+          logger$1.error("保存失败:", error);
           uni.showToast({ title: "保存失败，请重试", icon: "none", duration: 2e3 });
         } finally {
           isSaving.value = false;
@@ -13643,7 +13683,7 @@ ${existingWordsStr}${examBlock}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("QuickAdd", "清理缓存失败", error);
+          logger$1.warn("QuickAdd", "清理缓存失败", error);
         }
       });
       const __returned__ = { word, foundWord, isLoading, isSaving, goBack, cloudWordbooks, addToWordbook, addToWordbookOptions, addToWordbookIndex, addToWordbookLabel, onAddToWordbookChange, applyLocalSnapshotToWord, normalizeWordHeavyFields, get _searchTimer() {
@@ -13675,7 +13715,7 @@ ${existingWordsStr}${examBlock}
       }, get noteNewWordLearned() {
         return noteNewWordLearned;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get errorHandler() {
         return errorHandler;
       }, get cleanupExpiredCaches() {
@@ -13875,7 +13915,7 @@ ${existingWordsStr}${examBlock}
           }
         } catch (e2) {
           uni.hideLoading();
-          formatAppLog("error", "at pages/login/login.vue:158", "登录失败:", e2);
+          logger.error("登录失败:", e2);
           uni.showToast({
             title: "网络错误，请稍后重试",
             icon: "none"
@@ -14075,7 +14115,7 @@ ${existingWordsStr}${examBlock}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("My", "清理缓存失败", error);
+          logger$1.warn("My", "清理缓存失败", error);
         }
       });
       const checkLoginStatus = () => {
@@ -14104,7 +14144,7 @@ ${existingWordsStr}${examBlock}
           learningSnapshot.value = getLearningDashboard(currentPool, currentBook);
           studyStats.value = getStudyStats(currentPool, currentBook);
         } catch (e2) {
-          formatAppLog("error", "at pages/my/my.vue:379", "获取本地单词数失败:", e2);
+          logger$1.error("获取本地单词数失败:", e2);
           localWordCount.value = 0;
           totalViewCount.value = 0;
           learningSnapshot.value = { dueCount: 0, mistakeCount: 0, firstDayDue: 0 };
@@ -14161,7 +14201,7 @@ ${existingWordsStr}${examBlock}
             create_time: w2.create_time || (/* @__PURE__ */ new Date()).toISOString(),
             update_time: w2.update_time || (/* @__PURE__ */ new Date()).toISOString()
           }));
-          formatAppLog("log", "at pages/my/my.vue:444", "准备上传的轻量单词数据:", lightWords.length);
+          logger$1.debug("准备上传的轻量单词数据:", lightWords.length);
           const result = await _r.callFunction({
             name: "word-sync",
             data: {
@@ -14185,7 +14225,7 @@ ${existingWordsStr}${examBlock}
           }
         } catch (e2) {
           uni.hideLoading();
-          formatAppLog("error", "at pages/my/my.vue:473", "备份失败:", e2);
+          logger$1.error("备份失败:", e2);
           uni.showToast({
             title: "备份失败: " + e2.message,
             icon: "none"
@@ -14217,7 +14257,7 @@ ${existingWordsStr}${examBlock}
         }
         uni.showLoading({ title: "正在连接云端..." });
         try {
-          formatAppLog("log", "at pages/my/my.vue:510", "🚀 --- 开始向云端要数据, 账号 uid:", uid2);
+          logger$1.debug("🚀 --- 开始向云端要数据, 账号 uid:", uid2);
           const res = await _r.callFunction({
             name: "word-sync",
             data: {
@@ -14225,11 +14265,11 @@ ${existingWordsStr}${examBlock}
               uid: uid2
             }
           });
-          formatAppLog("log", "at pages/my/my.vue:520", "📦 云端返回的完整包裹:", res);
+          logger$1.debug("📦 云端返回的完整包裹:", res);
           if (res.result.code === 0) {
             const cloudWords = res.result.words || res.result.data || [];
             if (cloudWords && cloudWords.length > 0) {
-              formatAppLog("log", "at pages/my/my.vue:526", `✅ 成功拿到 ${cloudWords.length} 个单词！准备写入本地...`);
+              logger$1.debug(`✅ 成功拿到 ${cloudWords.length} 个单词！准备写入本地...`);
               const englishList = cloudWords.map((w2) => (w2.english || "").trim()).filter(Boolean);
               const briefMap = await getWordBriefBatch(englishList).catch(() => ({}));
               const restored = [];
@@ -14261,11 +14301,11 @@ ${existingWordsStr}${examBlock}
               uni.showToast({ title: "您的云端词库是空的", icon: "none" });
             }
           } else {
-            formatAppLog("error", "at pages/my/my.vue:563", "❌ 云端拒绝了请求:", res.result.msg);
+            logger$1.error("❌ 云端拒绝了请求:", res.result.msg);
             uni.showToast({ title: res.result.msg || "恢复失败", icon: "none" });
           }
         } catch (error) {
-          formatAppLog("error", "at pages/my/my.vue:568", "💥 前端请求崩溃:", error);
+          logger$1.error("💥 前端请求崩溃:", error);
           uni.showToast({ title: "网络通信异常", icon: "error" });
         } finally {
           uni.hideLoading();
@@ -14452,7 +14492,7 @@ ${existingWordsStr}${examBlock}
               existingSet.add(key);
               count++;
             } catch (e2) {
-              formatAppLog("warn", "at pages/my/my.vue:770", "跳过重复或无效:", w2.english, e2);
+              logger$1.warn("跳过重复或无效:", w2.english, e2);
             }
           }
           callback(null, count);
@@ -14481,9 +14521,9 @@ ${existingWordsStr}${examBlock}
               progress: progressData
             }
           });
-          formatAppLog("log", "at pages/my/my.vue:803", "学习进度已备份到云端");
+          logger$1.debug("学习进度已备份到云端");
         } catch (e2) {
-          formatAppLog("warn", "at pages/my/my.vue:805", "备份学习进度失败:", e2);
+          logger$1.warn("备份学习进度失败:", e2);
         }
       };
       const openAiSuggestion = async () => {
@@ -14529,7 +14569,7 @@ ${existingWordsStr}${examBlock}
       }, get getLatestSession() {
         return getLatestSession;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get cleanupExpiredCaches() {
         return cleanupExpiredCaches;
       } };
@@ -15025,7 +15065,7 @@ ${existingWordsStr}${examBlock}
             });
           }
         } catch (e2) {
-          formatAppLog("error", "at pages/my/edit-nickname.vue:62", "上传昵称到云端失败:", e2);
+          logger.error("上传昵称到云端失败:", e2);
         }
         uni.showToast({ title: "昵称已保存", duration: 1500 });
         setTimeout(() => uni.navigateBack(), 300);
@@ -15159,7 +15199,7 @@ ${existingWordsStr}${examBlock}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("WordbookList", "清理缓存失败", error);
+          logger$1.warn("WordbookList", "清理缓存失败", error);
         }
       });
       const __returned__ = { list, counts, currentId, showNewModal, newName, loadList, getCount, loadCounts, onSelect, onDelete, onConfirmNew, ref: vue.ref, computed: vue.computed, onMounted: vue.onMounted, get onUnload() {
@@ -15183,7 +15223,7 @@ ${existingWordsStr}${examBlock}
       }, get loadLocalWordbook() {
         return loadLocalWordbook;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get cleanupExpiredCaches() {
         return cleanupExpiredCaches;
       } };
@@ -15347,7 +15387,7 @@ ${existingWordsStr}${examBlock}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("Stats", "清理缓存失败", error);
+          logger$1.warn("Stats", "清理缓存失败", error);
         }
       });
       const __returned__ = { stats, trend, currentBookLabel, getWordPool, loadStats, getAccuracy, getBucketPercent, goToReview, ref: vue.ref, computed: vue.computed, get onShow() {
@@ -15367,7 +15407,7 @@ ${existingWordsStr}${examBlock}
       }, get getStudyStats() {
         return getStudyStats;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get cleanupExpiredCaches() {
         return cleanupExpiredCaches;
       } };
@@ -15662,7 +15702,7 @@ ${existingWordsStr}${examBlock}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("Mistakes", "清理缓存失败", error);
+          logger$1.warn("Mistakes", "清理缓存失败", error);
         }
       });
       const __returned__ = { mistakes, currentBookLabel, loadMistakes, formatTime, goToWrongReview, goToDetail, clearOne, ref: vue.ref, computed: vue.computed, get onShow() {
@@ -15676,7 +15716,7 @@ ${existingWordsStr}${examBlock}
       }, get clearMistake() {
         return clearMistake;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get cleanupExpiredCaches() {
         return cleanupExpiredCaches;
       } };
@@ -15784,7 +15824,7 @@ ${existingWordsStr}${examBlock}
             id: w2.id || `mastered_${index}_${w2.english}`
           }));
         } catch (e2) {
-          formatAppLog("error", "at pages/mastered-words/mastered-words.vue:82", "加载已斯单词本失败:", e2);
+          logger$1.error("加载已斯单词本失败:", e2);
           masteredWords.value = [];
         }
       };
@@ -15820,7 +15860,7 @@ ${existingWordsStr}${examBlock}
           unmasterItem.value = null;
           uni.showToast({ title: "已取消斯掉", icon: "success" });
         } catch (e2) {
-          formatAppLog("error", "at pages/mastered-words/mastered-words.vue:123", "取消斯掉失败:", e2);
+          logger$1.error("取消斯掉失败:", e2);
           uni.showToast({ title: "操作失败", icon: "none" });
         }
       };
@@ -15831,7 +15871,7 @@ ${existingWordsStr}${examBlock}
         try {
           cleanupExpiredCaches();
         } catch (error) {
-          logger.warn("MasteredWords", "清理缓存失败", error);
+          logger$1.warn("MasteredWords", "清理缓存失败", error);
         }
       });
       const __returned__ = { masteredWords, showUnmasterModal, unmasterItem, loadMasteredWords, formatDate, goToDetail, showUnmasterConfirm, confirmUnmaster, ref: vue.ref, get onShow() {
@@ -15843,7 +15883,7 @@ ${existingWordsStr}${examBlock}
       }, get setWordbookWords() {
         return setWordbookWords;
       }, get logger() {
-        return logger;
+        return logger$1;
       }, get cleanupExpiredCaches() {
         return cleanupExpiredCaches;
       } };
@@ -15982,13 +16022,13 @@ ${existingWordsStr}${examBlock}
   const _sfc_main = {
     name: "App",
     onLaunch() {
-      logger.info("App", "onLaunch 被触发");
+      logger$1.info("App", "onLaunch 被触发");
     },
     onShow() {
-      logger.info("App", "onShow 被触发");
+      logger$1.info("App", "onShow 被触发");
     },
     onHide() {
-      logger.info("App", "onHide 被触发");
+      logger$1.info("App", "onHide 被触发");
     }
   };
   function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {

@@ -59,7 +59,7 @@ const save = async () => {
       });
     }
   } catch (e) {
-    console.error('上传昵称到云端失败:', e);
+    logger.error('上传昵称到云端失败:', e);
     // 即使云端失败，本地也已保存，不影响用户体验
   }
   

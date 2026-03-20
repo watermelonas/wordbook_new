@@ -525,7 +525,7 @@ const loadWordFromMasterDb = async (english) => {
     examSentences.value = Array.isArray(detail.examSentences) ? detail.examSentences : [];
     
   } catch (e) {
-    console.error('[详情页-masterdb] 加载失败:', e);
+    logger.error('[详情页-masterdb] 加载失败:', e);
     word.value.chinese = '';
   } finally {
     detailHeavyLoading.value = false;
@@ -640,7 +640,7 @@ const loadWordFromWordbook = (english) => {
   loadExtraPanels();
 
   masterDb.getWordFullDetail(english).then((detail) => {
-    console.log('[详情页] getWordFullDetail 回调执行, detail=', detail ? '有数据' : 'null');
+    logger.debug('[详情页] getWordFullDetail 回调执行, detail=', detail ? '有数据' : 'null');
     detailHeavyLoading.value = false;
     examStatsLoading.value = false;
     examSentencesLoading.value = false;
@@ -678,7 +678,7 @@ const loadWordFromWordbook = (english) => {
       examSentences.value = Array.isArray(detail.examSentences) ? detail.examSentences : [];
       examStatsTags.value = (detail.examStats && Array.isArray(detail.examStats.tags)) ? detail.examStats.tags : [];
       if (examStatsTags.value.length > 0) word.value = { ...word.value, tags: examStatsTags.value.join(',') };
-      console.log('[详情页] 已赋值 examples.length=', examples.length);
+      logger.debug('[详情页] 已赋值 examples.length=', examples.length);
       // 主库可能只含真题数据、不含例句/近义/反义，用 pregen_data.db 补全
       const needPregen = examples.length === 0 && synonyms.length === 0 && antonyms.length === 0;
       if (needPregen) {
@@ -690,7 +690,7 @@ const loadWordFromWordbook = (english) => {
             const an = Array.isArray(pregen.antonyms) && pregen.antonyms.length > 0 ? pregen.antonyms : word.value.antonyms;
             word.value = { ...word.value, examples: ex, synonyms: sy, antonyms: an };
             if (!word.value.chinese && pregen.chinese) word.value = { ...word.value, chinese: pregen.chinese };
-            console.log('[详情页] 已从 pregen 补全 例句/近义/反义');
+            logger.debug('[详情页] 已从 pregen 补全 例句/近义/反义');
           }
         });
       }
@@ -711,11 +711,11 @@ const loadWordFromWordbook = (english) => {
           synonyms: sy,
           antonyms: an,
         };
-        if (ex.length || sy.length || an.length) console.log('[详情页] 已从 pregen 补全(主库无该词)');
+        if (ex.length || sy.length || an.length) logger.debug('[详情页] 已从 pregen 补全(主库无该词)');
       });
     }
   }).catch((e) => {
-    console.error('[详情页] getWordFullDetail catch', e);
+    logger.error('[详情页] getWordFullDetail catch', e);
     detailHeavyLoading.value = false;
     examStatsLoading.value = false;
     examSentencesLoading.value = false;
@@ -726,12 +726,12 @@ const loadWordFromWordbook = (english) => {
 const loadWord = async () => {
   const id = wordId.value;
   const t0 = Date.now();
-  console.log('[详情-自用] 入口 id=', id, 't0=', t0);
+  logger.debug('[详情-自用] 入口 id=', id, 't0=', t0);
   clearExamFallbackTimer();
 
   const tLight = Date.now();
   const result = await db.getWordByIdLight(id);
-  console.log('[详情-自用] getWordByIdLight', Date.now() - tLight, 'ms');
+  logger.debug('[详情-自用] getWordByIdLight', Date.now() - tLight, 'ms');
   if (!result) return;
   if (result.chinese) result.chinese = addNewlineBeforePos(result.chinese);
   word.value = result;
@@ -742,7 +742,7 @@ const loadWord = async () => {
 
   const tSameTag = Date.now();
   loadSameTagWords();
-  console.log('[详情-自用] loadSameTagWords 已触发(未await)', Date.now() - tSameTag, 'ms');
+  logger.debug('[详情-自用] loadSameTagWords 已触发(未await)', Date.now() - tSameTag, 'ms');
 
   const english = result.english;
   showAllExamSentences.value = false;
@@ -754,7 +754,7 @@ const loadWord = async () => {
 
   const tHeavy = Date.now();
   db.getWordByIdHeavy(id).then((heavy) => {
-    console.log('[详情-自用] getWordByIdHeavy', Date.now() - tHeavy, 'ms');
+    logger.debug('[详情-自用] getWordByIdHeavy', Date.now() - tHeavy, 'ms');
     if (!heavy || word.value?.id !== id) return;
     word.value = {
       ...word.value,
@@ -762,7 +762,7 @@ const loadWord = async () => {
       synonyms: heavy.synonyms || [],
       antonyms: heavy.antonyms || [],
     };
-    console.log('[详情-自用] 重型字段补全完成', Date.now() - t0, 'ms');
+    logger.debug('[详情-自用] 重型字段补全完成', Date.now() - t0, 'ms');
   });
 
   // 本地优先：若本地缺失释义/重型字段，则用主库/预生成库兜底补全
@@ -905,7 +905,7 @@ const applyTag = (tag) => {
 
 // 使用 onLoad 获取页面参数
 onLoad((options) => {
-  console.log('onLoad 获取到的参数:', options);
+  logger.debug('onLoad 获取到的参数:', options);
   if (options && options.id) {
     wordId.value = options.id;
     loadWord();
@@ -1045,7 +1045,7 @@ const generateExample = async () => {
       });
     }
   } catch (error) {
-    console.error('生成例句失败:', error);
+    logger.error('生成例句失败:', error);
     example.value = '生成例句失败，请重试';
   }
 };
@@ -1094,7 +1094,7 @@ const generateSynonyms = async () => {
       });
     }
   } catch (error) {
-    console.error('生成近义词失败:', error);
+    logger.error('生成近义词失败:', error);
     uni.showToast({
       title: '生成近义词失败，请重试',
       duration: 2000
@@ -1146,7 +1146,7 @@ const generateAntonyms = async () => {
       uni.showToast({ title: '反义词已生成', duration: 2000 });
     }
   } catch (error) {
-    console.error('生成反义词失败:', error);
+    logger.error('生成反义词失败:', error);
     uni.showToast({ title: '生成反义词失败', duration: 2000 });
   } finally {
     antonymLoading.value = false;

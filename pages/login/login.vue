@@ -155,7 +155,7 @@ const handleLogin = async () => {
     }
   } catch (e) {
     uni.hideLoading();
-    console.error('登录失败:', e);
+    logger.error('登录失败:', e);
     uni.showToast({
       title: '网络错误，请稍后重试',
       icon: 'none'

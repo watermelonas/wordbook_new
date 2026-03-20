@@ -79,7 +79,7 @@ const loadMasteredWords = async () => {
       id: w.id || `mastered_${index}_${w.english}`
     }));
   } catch (e) {
-    console.error('加载已斯单词本失败:', e);
+    logger.error('加载已斯单词本失败:', e);
     masteredWords.value = [];
   }
 };
@@ -120,7 +120,7 @@ const confirmUnmaster = async () => {
     unmasterItem.value = null;
     uni.showToast({ title: '已取消斯掉', icon: 'success' });
   } catch (e) {
-    console.error('取消斯掉失败:', e);
+    logger.error('取消斯掉失败:', e);
     uni.showToast({ title: '操作失败', icon: 'none' });
   }
 };
