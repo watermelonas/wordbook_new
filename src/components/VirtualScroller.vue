@@ -17,7 +17,7 @@
       <div
         v-for="(item, index) in visibleItems"
         :key="getItemKey(item, visibleStart + index)"
-        :style="{ height: itemHeight + 'px', overflow: 'hidden' }"
+        :style="{ minHeight: itemHeight + 'px' }"
         class="virtual-item"
       >
         <slot :item="item" :index="visibleStart + index" />

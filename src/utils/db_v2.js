@@ -15,6 +15,7 @@ import {
 import { createDatabaseAdapter } from './databaseAdapter.js';
 import { toJsonString, parseJsonSafe } from './sqlHelper.js';
 import { logger } from './errorHandler.js';
+import { dbToJs, dbRowsToJs, jsToDb } from './dataTransformer.js';
 
 const H5_STORAGE_KEY = 'wordbook_h5_words';
 const H5_MASTERED_KEY = 'wordbook_h5_mastered_words';
@@ -33,7 +34,9 @@ const parseWord = (item) => {
   if (Array.isArray(item.antonyms)) antonyms = item.antonyms;
   else if (item.antonyms) antonyms = parseJsonSafe(item.antonyms, []);
 
-  return { ...item, ...normalizeReviewFields(item), examples, synonyms, antonyms };
+  // 转换为 camelCase 并规范化字段
+  const jsWord = dbToJs(item);
+  return { ...jsWord, ...normalizeReviewFields(jsWord), examples, synonyms, antonyms };
 };
 
 /**

@@ -83,18 +83,18 @@ const normalizeProfile = (profile = {}) => {
     chinese: String(profile.chinese || '').trim(),
     importance: Number(profile.importance || 0) || 0,
     mastery: Number(profile.mastery || 0) || 0,
-    seen_count: Math.max(0, Number(profile.seen_count || 0)),
-    correct_count: Math.max(0, Number(profile.correct_count || 0)),
-    wrong_count: Math.max(0, Number(profile.wrong_count || 0)),
-    consecutive_correct: Math.max(0, Number(profile.consecutive_correct || 0)),
-    first_learned_at: profile.first_learned_at || '',
-    first_day_stage: Math.max(0, Number(profile.first_day_stage || 0)),
-    first_day_due_at: profile.first_day_due_at || '',
+    seenCount: Math.max(0, Number(profile.seenCount || profile.seen_count || 0)),
+    correctCount: Math.max(0, Number(profile.correctCount || profile.correct_count || 0)),
+    wrongCount: Math.max(0, Number(profile.wrongCount || profile.wrong_count || 0)),
+    consecutiveCorrect: Math.max(0, Number(profile.consecutiveCorrect || profile.consecutive_correct || 0)),
+    firstLearnedAt: profile.firstLearnedAt || profile.first_learned_at || '',
+    firstDayStage: Math.max(0, Number(profile.firstDayStage || profile.first_day_stage || 0)),
+    firstDayDueAt: profile.firstDayDueAt || profile.first_day_due_at || '',
     bookIds,
-    last_book_id: profile.last_book_id || '',
+    lastBookId: profile.lastBookId || profile.last_book_id || '',
     source: profile.source || '',
-    created_at: profile.created_at || '',
-    updated_at: profile.updated_at || '',
+    createdAt: profile.createdAt || profile.created_at || '',
+    updatedAt: profile.updatedAt || profile.updated_at || '',
     ...normalizeReviewFields(profile),
   };
   normalized.mastery = normalized.mastery || calculateMastery(normalized);
@@ -174,39 +174,41 @@ const setExtraMap = (map) => safeWrite(EXTRA_KEY, map || {});
  * 计算首日复习下一次到期时间
  */
 const getFirstDayNextDue = (profile, isCorrect, now = new Date()) => {
-  const stage = Math.max(0, Number(profile.first_day_stage || 0));
-  if (!profile.first_learned_at) {
+  const stage = Math.max(0, Number(profile.firstDayStage || profile.first_day_stage || 0));
+  const firstLearnedAt = profile.firstLearnedAt || profile.first_learned_at;
+
+  if (!firstLearnedAt) {
     return {
-      first_day_stage: 1,
-      first_day_due_at: new Date(now.getTime() + 10 * 60 * 1000).toISOString(),
-      first_learned_at: now.toISOString(),
+      firstDayStage: 1,
+      firstDayDueAt: new Date(now.getTime() + 10 * 60 * 1000).toISOString(),
+      firstLearnedAt: now.toISOString(),
     };
   }
   if (!isCorrect) {
     return {
-      first_day_stage: stage || 1,
-      first_day_due_at: new Date(now.getTime() + 20 * 60 * 1000).toISOString(),
-      first_learned_at: profile.first_learned_at,
+      firstDayStage: stage || 1,
+      firstDayDueAt: new Date(now.getTime() + 20 * 60 * 1000).toISOString(),
+      firstLearnedAt: firstLearnedAt,
     };
   }
   if (stage <= 1) {
     return {
-      first_day_stage: 2,
-      first_day_due_at: new Date(now.getTime() + 6 * 60 * 60 * 1000).toISOString(),
-      first_learned_at: profile.first_learned_at,
+      firstDayStage: 2,
+      firstDayDueAt: new Date(now.getTime() + 6 * 60 * 60 * 1000).toISOString(),
+      firstLearnedAt: firstLearnedAt,
     };
   }
   if (stage === 2) {
     return {
-      first_day_stage: 3,
-      first_day_due_at: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
-      first_learned_at: profile.first_learned_at,
+      firstDayStage: 3,
+      firstDayDueAt: new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+      firstLearnedAt: firstLearnedAt,
     };
   }
   return {
-    first_day_stage: 4,
-    first_day_due_at: '',
-    first_learned_at: profile.first_learned_at,
+    firstDayStage: 4,
+    firstDayDueAt: '',
+    firstLearnedAt: firstLearnedAt,
   };
 };
 
@@ -243,8 +245,8 @@ export const saveWordProfile = (word, patch = {}) => {
     ...patch,
     key,
     english: typeof word === 'string' ? word : (word.english || prev.english),
-    updated_at: new Date().toISOString(),
-    created_at: prev.created_at || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdAt: prev.createdAt || prev.created_at || new Date().toISOString(),
   });
 
   profiles[key] = next;
@@ -269,7 +271,7 @@ export const recordReviewOutcome = (word, isCorrect, options = {}) => {
       english: typeof word === 'string' ? word : word.english,
       chinese: typeof word === 'object' ? word.chinese : '',
       importance: typeof word === 'object' ? word.importance : 0,
-      created_at: now.toISOString(),
+      createdAt: now.toISOString(),
     });
 
     // 计算新的复习状态
@@ -280,18 +282,18 @@ export const recordReviewOutcome = (word, isCorrect, options = {}) => {
     const next = saveWordProfile(word, {
       ...reviewState,
       mastery: calculateMastery({ ...prev, ...reviewState }),
-      seen_count: prev.seen_count + 1,
-      correct_count: prev.correct_count + (isCorrect ? 1 : 0),
-      wrong_count: prev.wrong_count + (isCorrect ? 0 : 1),
-      consecutive_correct: isCorrect ? prev.consecutive_correct + 1 : 0,
+      seenCount: prev.seenCount + 1,
+      correctCount: prev.correctCount + (isCorrect ? 1 : 0),
+      wrongCount: prev.wrongCount + (isCorrect ? 0 : 1),
+      consecutiveCorrect: isCorrect ? prev.consecutiveCorrect + 1 : 0,
       chinese: (typeof word === 'object' && word.chinese) ? word.chinese : prev.chinese,
       importance: (typeof word === 'object' && word.importance != null) ? Number(word.importance) || 0 : prev.importance,
       bookIds: [...new Set([...(prev.bookIds || []), bookId])],
-      last_book_id: bookId,
+      lastBookId: bookId,
       source: options.source || 'review',
-      first_learned_at: firstDayState.first_learned_at,
-      first_day_stage: firstDayState.first_day_stage,
-      first_day_due_at: firstDayState.first_day_due_at,
+      firstLearnedAt: firstDayState.firstLearnedAt,
+      firstDayStage: firstDayState.firstDayStage,
+      firstDayDueAt: firstDayState.firstDayDueAt,
     });
 
     // 更新错误词记录
@@ -300,27 +302,27 @@ export const recordReviewOutcome = (word, isCorrect, options = {}) => {
       key,
       english: next.english,
       chinese: next.chinese,
-      error_count: 0,
-      recover_count: 0,
+      errorCount: 0,
+      recoverCount: 0,
       active: false,
       bookIds: [],
-      last_wrong_at: '',
+      lastWrongAt: '',
     };
 
     if (isCorrect) {
-      oldMistake.recover_count = Math.min(2, Number(oldMistake.recover_count || 0) + 1);
-      if (oldMistake.recover_count >= 2) oldMistake.active = false;
+      oldMistake.recoverCount = Math.min(2, Number(oldMistake.recoverCount || 0) + 1);
+      if (oldMistake.recoverCount >= 2) oldMistake.active = false;
     } else {
-      oldMistake.error_count = Number(oldMistake.error_count || 0) + 1;
-      oldMistake.recover_count = 0;
+      oldMistake.errorCount = Number(oldMistake.errorCount || 0) + 1;
+      oldMistake.recoverCount = 0;
       oldMistake.active = true;
-      oldMistake.last_wrong_at = now.toISOString();
+      oldMistake.lastWrongAt = now.toISOString();
       oldMistake.chinese = next.chinese || oldMistake.chinese;
     }
 
     oldMistake.english = next.english;
     oldMistake.bookIds = [...new Set([...(oldMistake.bookIds || []), bookId])];
-    oldMistake.updated_at = now.toISOString();
+    oldMistake.updatedAt = now.toISOString();
     mistakes[key] = oldMistake;
     setMistakesMap(mistakes);
 
@@ -375,9 +377,9 @@ export const getMistakeWords = (bookId = '', onlyActive = true) => {
     .filter((item) => !onlyActive || !!item.active)
     .filter((item) => !bookId || (Array.isArray(item.bookIds) && item.bookIds.includes(bookId)))
     .sort((a, b) => {
-      const diff = Number(b.error_count || 0) - Number(a.error_count || 0);
+      const diff = Number(b.errorCount || b.error_count || 0) - Number(a.errorCount || a.error_count || 0);
       if (diff !== 0) return diff;
-      return new Date(b.last_wrong_at || 0) - new Date(a.last_wrong_at || 0);
+      return new Date(b.lastWrongAt || b.last_wrong_at || 0) - new Date(a.lastWrongAt || a.last_wrong_at || 0);
     });
 };
 
@@ -489,7 +491,7 @@ export const getStudyStats = (words = [], bookId = '') => {
   const recentMap = {};
 
   history.forEach((item) => {
-    const key = getDayKey(item.created_at);
+    const key = getDayKey(item.createdAt || item.created_at);
     if (!recentMap[key]) {
       recentMap[key] = { day: key, reviewedCount: 0, correctCount: 0, wrongCount: 0 };
     }
@@ -526,7 +528,7 @@ export const getStudyStats = (words = [], bookId = '') => {
 export const getLatestSession = (bookId = '') => {
   const history = getHistoryList()
     .filter((item) => !bookId || item.bookId === bookId)
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    .sort((a, b) => new Date(b.createdAt || b.created_at) - new Date(a.createdAt || a.created_at));
   return history[0] || null;
 };
 

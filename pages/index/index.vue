@@ -105,31 +105,29 @@
       </view>
     </view>
 
-    <scroll-view
-      class="word-list"
-      scroll-y
+    <!-- 虚拟滚动列表 -->
+    <view v-if="filteredWords.length === 0" class="empty-state">
+      <view class="empty-text">{{ (searchText || (filterType !== 'none' && (filterValue !== '' && filterValue !== undefined))) ? '未找到匹配的单词' : '还没有单词，开始添加吧' }}</view>
+      <button v-if="!searchText && (filterType === 'none' || (filterValue === '' || filterValue === undefined))" class="empty-btn" @click="goToQuickAdd">添加单词</button>
+    </view>
+
+    <VirtualScroller
+      v-else
+      :items="filteredWords"
+      :item-height="120"
+      :container-height="containerHeight"
+      :buffer-size="5"
+      key-field="id"
       :refresher-enabled="true"
       :refresher-triggered="refreshing"
-      refresher-background="#FFF0F3"
-      refresher-default-style="none"
+      @scroll="handleVirtualScroll"
       @refresherrefresh="onListRefresh"
       @scrolltolower="onScrollToLower"
-      style="background-color: #FFF0F3;"
+      class="word-list"
     >
-      <!-- 自定义刷新指示器 -->
-      <view v-if="refreshing" class="custom-refresher">
-        <view class="refresher-spinner"></view>
-      </view>
-      <view v-if="filteredWords.length === 0" class="empty-state">
-        <view class="empty-text">{{ (searchText || (filterType !== 'none' && (filterValue !== '' && filterValue !== undefined))) ? '未找到匹配的单词' : '还没有单词，开始添加吧' }}</view>
-        <button v-if="!searchText && (filterType === 'none' || (filterValue === '' || filterValue === undefined))" class="empty-btn" @click="goToQuickAdd">添加单词</button>
-      </view>
-
-      <view class="word-list-container">
+      <template #default="{ item: word, index }">
         <view
           class="word-item"
-          v-for="word in visibleWords"
-          :key="word.id || ('wb-' + word.english)"
           :class="{ 'word-item-removing': removingWords[(word.english || '').trim().toLowerCase()] }"
         >
           <view class="word-content" @click="goToDetail(word)">
@@ -152,9 +150,8 @@
             <view v-else class="favorite-icon-empty"></view>
           </view>
         </view>
-      </view>
-      <view v-if="hasMoreWords" class="load-more" @click="onScrollToLower">加载更多</view>
-    </scroll-view>
+      </template>
+    </VirtualScroller>
 
     <!-- 底部导航 -->
     <view class="footer">
@@ -168,6 +165,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import VocalColorBlockSelector from '../../components/vocal-color-block-selector/vocal-color-block-selector.vue';
+import VirtualScroller from '../../src/components/VirtualScroller.vue';
 import { onLoad, onUnload, onShow, onReady } from '@dcloudio/uni-app';
 import db from '../../src/utils/db_v2';
 import * as pregenVocab from '../../src/utils/pregenVocab.js';
@@ -340,6 +338,7 @@ const SHOW_CHINESE_KEY = 'index_show_chinese_v1';
 const showChinese = ref(true);
 const learningSnapshot = ref({ dueCount: 0, mistakeCount: 0, firstDayDue: 0, overdueCount: 0 });
 const latestSession = ref(null);
+const containerHeight = ref(600); // 虚拟滚动容器高度
 
 // 排序选项
 const sortOptions = ['create_time', 'alphabetical', 'importance', 'repeat_count', 'view_count', 'exam_count'];
@@ -691,6 +690,23 @@ onShow(() => {
     setTimeout(() => reEnrichCurrentWordbook(), 350);
   }
   loadLearningSnapshot();
+
+  // 计算虚拟滚动容器高度
+  try {
+    uni.getSystemInfo({
+      success: (res) => {
+        // 屏幕高度 - 状态栏 - 工具栏 - 搜索栏 - 底部导航
+        const statusBarHeight = res.statusBarHeight || 0;
+        const toolbarHeight = 50; // 筛选排序 + 学习中心按钮
+        const searchBarHeight = 50; // 搜索栏
+        const footerHeight = 50; // 底部导航
+        const containerH = res.windowHeight - statusBarHeight - toolbarHeight - searchBarHeight - footerHeight;
+        containerHeight.value = Math.max(400, containerH);
+      }
+    });
+  } catch (e) {
+    logger.warn('index', '计算容器高度失败', e);
+  }
 });
 
 // onReady: reEnrichCurrentWordbook 已在 onShow 中调用，此处无需重复执行
@@ -754,6 +770,18 @@ const loadMoreSelfWords = async () => {
   // 仅补全新增页，保持滚动流畅并修复释义/标签缺失
   enrichWordbookListInBackground(normalizedNext, getCurrentWordbook(), words);
   hasMoreSelfWords.value = next.length >= PAGE_SIZE;
+};
+
+/**
+ * 虚拟滚动事件处理
+ */
+const handleVirtualScroll = (event) => {
+  logger.debug('index', '虚拟滚动', {
+    scrollTop: event.scrollTop,
+    visibleStart: event.visibleStart,
+    visibleEnd: event.visibleEnd,
+    visibleCount: event.visibleItems.length
+  });
 };
 
 const onScrollToLower = () => {
@@ -1170,6 +1198,14 @@ const onSearchConfirm = () => {
   background-color: #FFF0F3 !important;
 }
 
+:deep(.virtual-scroller-wrapper) {
+  background-color: #FFF0F3 !important;
+}
+
+:deep(.virtual-scroller) {
+  background-color: #FFF0F3 !important;
+}
+
 :deep(.uni-scroll-view) {
   background-color: #FFF0F3 !important;
 }
@@ -1256,15 +1292,12 @@ const onSearchConfirm = () => {
   box-sizing: border-box;
 
   /* 💡 核心：同时赋予所有空间属性平滑过渡 */
-  max-height: 500px;
   opacity: 1;
   transform: translateX(0) scale(1);
-  transition: max-height 0.4s linear,
-              margin 0.4s linear,
+  transition: margin 0.4s linear,
               padding 0.4s linear,
               opacity 0.3s ease-out,
               transform 0.3s ease-out;
-  overflow: hidden;
   display: flex;
   align-items: flex-start;
   gap: 12px;
