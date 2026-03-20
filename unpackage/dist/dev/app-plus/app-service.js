@@ -15666,6 +15666,7 @@ ${existingWordsStr}${examBlock}
     setup(__props, { expose: __expose }) {
       __expose();
       const mistakes = vue.ref([]);
+      const containerHeight = vue.ref(600);
       const currentBookLabel = vue.computed(() => getCurrentWordbook() || "当前词书");
       const loadMistakes = () => {
         mistakes.value = getMistakeWords(getCurrentWordbook(), true);
@@ -15695,8 +15696,27 @@ ${existingWordsStr}${examBlock}
         loadMistakes();
         uni.showToast({ title: "已从错词本移除", icon: "none" });
       };
+      const handleVirtualScroll = (event) => {
+        logger$1.debug("Mistakes", "虚拟滚动", {
+          scrollTop: event.scrollTop,
+          visibleCount: event.visibleItems.length
+        });
+      };
       onShow(() => {
         loadMistakes();
+        try {
+          uni.getSystemInfo({
+            success: (res) => {
+              const statusBarHeight = res.statusBarHeight || 0;
+              const topCardHeight = 80;
+              const footerHeight = 50;
+              const containerH = res.windowHeight - statusBarHeight - topCardHeight - footerHeight;
+              containerHeight.value = Math.max(400, containerH);
+            }
+          });
+        } catch (e2) {
+          logger$1.warn("Mistakes", "计算容器高度失败", e2);
+        }
       });
       onUnload(() => {
         try {
@@ -15705,11 +15725,11 @@ ${existingWordsStr}${examBlock}
           logger$1.warn("Mistakes", "清理缓存失败", error);
         }
       });
-      const __returned__ = { mistakes, currentBookLabel, loadMistakes, formatTime, goToWrongReview, goToDetail, clearOne, ref: vue.ref, computed: vue.computed, get onShow() {
+      const __returned__ = { mistakes, containerHeight, currentBookLabel, loadMistakes, formatTime, goToWrongReview, goToDetail, clearOne, handleVirtualScroll, ref: vue.ref, computed: vue.computed, get onShow() {
         return onShow;
       }, get onUnload() {
         return onUnload;
-      }, get getCurrentWordbook() {
+      }, VirtualScroller, get getCurrentWordbook() {
         return getCurrentWordbook;
       }, get getMistakeWords() {
         return getMistakeWords;
@@ -15748,15 +15768,18 @@ ${existingWordsStr}${examBlock}
         class: "card empty-card"
       }, [
         vue.createElementVNode("text", { class: "empty-text" }, "当前没有待消灭的错词")
-      ])) : vue.createCommentVNode("v-if", true),
-      (vue.openBlock(true), vue.createElementBlock(
-        vue.Fragment,
-        null,
-        vue.renderList($setup.mistakes, (item) => {
-          return vue.openBlock(), vue.createElementBlock("view", {
-            key: item.key,
-            class: "card mistake-card"
-          }, [
+      ])) : (vue.openBlock(), vue.createBlock($setup["VirtualScroller"], {
+        key: 1,
+        items: $setup.mistakes,
+        "item-height": 100,
+        "container-height": $setup.containerHeight,
+        "buffer-size": 5,
+        "key-field": "key",
+        onScroll: $setup.handleVirtualScroll,
+        class: "mistakes-list"
+      }, {
+        default: vue.withCtx(({ item, index }) => [
+          vue.createElementVNode("view", { class: "card mistake-card" }, [
             vue.createElementVNode("view", { class: "mistake-head" }, [
               vue.createElementVNode("view", null, [
                 vue.createElementVNode(
@@ -15801,11 +15824,11 @@ ${existingWordsStr}${examBlock}
                 onClick: ($event) => $setup.clearOne(item)
               }, "标记已掌握", 8, ["onClick"])
             ])
-          ]);
-        }),
-        128
-        /* KEYED_FRAGMENT */
-      ))
+          ])
+        ]),
+        _: 1
+        /* STABLE */
+      }, 8, ["items", "container-height"]))
     ]);
   }
   const PagesMistakesMistakes = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$2], ["__scopeId", "data-v-feb32a29"], ["__file", "E:/vocal/wordbook_new/pages/mistakes/mistakes.vue"]]);
@@ -15814,6 +15837,7 @@ ${existingWordsStr}${examBlock}
     setup(__props, { expose: __expose }) {
       __expose();
       const masteredWords = vue.ref([]);
+      const containerHeight = vue.ref(600);
       const showUnmasterModal = vue.ref(false);
       const unmasterItem = vue.ref(null);
       const loadMasteredWords = async () => {
@@ -15824,7 +15848,7 @@ ${existingWordsStr}${examBlock}
             id: w2.id || `mastered_${index}_${w2.english}`
           }));
         } catch (e2) {
-          logger$1.error("加载已斯单词本失败:", e2);
+          logger$1.error("MasteredWords", "加载已斯单词本失败", e2);
           masteredWords.value = [];
         }
       };
@@ -15839,6 +15863,12 @@ ${existingWordsStr}${examBlock}
           return;
         uni.navigateTo({
           url: `/pages/word-detail/word-detail?english=${encodeURIComponent(item.english)}`
+        });
+      };
+      const handleVirtualScroll = (event) => {
+        logger$1.debug("MasteredWords", "虚拟滚动", {
+          scrollTop: event.scrollTop,
+          visibleCount: event.visibleItems.length
         });
       };
       const showUnmasterConfirm = (item) => {
@@ -15866,6 +15896,21 @@ ${existingWordsStr}${examBlock}
       };
       onShow(() => {
         loadMasteredWords();
+        try {
+          uni.getSystemInfo({
+            success: (res) => {
+              const statusBarHeight = res.statusBarHeight || 0;
+              const headerHeight = 50;
+              const statCardHeight = 100;
+              const labelHeight = 40;
+              const footerHeight = 50;
+              const containerH = res.windowHeight - statusBarHeight - headerHeight - statCardHeight - labelHeight - footerHeight;
+              containerHeight.value = Math.max(400, containerH);
+            }
+          });
+        } catch (e2) {
+          logger$1.warn("MasteredWords", "计算容器高度失败", e2);
+        }
       });
       onUnload(() => {
         try {
@@ -15874,11 +15919,11 @@ ${existingWordsStr}${examBlock}
           logger$1.warn("MasteredWords", "清理缓存失败", error);
         }
       });
-      const __returned__ = { masteredWords, showUnmasterModal, unmasterItem, loadMasteredWords, formatDate, goToDetail, showUnmasterConfirm, confirmUnmaster, ref: vue.ref, get onShow() {
+      const __returned__ = { masteredWords, containerHeight, showUnmasterModal, unmasterItem, loadMasteredWords, formatDate, goToDetail, handleVirtualScroll, showUnmasterConfirm, confirmUnmaster, ref: vue.ref, get onShow() {
         return onShow;
       }, get onUnload() {
         return onUnload;
-      }, get getWordbookWords() {
+      }, VirtualScroller, get getWordbookWords() {
         return getWordbookWords;
       }, get setWordbookWords() {
         return setWordbookWords;
@@ -15925,14 +15970,17 @@ ${existingWordsStr}${examBlock}
           ])
         ]),
         vue.createElementVNode("view", { class: "section-label" }, "单词列表"),
-        (vue.openBlock(true), vue.createElementBlock(
-          vue.Fragment,
-          null,
-          vue.renderList($setup.masteredWords, (item) => {
-            return vue.openBlock(), vue.createElementBlock("view", {
-              key: item.id,
-              class: "card word-card"
-            }, [
+        vue.createVNode($setup["VirtualScroller"], {
+          items: $setup.masteredWords,
+          "item-height": 110,
+          "container-height": $setup.containerHeight,
+          "buffer-size": 5,
+          "key-field": "id",
+          onScroll: $setup.handleVirtualScroll,
+          class: "words-list"
+        }, {
+          default: vue.withCtx(({ item, index }) => [
+            vue.createElementVNode("view", { class: "card word-card" }, [
               vue.createElementVNode("view", { class: "word-header" }, [
                 vue.createElementVNode("view", { class: "word-info" }, [
                   vue.createElementVNode(
@@ -15968,11 +16016,11 @@ ${existingWordsStr}${examBlock}
                   onClick: ($event) => $setup.showUnmasterConfirm(item)
                 }, "取消斯掉", 8, ["onClick"])
               ])
-            ]);
-          }),
-          128
-          /* KEYED_FRAGMENT */
-        ))
+            ])
+          ]),
+          _: 1
+          /* STABLE */
+        }, 8, ["items", "container-height"])
       ])),
       $setup.showUnmasterModal ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 2,

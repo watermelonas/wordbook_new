@@ -1,9 +1,28 @@
 
+.virtual-scroller-wrapper[data-v-312fc91d] {
+  width: 100%;
+  overflow: hidden;
+}
+.virtual-scroller[data-v-312fc91d] {
+  width: 100%;
+  height: 100%;
+}
+.virtual-spacer-top[data-v-312fc91d],
+.virtual-spacer-bottom[data-v-312fc91d] {
+  pointer-events: none;
+}
+.virtual-item[data-v-312fc91d] {
+  width: 100%;
+}
+
+
 .container[data-v-feb32a29] {
   min-height: 100vh;
   background: #FFF8FB;
   padding: 16px;
   padding-top: 0;
+  display: flex;
+  flex-direction: column;
 }
 .status-bar[data-v-feb32a29] {
   min-height: 44px;
@@ -13,6 +32,20 @@
   background: #FFF8FB;
   margin: 0 -16px;
   padding: 0 16px;
+}
+.top-card[data-v-feb32a29] {
+  margin-bottom: 14px;
+}
+.mistakes-list[data-v-feb32a29] {
+  flex: 1;
+  min-height: 0;
+  padding: 0 -16px;
+}
+[data-v-feb32a29] .virtual-scroller-wrapper {
+  background-color: #FFF8FB !important;
+}
+[data-v-feb32a29] .virtual-scroller {
+  background-color: #FFF8FB !important;
 }
 .card[data-v-feb32a29] {
   background: #FFFFFF;

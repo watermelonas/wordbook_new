@@ -15,7 +15,7 @@
       <text class="empty-desc">开始复习，掌握更多单词吧</text>
     </view>
 
-    <!-- 统计卡片 -->
+    <!-- 统计卡片和单词列表 -->
     <view v-else class="content">
       <view class="section-label">已斯统计</view>
       <view class="card stat-card">
@@ -27,21 +27,33 @@
         </view>
       </view>
 
-      <!-- 单词列表 -->
+      <!-- 单词列表 - 使用虚拟滚动 -->
       <view class="section-label">单词列表</view>
-      <view v-for="item in masteredWords" :key="item.id" class="card word-card">
-        <view class="word-header">
-          <view class="word-info">
-            <text class="word-english">{{ item.english }}</text>
-            <text class="word-chinese">{{ item.chinese || '—' }}</text>
+      <VirtualScroller
+        :items="masteredWords"
+        :item-height="110"
+        :container-height="containerHeight"
+        :buffer-size="5"
+        key-field="id"
+        @scroll="handleVirtualScroll"
+        class="words-list"
+      >
+        <template #default="{ item, index }">
+          <view class="card word-card">
+            <view class="word-header">
+              <view class="word-info">
+                <text class="word-english">{{ item.english }}</text>
+                <text class="word-chinese">{{ item.chinese || '—' }}</text>
+              </view>
+              <view class="word-date">{{ formatDate(item.mastered_at) }}</view>
+            </view>
+            <view class="word-actions">
+              <button class="action-btn detail-btn" @click="goToDetail(item)">查看详情</button>
+              <button class="action-btn unmaster-btn" @click="showUnmasterConfirm(item)">取消斯掉</button>
+            </view>
           </view>
-          <view class="word-date">{{ formatDate(item.mastered_at) }}</view>
-        </view>
-        <view class="word-actions">
-          <button class="action-btn detail-btn" @click="goToDetail(item)">查看详情</button>
-          <button class="action-btn unmaster-btn" @click="showUnmasterConfirm(item)">取消斯掉</button>
-        </view>
-      </view>
+        </template>
+      </VirtualScroller>
     </view>
 
     <!-- 取消斯掉确认弹窗 -->
@@ -62,11 +74,13 @@
 <script setup>
 import { ref } from 'vue';
 import { onShow, onUnload } from '@dcloudio/uni-app';
+import VirtualScroller from '../../src/components/VirtualScroller.vue';
 import { getWordbookWords, setWordbookWords } from '../../src/utils/wordbookSource.js';
 import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 
 const masteredWords = ref([]);
+const containerHeight = ref(600);
 const showUnmasterModal = ref(false);
 const unmasterItem = ref(null);
 
@@ -79,7 +93,7 @@ const loadMasteredWords = async () => {
       id: w.id || `mastered_${index}_${w.english}`
     }));
   } catch (e) {
-    logger.error('加载已斯单词本失败:', e);
+    logger.error('MasteredWords', '加载已斯单词本失败', e);
     masteredWords.value = [];
   }
 };
@@ -94,6 +108,16 @@ const goToDetail = (item) => {
   if (!item.english) return;
   uni.navigateTo({
     url: `/pages/word-detail/word-detail?english=${encodeURIComponent(item.english)}`
+  });
+};
+
+/**
+ * 虚拟滚动事件处理
+ */
+const handleVirtualScroll = (event) => {
+  logger.debug('MasteredWords', '虚拟滚动', {
+    scrollTop: event.scrollTop,
+    visibleCount: event.visibleItems.length
   });
 };
 
@@ -127,6 +151,24 @@ const confirmUnmaster = async () => {
 
 onShow(() => {
   loadMasteredWords();
+
+  // 计算虚拟滚动容器高度
+  try {
+    uni.getSystemInfo({
+      success: (res) => {
+        // 屏幕高度 - 状态栏 - 顶部标题 - 统计卡片 - 单词列表标签 - 底部导航
+        const statusBarHeight = res.statusBarHeight || 0;
+        const headerHeight = 50; // 顶部标题
+        const statCardHeight = 100; // 统计卡片
+        const labelHeight = 40; // 单词列表标签
+        const footerHeight = 50; // 底部导航
+        const containerH = res.windowHeight - statusBarHeight - headerHeight - statCardHeight - labelHeight - footerHeight;
+        containerHeight.value = Math.max(400, containerH);
+      }
+    });
+  } catch (e) {
+    logger.warn('MasteredWords', '计算容器高度失败', e);
+  }
 });
 
 onUnload(() => {
@@ -144,6 +186,8 @@ onUnload(() => {
   background-color: #FFF8FB;
   padding: 20px;
   padding-top: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .status-bar {
@@ -154,6 +198,26 @@ onUnload(() => {
   background: #FFF8FB;
   margin: 0 -20px;
   padding: 0 20px;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.words-list {
+  flex: 1;
+  min-height: 0;
+}
+
+:deep(.virtual-scroller-wrapper) {
+  background-color: #FFF8FB !important;
+}
+
+:deep(.virtual-scroller) {
+  background-color: #FFF8FB !important;
 }
 
 .header {

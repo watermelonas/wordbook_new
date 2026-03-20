@@ -2,7 +2,7 @@
   <view class="container">
     <!-- 状态栏占位 -->
     <view class="status-bar"></view>
-    
+
     <view class="card top-card">
       <view>
         <view class="card-title">错词本</view>
@@ -15,34 +15,49 @@
       <text class="empty-text">当前没有待消灭的错词</text>
     </view>
 
-    <view v-for="item in mistakes" :key="item.key" class="card mistake-card">
-      <view class="mistake-head">
-        <view>
-          <text class="mistake-word">{{ item.english }}</text>
-          <text class="mistake-chi">{{ item.chinese || '—' }}</text>
+    <VirtualScroller
+      v-else
+      :items="mistakes"
+      :item-height="100"
+      :container-height="containerHeight"
+      :buffer-size="5"
+      key-field="key"
+      @scroll="handleVirtualScroll"
+      class="mistakes-list"
+    >
+      <template #default="{ item, index }">
+        <view class="card mistake-card">
+          <view class="mistake-head">
+            <view>
+              <text class="mistake-word">{{ item.english }}</text>
+              <text class="mistake-chi">{{ item.chinese || '—' }}</text>
+            </view>
+            <view class="mistake-meta">
+              <text>错 {{ item.error_count || 0 }} 次</text>
+              <text>{{ formatTime(item.last_wrong_at) }}</text>
+            </view>
+          </view>
+          <view class="action-row">
+            <button class="pill-btn secondary" @click="goToDetail(item)">查看详情</button>
+            <button class="pill-btn tertiary" @click="clearOne(item)">标记已掌握</button>
+          </view>
         </view>
-        <view class="mistake-meta">
-          <text>错 {{ item.error_count || 0 }} 次</text>
-          <text>{{ formatTime(item.last_wrong_at) }}</text>
-        </view>
-      </view>
-      <view class="action-row">
-        <button class="pill-btn secondary" @click="goToDetail(item)">查看详情</button>
-        <button class="pill-btn tertiary" @click="clearOne(item)">标记已掌握</button>
-      </view>
-    </view>
+      </template>
+    </VirtualScroller>
   </view>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
 import { onShow, onUnload } from '@dcloudio/uni-app';
+import VirtualScroller from '../../src/components/VirtualScroller.vue';
 import { getCurrentWordbook } from '../../src/utils/wordbookSource.js';
 import { getMistakeWords, clearMistake } from '../../src/utils/learningCenter_v2.js';
 import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 
 const mistakes = ref([]);
+const containerHeight = ref(600);
 const currentBookLabel = computed(() => getCurrentWordbook() || '当前词书');
 
 const loadMistakes = () => {
@@ -75,8 +90,34 @@ const clearOne = (item) => {
   uni.showToast({ title: '已从错词本移除', icon: 'none' });
 };
 
+/**
+ * 虚拟滚动事件处理
+ */
+const handleVirtualScroll = (event) => {
+  logger.debug('Mistakes', '虚拟滚动', {
+    scrollTop: event.scrollTop,
+    visibleCount: event.visibleItems.length
+  });
+};
+
 onShow(() => {
   loadMistakes();
+
+  // 计算虚拟滚动容器高度
+  try {
+    uni.getSystemInfo({
+      success: (res) => {
+        // 屏幕高度 - 状态栏 - 顶部卡片 - 底部导航
+        const statusBarHeight = res.statusBarHeight || 0;
+        const topCardHeight = 80; // 顶部卡片高度
+        const footerHeight = 50; // 底部导航
+        const containerH = res.windowHeight - statusBarHeight - topCardHeight - footerHeight;
+        containerHeight.value = Math.max(400, containerH);
+      }
+    });
+  } catch (e) {
+    logger.warn('Mistakes', '计算容器高度失败', e);
+  }
 });
 
 onUnload(() => {
@@ -95,6 +136,8 @@ onUnload(() => {
   background: #FFF8FB;
   padding: 16px;
   padding-top: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .status-bar {
@@ -105,6 +148,24 @@ onUnload(() => {
   background: #FFF8FB;
   margin: 0 -16px;
   padding: 0 16px;
+}
+
+.top-card {
+  margin-bottom: 14px;
+}
+
+.mistakes-list {
+  flex: 1;
+  min-height: 0;
+  padding: 0 -16px;
+}
+
+:deep(.virtual-scroller-wrapper) {
+  background-color: #FFF8FB !important;
+}
+
+:deep(.virtual-scroller) {
+  background-color: #FFF8FB !important;
 }
 
 .card {
