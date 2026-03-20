@@ -11,7 +11,17 @@
       "Bash(xargs wc:*)",
       "Bash(grep -E \"\\\\.js$\")",
       "Bash(wc -l ./src/utils/*.js)",
-      "Bash(python3 /tmp/replace_console.py)"
+      "Bash(python3 /tmp/replace_console.py)",
+      "Bash(sed -i 's/word\\\\.repeat_count/word.repeatCount/g' pages/index/index.vue)",
+      "Bash(sed -i 's/word\\\\.source_page/word.sourcePage/g' pages/index/index.vue)",
+      "Bash(sed -i 's/word\\\\.is_favorite/word.isFavorite/g' pages/index/index.vue)",
+      "Bash(sed -i 's/word\\\\.exam_count/word.examCount/g' pages/index/index.vue)",
+      "Bash(sed -i 's/word\\\\.create_time/word.createTime/g' pages/index/index.vue)",
+      "Bash(sed -i 's/a\\\\.repeat_count/a.repeatCount/g' pages/index/index.vue)",
+      "Bash(sed -i 's/b\\\\.repeat_count/b.repeatCount/g' pages/index/index.vue)",
+      "Bash(sed -i 's/a\\\\.view_count/a.viewCount/g' pages/index/index.vue)",
+      "Bash(sed -i 's/b\\\\.view_count/b.viewCount/g' pages/index/index.vue)",
+      "Bash(sed -i 's/a\\\\.create_time/a.createTime/g' pages/index/index.vue)"
     ],
     "additionalDirectories": [
       "E:\\vocal\\wordbook_new\\pages\\review"

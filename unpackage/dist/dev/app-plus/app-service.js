@@ -7256,20 +7256,21 @@ ${i3}
         if (masteredWordsSet.has((w2.english || "").trim().toLowerCase())) {
           return null;
         }
+        const normalized = dbToJs(w2);
         return {
-          ...w2,
-          id: w2.id || null,
-          english: (w2.english || "").trim(),
-          chinese: (w2.chinese || "").trim(),
-          repeat_count: w2.repeat_count ?? 1,
-          tags: (w2.tags || "").trim() ? String(w2.tags) : "",
-          source_page: w2.source_page || "",
-          year: w2.year || "",
-          importance: Number(w2.importance) || 0,
-          view_count: Number(w2.view_count) || 0,
-          exam_count: w2.exam_count != null ? Number(w2.exam_count) || 0 : void 0,
-          create_time: w2.create_time || "",
-          is_favorite: favoriteWordsSet.has((w2.english || "").trim().toLowerCase())
+          ...normalized,
+          id: normalized.id || null,
+          english: (normalized.english || "").trim(),
+          chinese: (normalized.chinese || "").trim(),
+          repeatCount: normalized.repeatCount ?? 1,
+          tags: (normalized.tags || "").trim() ? String(normalized.tags) : "",
+          sourcePage: normalized.sourcePage || "",
+          year: normalized.year || "",
+          importance: Number(normalized.importance) || 0,
+          viewCount: Number(normalized.viewCount) || 0,
+          examCount: normalized.examCount != null ? Number(normalized.examCount) || 0 : void 0,
+          createTime: normalized.createTime || "",
+          isFavorite: favoriteWordsSet.has((normalized.english || "").trim().toLowerCase())
         };
       }
       async function updateFavoriteWordsSet() {
@@ -7294,8 +7295,8 @@ ${i3}
       function getExamCountForSort(word) {
         if (!word)
           return 0;
-        if (word.exam_count != null)
-          return Number(word.exam_count) || 0;
+        if (word.examCount != null)
+          return Number(word.examCount) || 0;
         return 0;
       }
       function sortExternalWords(list) {
@@ -7308,12 +7309,12 @@ ${i3}
           if (type === "importance")
             return ((Number(a2.importance) || 0) - (Number(b2.importance) || 0)) * order;
           if (type === "repeat_count")
-            return ((Number(a2.repeat_count) || 0) - (Number(b2.repeat_count) || 0)) * order;
+            return ((Number(a2.repeatCount) || 0) - (Number(b2.repeatCount) || 0)) * order;
           if (type === "view_count")
-            return ((Number(a2.view_count) || 0) - (Number(b2.view_count) || 0)) * order;
+            return ((Number(a2.viewCount) || 0) - (Number(b2.viewCount) || 0)) * order;
           if (type === "exam_count")
             return (getExamCountForSort(a2) - getExamCountForSort(b2)) * order;
-          return (new Date(a2.create_time || 0) - new Date(b2.create_time || 0)) * order;
+          return (new Date(a2.createTime || 0) - new Date(b2.createTime || 0)) * order;
         });
         return arr;
       }
@@ -7982,7 +7983,7 @@ ${i3}
         }
       };
       const isFavorited = (word) => {
-        return word && word.is_favorite === true;
+        return word && word.isFavorite === true;
       };
       const toggleFavorite = async (word) => {
         if (!word || !word.english) {
@@ -7990,7 +7991,7 @@ ${i3}
           return;
         }
         try {
-          const isFav = word.is_favorite === true;
+          const isFav = word.isFavorite === true;
           logger$1.debug("Index", "切换收藏", { word: word.english, isFavorite: isFav });
           const { getCloudWordbooks: getCloudWordbooks2, setWordbookWords: setWordbookWords2, getWordbookWords: getWordbookWords2, addCloudWordbook: addCloudWordbook2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
           let wordbooks = getCloudWordbooks2();
@@ -8006,7 +8007,7 @@ ${i3}
             logger$1.debug("Index", "取消收藏", { word: word.english });
             wordbookWords = wordbookWords.filter((w2) => w2.english.toLowerCase() !== word.english.toLowerCase());
             setWordbookWords2(favoriteWordbook.id, wordbookWords);
-            word.is_favorite = false;
+            word.isFavorite = false;
             favoriteWordsSet.delete(word.english.toLowerCase());
             uni.showToast({ title: "已取消收藏", icon: "success" });
           } else {
@@ -8015,14 +8016,14 @@ ${i3}
               wordbookWords.push({
                 english: word.english,
                 chinese: word.chinese || "",
-                source_page: word.source_page || "",
+                source_page: word.sourcePage || "",
                 year: word.year || "",
                 tags: word.tags || "",
                 importance: word.importance || 0
               });
               setWordbookWords2(favoriteWordbook.id, wordbookWords);
             }
-            word.is_favorite = true;
+            word.isFavorite = true;
             favoriteWordsSet.add(word.english.toLowerCase());
             uni.showToast({ title: "已收藏", icon: "success" });
           }
@@ -8035,8 +8036,8 @@ ${i3}
       const getExamCount = (word) => {
         if (!word || !word.english)
           return 0;
-        if (word.exam_count != null)
-          return Number(word.exam_count) || 0;
+        if (word.examCount != null)
+          return Number(word.examCount) || 0;
         return 0;
       };
       const onSearchInput = (e2) => {
@@ -8109,6 +8110,8 @@ ${i3}
         return cleanupExpiredCaches;
       }, get getMasteredWordbookWords() {
         return getMasteredWordbookWords;
+      }, get dbToJs() {
+        return dbToJs;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -8417,7 +8420,7 @@ ${i3}
                   vue.createElementVNode(
                     "span",
                     { class: "repeat-count" },
-                    "学习" + vue.toDisplayString(word.repeat_count || 0) + "次",
+                    "学习" + vue.toDisplayString(word.repeatCount || 0) + "次",
                     1
                     /* TEXT */
                   )
@@ -8432,16 +8435,16 @@ ${i3}
                   1
                   /* TEXT */
                 )) : vue.createCommentVNode("v-if", true),
-                word.source_page || word.year || $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock("view", {
+                word.sourcePage || word.year || $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock("view", {
                   key: 1,
                   class: "word-source"
                 }, [
-                  word.source_page || word.year ? (vue.openBlock(), vue.createElementBlock(
+                  word.sourcePage || word.year ? (vue.openBlock(), vue.createElementBlock(
                     vue.Fragment,
                     { key: 0 },
                     [
                       vue.createTextVNode(
-                        "页码 " + vue.toDisplayString(word.source_page || "-") + " · 年份 " + vue.toDisplayString(word.year || "-"),
+                        "页码 " + vue.toDisplayString(word.sourcePage || "-") + " · 年份 " + vue.toDisplayString(word.year || "-"),
                         1
                         /* TEXT */
                       )
@@ -8512,7 +8515,7 @@ ${i3}
                 class: "word-favorite-btn",
                 onClick: vue.withModifiers(($event) => $setup.toggleFavorite(word), ["stop"])
               }, [
-                word.is_favorite ? (vue.openBlock(), vue.createElementBlock("view", {
+                word.isFavorite ? (vue.openBlock(), vue.createElementBlock("view", {
                   key: 0,
                   class: "favorite-icon-filled"
                 })) : (vue.openBlock(), vue.createElementBlock("view", {

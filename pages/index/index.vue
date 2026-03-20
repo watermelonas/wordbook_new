@@ -131,10 +131,10 @@
           :class="{ 'word-item-removing': removingWords[(word.english || '').trim().toLowerCase()] }"
         >
           <view class="word-content" @click="goToDetail(word)">
-            <view class="word-english">{{ word.english }} <span class="repeat-count">学习{{ word.repeat_count || 0 }}次</span></view>
+            <view class="word-english">{{ word.english }} <span class="repeat-count">学习{{ word.repeatCount || 0 }}次</span></view>
             <view v-if="showChinese" class="word-chinese">{{ word.chinese || '—' }}</view>
-            <view v-if="(word.source_page || word.year) || getExamCount(word)" class="word-source">
-              <template v-if="word.source_page || word.year">页码 {{ word.source_page || '-' }} · 年份 {{ word.year || '-' }}</template>
+            <view v-if="(word.sourcePage || word.year) || getExamCount(word)" class="word-source">
+              <template v-if="word.sourcePage || word.year">页码 {{ word.sourcePage || '-' }} · 年份 {{ word.year || '-' }}</template>
               <text v-if="getExamCount(word)" class="word-exam-count">真题 {{ getExamCount(word) }}次</text>
             </view>
             <view v-if="word.tags" class="word-tags">
@@ -146,7 +146,7 @@
           </view>
           <view class="word-action-btn" @click.stop="masterWord(word)">斩</view>
           <view class="word-favorite-btn" @click.stop="toggleFavorite(word)">
-            <view v-if="word.is_favorite" class="favorite-icon-filled"></view>
+            <view v-if="word.isFavorite" class="favorite-icon-filled"></view>
             <view v-else class="favorite-icon-empty"></view>
           </view>
         </view>
@@ -175,6 +175,7 @@ import { getLearningDashboard, getLatestSession } from '../../src/utils/learning
 import { logger, errorHandler } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 import { getMasteredWordbookWords } from '../../src/utils/masteredWordbookWords.js';
+import { dbToJs } from '../../src/utils/dataTransformer.js';
 
 const ENRICH_CHUNK = 200;
 const FIRST_SCREEN_COUNT = 120;
@@ -207,20 +208,24 @@ function normalizeListWord(w) {
     return null;
   }
 
+  // 使用 dataTransformer 转换数据库字段为 camelCase
+  const normalized = dbToJs(w);
+
+  // 添加额外的处理
   return {
-    ...w,
-    id: w.id || null,
-    english: (w.english || '').trim(),
-    chinese: (w.chinese || '').trim(),
-    repeat_count: w.repeat_count ?? 1,
-    tags: (w.tags || '').trim() ? String(w.tags) : '',
-    source_page: w.source_page || '',
-    year: w.year || '',
-    importance: Number(w.importance) || 0,
-    view_count: Number(w.view_count) || 0,
-    exam_count: w.exam_count != null ? (Number(w.exam_count) || 0) : undefined,
-    create_time: w.create_time || '',
-    is_favorite: favoriteWordsSet.has((w.english || '').trim().toLowerCase()),
+    ...normalized,
+    id: normalized.id || null,
+    english: (normalized.english || '').trim(),
+    chinese: (normalized.chinese || '').trim(),
+    repeatCount: normalized.repeatCount ?? 1,
+    tags: (normalized.tags || '').trim() ? String(normalized.tags) : '',
+    sourcePage: normalized.sourcePage || '',
+    year: normalized.year || '',
+    importance: Number(normalized.importance) || 0,
+    viewCount: Number(normalized.viewCount) || 0,
+    examCount: normalized.examCount != null ? (Number(normalized.examCount) || 0) : undefined,
+    createTime: normalized.createTime || '',
+    isFavorite: favoriteWordsSet.has((normalized.english || '').trim().toLowerCase()),
   };
 }
 
@@ -249,7 +254,7 @@ async function updateMasteredWordsSet() {
 
 function getExamCountForSort(word) {
   if (!word) return 0;
-  if (word.exam_count != null) return Number(word.exam_count) || 0;
+  if (word.examCount != null) return Number(word.examCount) || 0;
   return 0;
 }
 
@@ -260,10 +265,10 @@ function sortExternalWords(list) {
   arr.sort((a, b) => {
     if (type === 'alphabetical') return ((a.english || '').localeCompare(b.english || '')) * order;
     if (type === 'importance') return (((Number(a.importance) || 0) - (Number(b.importance) || 0))) * order;
-    if (type === 'repeat_count') return (((Number(a.repeat_count) || 0) - (Number(b.repeat_count) || 0))) * order;
-    if (type === 'view_count') return (((Number(a.view_count) || 0) - (Number(b.view_count) || 0))) * order;
+    if (type === 'repeat_count') return (((Number(a.repeatCount) || 0) - (Number(b.repeatCount) || 0))) * order;
+    if (type === 'view_count') return (((Number(a.viewCount) || 0) - (Number(b.viewCount) || 0))) * order;
     if (type === 'exam_count') return ((getExamCountForSort(a) - getExamCountForSort(b))) * order;
-    return ((new Date(a.create_time || 0) - new Date(b.create_time || 0))) * order;
+    return ((new Date(a.createTime || 0) - new Date(b.createTime || 0))) * order;
   });
   return arr;
 }
@@ -993,7 +998,7 @@ const uploadProgressToCloud = async () => {
 
 /** 检查单词是否已收藏 */
 const isFavorited = (word) => {
-  return word && word.is_favorite === true;
+  return word && word.isFavorite === true;
 };
 
 /** 切换收藏状态 */
@@ -1004,7 +1009,7 @@ const toggleFavorite = async (word) => {
   }
 
   try {
-    const isFav = word.is_favorite === true;
+    const isFav = word.isFavorite === true;
     logger.debug('Index', '切换收藏', { word: word.english, isFavorite: isFav });
 
     // 获取或创建收藏单词本
@@ -1029,7 +1034,7 @@ const toggleFavorite = async (word) => {
       logger.debug('Index', '取消收藏', { word: word.english });
       wordbookWords = wordbookWords.filter(w => w.english.toLowerCase() !== word.english.toLowerCase());
       setWordbookWords(favoriteWordbook.id, wordbookWords);
-      word.is_favorite = false;
+      word.isFavorite = false;
       favoriteWordsSet.delete(word.english.toLowerCase());
       uni.showToast({ title: '已取消收藏', icon: 'success' });
     } else {
@@ -1039,14 +1044,14 @@ const toggleFavorite = async (word) => {
         wordbookWords.push({
           english: word.english,
           chinese: word.chinese || '',
-          source_page: word.source_page || '',
+          source_page: word.sourcePage || '',
           year: word.year || '',
           tags: word.tags || '',
           importance: word.importance || 0
         });
         setWordbookWords(favoriteWordbook.id, wordbookWords);
       }
-      word.is_favorite = true;
+      word.isFavorite = true;
       favoriteWordsSet.add(word.english.toLowerCase());
       uni.showToast({ title: '已收藏', icon: 'success' });
     }
@@ -1061,7 +1066,7 @@ const toggleFavorite = async (word) => {
 /** 真题总出现次数（单词本词用 CSV 的 exam_count，自用词用静态数据） */
 const getExamCount = (word) => {
   if (!word || !word.english) return 0;
-  if (word.exam_count != null) return Number(word.exam_count) || 0;
+  if (word.examCount != null) return Number(word.examCount) || 0;
   return 0;
 };
 
