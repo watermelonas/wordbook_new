@@ -532,7 +532,7 @@ if (uni.restoreGlobal) {
   function I(e2) {
     return e2 && "string" == typeof e2 ? JSON.parse(e2) : e2;
   }
-  const S = true, b = "app", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), T = b, C = I('{"address":["127.0.0.1","192.168.1.222"],"servePort":7001,"debugPort":9001,"initialLaunchType":"remote","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), P = I('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
+  const S = true, b = "app", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), T = b, C = I('{"address":["127.0.0.1","192.168.1.222"],"servePort":7000,"debugPort":9000,"initialLaunchType":"remote","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), P = I('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
   let E = "";
   try {
     E = "__UNI__9F3DDBE";
@@ -3507,7 +3507,8 @@ ${i3}
     INITIAL_DIFFICULTY: 0.35,
     // 新单词的初始稳定性（天数）
     // 值越高，遗忘越慢
-    INITIAL_STABILITY: 0.6,
+    // 改进：从 0.6 天改为 1.5 天，给用户更多消化时间
+    INITIAL_STABILITY: 1.5,
     // 新单词的初始可检索性（0.05-0.99）
     // 表示能回忆起单词的概率
     INITIAL_RETRIEVABILITY: 0.92,
@@ -3522,7 +3523,8 @@ ${i3}
     DIFFICULTY_MAX: 0.98,
     // ============ 稳定性调整参数 ============
     // 答对时稳定性的增长系数
-    STABILITY_GROWTH_FACTOR: 1.55,
+    // 改进：从 1.55 改为 1.8，加快学习进度
+    STABILITY_GROWTH_FACTOR: 1.8,
     // 答对时难度对稳定性的影响系数
     STABILITY_DIFFICULTY_FACTOR: 0.65,
     // 答对时可检索性对稳定性的影响系数
@@ -3541,7 +3543,8 @@ ${i3}
     // 复习间隔的最大值（天）
     INTERVAL_MAX_DAYS: 90,
     // 答错后的复习间隔（天）
-    INTERVAL_ON_WRONG: 0.125,
+    // 改进：从 0.125 天改为 0.04 天（1 小时），立即复习
+    INTERVAL_ON_WRONG: 0.04,
     // ============ 可检索性参数 ============
     // 答对时的可检索性
     RETRIEVABILITY_ON_CORRECT: 0.97,
@@ -3586,7 +3589,10 @@ ${i3}
     // 掌握度分层：薄弱（%）
     MASTERY_WEAK_THRESHOLD: 40,
     // 掌握度分层：危险（%）
-    MASTERY_DANGER_THRESHOLD: 0
+    MASTERY_DANGER_THRESHOLD: 0,
+    // ============ 算法版本 ============
+    // 用于追踪算法版本，升级时用于数据迁移
+    ALGORITHM_VERSION: 2
   };
   const REVIEW_DEFAULTS = {
     difficulty_score: FSRS_CONFIG.INITIAL_DIFFICULTY,
@@ -3668,7 +3674,13 @@ ${i3}
         stability * (FSRS_CONFIG.STABILITY_DECAY_FACTOR + (1 - difficulty) * 0.22)
       );
       lapseCount += 1;
-      intervalDays = FSRS_CONFIG.INTERVAL_ON_WRONG;
+      if (lapseCount === 1) {
+        intervalDays = 0.04;
+      } else if (lapseCount === 2) {
+        intervalDays = 0.125;
+      } else {
+        intervalDays = 0.25;
+      }
       retrievability = FSRS_CONFIG.RETRIEVABILITY_ON_WRONG;
     }
     return {
@@ -3691,9 +3703,13 @@ ${i3}
     const dueAt = fields.next_review_time ? new Date(fields.next_review_time) : new Date(word.last_reviewed_at || word.update_time || word.create_time || now.toISOString());
     const overdueDays = Math.max(0, (now - dueAt) / (1e3 * 60 * 60 * 24));
     const importance = clamp(Number(word.importance) || FSRS_CONFIG.IMPORTANCE_DEFAULT, FSRS_CONFIG.IMPORTANCE_MIN, FSRS_CONFIG.IMPORTANCE_MAX);
-    let score = forgetProb * 55 + fields.difficulty_score * 22 + overdueDays * 12 + fields.lapse_count * 8 + importance * 4;
+    let score = overdueDays * 35 + // 超期天数权重提升到 35%（从 12%）
+    forgetProb * 35 + // 遗忘概率权重降低到 35%（从 55%）
+    fields.difficulty_score * 20 + // 难度权重提升到 20%（从 22%）
+    fields.lapse_count * 7 + // 错误次数权重降低到 7%（从 8%）
+    importance * 3;
     if (hardMode) {
-      score += forgetProb * 10 + fields.difficulty_score * 8 + (word.error_rate || 0) * 0.2;
+      score += fields.difficulty_score * 15 + fields.lapse_count * 10;
     }
     return {
       score,
@@ -3705,11 +3721,12 @@ ${i3}
     const fields = normalizeReviewFields(word);
     const elapsedDays = computeElapsedDays(word, /* @__PURE__ */ new Date());
     const forgetProbability = 1 - computeRetrievabilityByStability(fields.stability, elapsedDays);
-    return clamp(
-      Math.round((1 - (forgetProbability * 0.72 + fields.difficulty_score * 0.28)) * 100),
-      1,
-      99
-    );
+    const baseMastery = (1 - (forgetProbability * 0.6 + fields.difficulty_score * 0.4)) * 100;
+    const totalReviews = fields.correctCount + fields.wrongCount;
+    const correctRate = totalReviews > 0 ? fields.correctCount / totalReviews * 100 : 50;
+    const consecutiveBonus = Math.min(fields.consecutiveCorrect * 2, 15);
+    const mastery = baseMastery * 0.5 + correctRate * 0.3 + consecutiveBonus * 0.15 + (100 - fields.difficulty_score * 100) * 0.05;
+    return clamp(Math.round(mastery), 1, 99);
   };
   const sqlLiteral = (value) => {
     if (value === null || value === void 0)
@@ -4086,6 +4103,36 @@ ${i3}
     };
   }
   disableConsoleInProduction();
+  function validateWord(word) {
+    if (!word || typeof word !== "object") {
+      throw new Error("单词必须是对象");
+    }
+    if (!word.english || typeof word.english !== "string") {
+      throw new Error("单词英文不能为空");
+    }
+    if (word.english.trim().length === 0) {
+      throw new Error("单词英文不能为空字符串");
+    }
+    if (word.chinese && typeof word.chinese !== "string") {
+      throw new Error("单词中文必须是字符串");
+    }
+    if (word.importance !== void 0 && word.importance !== null) {
+      const imp = Number(word.importance);
+      if (isNaN(imp) || imp < 0 || imp > 5) {
+        throw new Error("重要性必须是 0-5 之间的数字");
+      }
+    }
+    return true;
+  }
+  function validateWordId(id) {
+    if (!id) {
+      throw new Error("单词 ID 不能为空");
+    }
+    if (typeof id !== "string" && typeof id !== "number") {
+      throw new Error("单词 ID 必须是字符串或数字");
+    }
+    return true;
+  }
   const H5_STORAGE_KEY$1 = "wordbook_h5_words";
   const getH5Words$1 = () => {
     try {
@@ -4117,8 +4164,12 @@ ${i3}
       return Promise.resolve(getH5Words$1());
     }
     async addWord(word) {
-      if (!word.english)
-        throw new Error("单词不能为空");
+      try {
+        validateWord(word);
+      } catch (e2) {
+        logger$1.error("H5Adapter", "单词验证失败", e2);
+        throw e2;
+      }
       const words = getH5Words$1();
       const newWord = {
         ...word,
@@ -4135,8 +4186,15 @@ ${i3}
       return Promise.resolve(newWord);
     }
     async updateWord(id, updates) {
-      if (!id)
-        throw new Error("无效 id");
+      try {
+        validateWordId(id);
+        if (updates && typeof updates === "object") {
+          validateWord({ ...updates, english: updates.english || "temp" });
+        }
+      } catch (e2) {
+        logger$1.error("H5Adapter", "更新参数验证失败", e2);
+        throw e2;
+      }
       const words = getH5Words$1();
       const idx = words.findIndex((w2) => w2.id === id);
       if (idx === -1)
@@ -4443,7 +4501,40 @@ ${i3}
   }
   const H5_STORAGE_KEY = "wordbook_h5_words";
   const H5_MASTERED_KEY = "wordbook_h5_mastered_words";
+  class WordParseCache {
+    constructor(maxSize = 1e3) {
+      this.maxSize = maxSize;
+      this.cache = /* @__PURE__ */ new Map();
+    }
+    get(key) {
+      if (!this.cache.has(key))
+        return null;
+      const value = this.cache.get(key);
+      this.cache.delete(key);
+      this.cache.set(key, value);
+      return value;
+    }
+    set(key, value) {
+      if (this.cache.has(key)) {
+        this.cache.delete(key);
+      } else if (this.cache.size >= this.maxSize) {
+        const firstKey = this.cache.keys().next().value;
+        this.cache.delete(firstKey);
+      }
+      this.cache.set(key, value);
+    }
+    clear() {
+      this.cache.clear();
+    }
+  }
+  const wordParseCache = new WordParseCache(1e3);
   const parseWord = (item) => {
+    const cacheKey = item.id || item.english;
+    if (cacheKey) {
+      const cached = wordParseCache.get(cacheKey);
+      if (cached)
+        return cached;
+    }
     let examples = [], synonyms = [], antonyms = [];
     if (Array.isArray(item.examples))
       examples = item.examples;
@@ -4458,7 +4549,12 @@ ${i3}
     else if (item.antonyms)
       antonyms = parseJsonSafe$1(item.antonyms, []);
     const jsWord = dbToJs(item);
-    return { ...jsWord, ...normalizeReviewFields(jsWord), examples, synonyms, antonyms };
+    const parsed = { ...jsWord, ...normalizeReviewFields(jsWord), examples, synonyms, antonyms };
+    Object.freeze(parsed);
+    if (cacheKey) {
+      wordParseCache.set(cacheKey, parsed);
+    }
+    return parsed;
   };
   const getH5Words = () => {
     try {
@@ -6427,7 +6523,7 @@ ${i3}
       }
       const hasMastered = list.some((o2) => o2.id === "mastered");
       if (!hasMastered) {
-        list = [...list, { id: "mastered", name: "已斯单词本" }];
+        list = [...list, { id: "mastered", name: "已斩单词本" }];
         uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(list));
       }
       const hasFavorite = list.some((o2) => o2.id === "favorite");
@@ -6437,7 +6533,7 @@ ${i3}
       }
       return list;
     } catch (_2) {
-      return [{ id: SELF_ID, name: "自用单词" }, { id: "mastered", name: "已斯单词本" }, { id: "favorite", name: "收藏" }];
+      return [{ id: SELF_ID, name: "自用单词" }, { id: "mastered", name: "已斩单词本" }, { id: "favorite", name: "收藏" }];
     }
   }
   function setCloudWordbooks(list) {
@@ -6447,7 +6543,7 @@ ${i3}
     if (!hasSelf) {
       finalList = [{ id: SELF_ID, name: "自用单词" }, ...finalList];
     }
-    finalList.push({ id: "mastered", name: "已斯单词本" });
+    finalList.push({ id: "mastered", name: "已斩单词本" });
     finalList.push({ id: "favorite", name: "收藏" });
     uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(finalList));
   }
@@ -6458,7 +6554,7 @@ ${i3}
     setCloudWordbooks([
       { id: SELF_ID, name: "自用单词" },
       ...list,
-      { id: "mastered", name: "已斯单词本" },
+      { id: "mastered", name: "已斩单词本" },
       { id: "favorite", name: "收藏" }
     ]);
     return id;
@@ -6927,6 +7023,10 @@ ${i3}
     const key = normalizeWordKey(word);
     if (!key)
       return null;
+    if (typeof isCorrect !== "boolean") {
+      logger$1.error("learningCenter", "复习结果验证失败：isCorrect 必须是布尔值", { isCorrect });
+      throw new Error("isCorrect 必须是布尔值");
+    }
     const now = /* @__PURE__ */ new Date();
     const bookId = options.bookId || getCurrentWordbook() || "self";
     try {
@@ -6978,7 +7078,9 @@ ${i3}
         oldMistake.chinese = next.chinese || oldMistake.chinese;
       }
       oldMistake.english = next.english;
-      oldMistake.bookIds = [.../* @__PURE__ */ new Set([...oldMistake.bookIds || [], bookId])];
+      if (bookId) {
+        oldMistake.bookIds = [.../* @__PURE__ */ new Set([...oldMistake.bookIds || [], bookId])];
+      }
       oldMistake.updatedAt = now.toISOString();
       mistakes[key] = oldMistake;
       setMistakesMap(mistakes);
@@ -7016,7 +7118,11 @@ ${i3}
   };
   const getMistakeWords = (bookId = "", onlyActive = true) => {
     const mistakes = Object.values(getMistakesMap() || {});
-    return mistakes.filter((item) => item && item.english).filter((item) => !onlyActive || !!item.active).filter((item) => !bookId || Array.isArray(item.bookIds) && item.bookIds.includes(bookId)).sort((a2, b2) => {
+    return mistakes.filter((item) => item && item.english).filter((item) => !onlyActive || !!item.active).filter((item) => {
+      if (!bookId)
+        return true;
+      return Array.isArray(item.bookIds) && item.bookIds.includes(bookId);
+    }).sort((a2, b2) => {
       const diff = Number(b2.errorCount || b2.error_count || 0) - Number(a2.errorCount || a2.error_count || 0);
       if (diff !== 0)
         return diff;
@@ -7756,6 +7862,9 @@ ${i3}
         } catch (_2) {
         }
         plusReadyHandler = null;
+        allExternalWords = [];
+        allExternalWordsLength.value = 0;
+        words.value = [];
         try {
           cleanupExpiredCaches();
         } catch (error) {
@@ -7948,9 +8057,9 @@ ${i3}
               mastered: masteredList
             }
           });
-          logger$1.info("Index", "已斯单词列表已上传到云端");
+          logger$1.info("Index", "已斩单词列表已上传到云端");
         } catch (e2) {
-          logger$1.warn("Index", "上传已斯单词列表失败", e2);
+          logger$1.warn("Index", "上传已斩单词列表失败", e2);
         }
       };
       const uploadProgressToCloud = async () => {
@@ -8404,7 +8513,9 @@ ${i3}
           vue.createElementVNode(
             "view",
             {
-              class: vue.normalizeClass(["word-item", { "word-item-removing": $setup.removingWords[(word.english || "").trim().toLowerCase()] }])
+              class: vue.normalizeClass(["word-item", {
+                "word-item-removing": $setup.removingWords[(word.english || "").trim().toLowerCase()]
+              }])
             },
             [
               vue.createElementVNode("view", {
@@ -11543,17 +11654,23 @@ ${existingWordsStr}${examBlock}
       };
       const startExtraRound20 = async () => startReviewInternal(20);
       const onPrimaryStartClick = async () => {
-        if (isTodayTargetDone.value) {
-          await startExtraRound20();
-          return;
+        uni.showLoading({ title: "加载中...", mask: true });
+        try {
+          if (isTodayTargetDone.value) {
+            await startExtraRound20();
+          } else {
+            await startReview();
+          }
+        } finally {
+          uni.hideLoading();
         }
-        await startReview();
       };
       const startRecommendedReview = async () => {
-        const dailyTarget = Number(settings.value.count || 20);
-        getCurrentBookId();
-        const newWordsNeeded = Math.max(0, dailyTarget - todayReviewed.value);
+        uni.showLoading({ title: "加载中...", mask: true });
         try {
+          const dailyTarget = Number(settings.value.count || 20);
+          const bookId = getCurrentBookId();
+          const newWordsNeeded = Math.max(0, dailyTarget - todayReviewed.value);
           let allWords = [];
           if (isSelfWordbook()) {
             allWords = await db.getAllWords();
@@ -11576,6 +11693,8 @@ ${existingWordsStr}${examBlock}
         } catch (e2) {
           logger$1.error("startRecommendedReview 失败:", e2);
           uni.showToast({ title: "加载失败", icon: "none" });
+        } finally {
+          uni.hideLoading();
         }
       };
       const startPresetReview = async (preset) => {
@@ -15851,7 +15970,7 @@ ${existingWordsStr}${examBlock}
             id: w2.id || `mastered_${index}_${w2.english}`
           }));
         } catch (e2) {
-          logger$1.error("MasteredWords", "加载已斯单词本失败", e2);
+          logger$1.error("MasteredWords", "加载已斩单词本失败", e2);
           masteredWords.value = [];
         }
       };
@@ -15944,7 +16063,7 @@ ${existingWordsStr}${examBlock}
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("view", { class: "status-bar" }),
       vue.createElementVNode("view", { class: "header" }, [
-        vue.createElementVNode("view", { class: "header-title" }, "已斯单词本")
+        vue.createElementVNode("view", { class: "header-title" }, "已斩单词本")
       ]),
       $setup.masteredWords.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
@@ -15957,7 +16076,7 @@ ${existingWordsStr}${examBlock}
         key: 1,
         class: "content"
       }, [
-        vue.createElementVNode("view", { class: "section-label" }, "已斯统计"),
+        vue.createElementVNode("view", { class: "section-label" }, "已斩统计"),
         vue.createElementVNode("view", { class: "card stat-card" }, [
           vue.createElementVNode("view", { class: "stat-row" }, [
             vue.createElementVNode("view", { class: "stat-item" }, [

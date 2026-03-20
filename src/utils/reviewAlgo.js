@@ -257,8 +257,18 @@ export const scheduleReviewState = (word = {}, isCorrect = false, now = new Date
     // 错误次数增加
     lapseCount += 1;
 
-    // 复习间隔变短：需要尽快复习
-    intervalDays = FSRS_CONFIG.INTERVAL_ON_WRONG;
+    // 改进的复习间隔计算：答错时应该立即复习
+    // 根据错误次数调整间隔：
+    // - 第 1 次错误：1 小时（0.04 天）
+    // - 第 2 次错误：3 小时（0.125 天）
+    // - 第 3+ 次错误：6 小时（0.25 天）
+    if (lapseCount === 1) {
+      intervalDays = 0.04;  // 1 小时
+    } else if (lapseCount === 2) {
+      intervalDays = 0.125;  // 3 小时
+    } else {
+      intervalDays = 0.25;  // 6 小时
+    }
 
     // 可检索性设为低值
     retrievability = FSRS_CONFIG.RETRIEVABILITY_ON_WRONG;
@@ -275,6 +285,37 @@ export const scheduleReviewState = (word = {}, isCorrect = false, now = new Date
     next_review_time: new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1000).toISOString(),
     last_reviewed_at: now.toISOString(),
   };
+};
+
+/**
+ * ✅ 验证算法输出的合理性
+ */
+export const validateScheduleOutput = (output) => {
+  if (!output || typeof output !== 'object') {
+    throw new Error('算法输出必须是对象');
+  }
+
+  // 验证复习间隔
+  if (typeof output.interval_days !== 'number' || output.interval_days < 0) {
+    throw new Error('复习间隔必须是非负数');
+  }
+
+  // 验证下次复习时间
+  if (typeof output.next_review_time !== 'string') {
+    throw new Error('下次复习时间必须是字符串');
+  }
+
+  // 验证难度分数
+  if (typeof output.difficulty_score !== 'number' || output.difficulty_score < FSRS_CONFIG.DIFFICULTY_MIN || output.difficulty_score > FSRS_CONFIG.DIFFICULTY_MAX) {
+    throw new Error(`难度分数必须在 ${FSRS_CONFIG.DIFFICULTY_MIN}-${FSRS_CONFIG.DIFFICULTY_MAX} 之间`);
+  }
+
+  // 验证稳定性
+  if (typeof output.stability !== 'number' || output.stability < FSRS_CONFIG.STABILITY_MIN) {
+    throw new Error(`稳定性必须 >= ${FSRS_CONFIG.STABILITY_MIN}`);
+  }
+
+  return true;
 };
 
 /**
@@ -316,17 +357,24 @@ export const calculateReviewPriority = (word = {}, hardMode = false) => {
   const overdueDays = Math.max(0, (now - dueAt) / (1000 * 60 * 60 * 24));
   const importance = clamp(Number(word.importance) || FSRS_CONFIG.IMPORTANCE_DEFAULT, FSRS_CONFIG.IMPORTANCE_MIN, FSRS_CONFIG.IMPORTANCE_MAX);
 
-  // 基础优先级分数
-  let score =
-    forgetProb * 55 +
-    fields.difficulty_score * 22 +
-    overdueDays * 12 +
-    fields.lapse_count * 8 +
-    importance * 4;
+  // 改进的优先级分数计算（更科学的权重分配）
+  // 权重分配：
+  // - 逾期天数 (35%)：超期单词最优先复习
+  // - 遗忘概率 (35%)：容易遗忘的单词需要加强
+  // - 难度系数 (20%)：难单词需要更多复习
+  // - 错误次数 (7%)：经常出错的单词需要加强
+  // - 重要性 (3%)：重要单词优先复习
 
-  // 困难模式：增加遗忘概率和难度的权重
+  let score =
+    overdueDays * 35 +      // 超期天数权重提升到 35%（从 12%）
+    forgetProb * 35 +       // 遗忘概率权重降低到 35%（从 55%）
+    fields.difficulty_score * 20 +  // 难度权重提升到 20%（从 22%）
+    fields.lapse_count * 7 +        // 错误次数权重降低到 7%（从 8%）
+    importance * 3;                 // 重要性权重降低到 3%（从 4%）
+
+  // 困难模式：增加难度和错误次数的权重
   if (hardMode) {
-    score += forgetProb * 10 + fields.difficulty_score * 8 + (word.error_rate || 0) * 0.2;
+    score += fields.difficulty_score * 15 + fields.lapse_count * 10;
   }
 
   return {
@@ -363,11 +411,26 @@ export const calculateMastery = (word = {}) => {
   const elapsedDays = computeElapsedDays(word, new Date());
   const forgetProbability = 1 - computeRetrievabilityByStability(fields.stability, elapsedDays);
 
-  // 掌握度公式：(1 - (遗忘概率 * 0.72 + 难度 * 0.28)) * 100
-  // 范围限制在 1-99
-  return clamp(
-    Math.round((1 - (forgetProbability * 0.72 + fields.difficulty_score * 0.28)) * 100),
-    1,
-    99
-  );
+  // 改进的掌握度计算公式
+  // 综合考虑多个因素：
+  // 1. 遗忘概率（50%权重）：基础因素
+  // 2. 正确率（30%权重）：实际表现
+  // 3. 连续正确次数（15%权重）：学习动力
+  // 4. 难度系数（5%权重）：难度调整
+
+  // 基础掌握度（基于遗忘概率和难度）
+  const baseMastery = (1 - (forgetProbability * 0.6 + fields.difficulty_score * 0.4)) * 100;
+
+  // 正确率因素
+  const totalReviews = fields.correctCount + fields.wrongCount;
+  const correctRate = totalReviews > 0 ? (fields.correctCount / totalReviews) * 100 : 50;
+
+  // 连续正确因素（鼓励用户保持连续正确）
+  // 每连续正确 1 次，加 2 分，最多加 15 分
+  const consecutiveBonus = Math.min(fields.consecutiveCorrect * 2, 15);
+
+  // 综合掌握度
+  const mastery = baseMastery * 0.5 + correctRate * 0.3 + consecutiveBonus * 0.15 + (100 - fields.difficulty_score * 100) * 0.05;
+
+  return clamp(Math.round(mastery), 1, 99);
 };

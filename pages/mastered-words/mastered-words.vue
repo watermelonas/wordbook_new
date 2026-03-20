@@ -5,7 +5,7 @@
 
     <!-- 顶部标题 -->
     <view class="header">
-      <view class="header-title">已斯单词本</view>
+      <view class="header-title">已斩单词本</view>
     </view>
 
     <!-- 空状态 -->
@@ -17,7 +17,7 @@
 
     <!-- 统计卡片和单词列表 -->
     <view v-else class="content">
-      <view class="section-label">已斯统计</view>
+      <view class="section-label">已斩统计</view>
       <view class="card stat-card">
         <view class="stat-row">
           <view class="stat-item">
@@ -86,14 +86,14 @@ const unmasterItem = ref(null);
 
 const loadMasteredWords = async () => {
   try {
-    // 加载"已斯"单词本
+    // 加载"已斩"单词本
     const words = getWordbookWords('mastered') || [];
     masteredWords.value = words.map((w, index) => ({
       ...w,
       id: w.id || `mastered_${index}_${w.english}`
     }));
   } catch (e) {
-    logger.error('MasteredWords', '加载已斯单词本失败', e);
+    logger.error('MasteredWords', '加载已斩单词本失败', e);
     masteredWords.value = [];
   }
 };
@@ -130,7 +130,7 @@ const confirmUnmaster = async () => {
   if (!unmasterItem.value) return;
 
   try {
-    // 从"已斯"单词本中移除
+    // 从"已斩"单词本中移除
     const words = getWordbookWords('mastered') || [];
     const filtered = words.filter(w => (w.english || '').trim().toLowerCase() !== (unmasterItem.value.english || '').trim().toLowerCase());
     setWordbookWords('mastered', filtered);

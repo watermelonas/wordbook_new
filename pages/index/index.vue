@@ -128,7 +128,9 @@
       <template #default="{ item: word, index }">
         <view
           class="word-item"
-          :class="{ 'word-item-removing': removingWords[(word.english || '').trim().toLowerCase()] }"
+          :class="{
+            'word-item-removing': removingWords[(word.english || '').trim().toLowerCase()]
+          }"
         >
           <view class="word-content" @click="goToDetail(word)">
             <view class="word-english">{{ word.english }} <span class="repeat-count">学习{{ word.repeatCount || 0 }}次</span></view>
@@ -276,7 +278,7 @@ function sortExternalWords(list) {
 function filterExternalWords(list) {
   let out = [...list];
 
-  // 过滤已斯的单词
+  // 过滤已斩的单词
   const bookId = getCurrentWordbook();
   const masteredSet = getMasteredWordbookWords(bookId);
   out = out.filter((w) => {
@@ -306,7 +308,7 @@ function filterExternalWords(list) {
 
 function prepareExternalWords(raw) {
   const normalized = (raw || []).map(normalizeListWord).filter(Boolean);
-  // 💡 过滤掉全局已斯的单词
+  // 💡 过滤掉全局已斩的单词
   const masteredWords = getMasteredWordbookWords();
   const masteredSet = new Set(Array.from(masteredWords).map(w => (w || '').trim().toLowerCase()));
   const filtered = normalized.filter(w => !masteredSet.has((w.english || '').trim().toLowerCase()));
@@ -334,7 +336,7 @@ const displayLimit = ref(200);
 const showFilter = ref(false);
 const showLearningCenter = ref(false);
 const words = ref([]);
-const removingWords = ref({});
+const removingWords = ref({}); // ✅ 只保留这一个标记
 const refreshing = ref(false);
 const sortBy = ref('create_time');
 const filterType = ref('none'); // 筛选类型：none, year, page
@@ -638,9 +640,11 @@ const loadWords = async () => {
       raw = getWordbookWords(book) || [];
     }
 
+    // ✅ 优化：只保存全量数据用于分页，不放入 ref
     allExternalWords = prepareExternalWords(raw);
     allExternalWordsLength.value = allExternalWords.length;
 
+    // ✅ 优化：只加载首页数据（200 词）
     words.value = allExternalWords.slice(0, PAGE_SIZE);
     displayLimit.value = PAGE_SIZE;
     logger.debug('Index', '极速加载：外部单词本首屏成功', { count: words.value.length, total: allExternalWords.length });
@@ -726,6 +730,11 @@ onUnload(() => {
     }
   } catch (_) {}
   plusReadyHandler = null;
+
+  // ✅ 优化：页面卸载时清理全量缓存，释放内存
+  allExternalWords = [];
+  allExternalWordsLength.value = 0;
+  words.value = [];
 
   // 清理过期缓存
   try {
@@ -886,7 +895,7 @@ const masterWord = async (word) => {
 
   const wordKey = (word.english || '').trim().toLowerCase();
 
-  // 1. 立即标记该单词，触发 CSS 渐隐和折叠动画
+  // 1. 立即标记该单词，触发 CSS 折叠动画
   removingWords.value[wordKey] = true;
 
   try {
@@ -897,10 +906,10 @@ const masterWord = async (word) => {
       const { getWordbookWords, setWordbookWords } = await import('../../src/utils/wordbookSource.js');
       const { addGlobalMasteredWord } = await import('../../src/utils/masteredWordbookWords.js');
 
-      // 添加到全局已斯列表（这样在所有词书中都不会出现）
+      // 添加到全局已斩列表（这样在所有词书中都不会出现）
       addGlobalMasteredWord(word.english);
 
-      // 添加到已斯词书列表
+      // 添加到已斩词书列表
       const masteredWords = getWordbookWords('mastered') || [];
       const exists = masteredWords.some(w => (w.english || '').trim().toLowerCase() === (word.english || '').trim().toLowerCase());
       if (!exists) {
@@ -924,10 +933,10 @@ const masterWord = async (word) => {
       uni.showToast({ title: '已斩掉', icon: 'success' });
     }
 
-    // 2. 💡 极其重要：等待动画播放完毕。CSS动画是 400ms，这里等 450ms
+    // 2. ✅ 只需要等待被斩单词自己折叠完毕（稍微留 50ms 缓冲）
     await new Promise(resolve => setTimeout(resolve, 450));
 
-    // 3. 动画结束后，真正从列表中移除元素
+    // 3. 动画完成后，安全移除
     words.value = words.value.filter(w => (w.english || '').trim().toLowerCase() !== wordKey);
     delete removingWords.value[wordKey];
 
@@ -938,7 +947,7 @@ const masterWord = async (word) => {
   }
 };
 
-/** 上传已斯单词列表到云端 */
+/** 上传已斩单词列表到云端 */
 const uploadMasteredWordsToCloud = async () => {
   try {
     const uid = uni.getStorageSync('uid');
@@ -957,9 +966,9 @@ const uploadMasteredWordsToCloud = async () => {
       }
     });
 
-    logger.info('Index', '已斯单词列表已上传到云端');
+    logger.info('Index', '已斩单词列表已上传到云端');
   } catch (e) {
-    logger.warn('Index', '上传已斯单词列表失败', e);
+    logger.warn('Index', '上传已斩单词列表失败', e);
   }
 };
 
@@ -1286,6 +1295,7 @@ const onSearchConfirm = () => {
 }
 
 .word-item {
+  /* --- 基础样式保持不变 --- */
   background-color: white;
   padding: 16px 20px;
   border-radius: 16px;
@@ -1294,36 +1304,59 @@ const onSearchConfirm = () => {
   width: calc(100% - 20px);
   position: relative;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 
-  /* 💡 核心：同时赋予所有空间属性平滑过渡 */
+  /* ✅ 自适应高度，不限制内容显示 */
+  max-height: none;
   opacity: 1;
   transform: translateX(0) scale(1);
-  transition: margin 0.4s linear,
-              padding 0.4s linear,
-              opacity 0.3s ease-out,
-              transform 0.3s ease-out;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  overflow: hidden;
 }
 
 /* 斩击触发后的状态 */
-.word-item-removing {
-  opacity: 0 !important;
-  transform: translateX(40px) scale(0.95) !important;
+.word-item.word-item-removing {
+  /* 总时长 0.5s，ease-out 会让动画先快后慢，更符合物理直觉 */
+  animation: swipeAndDelete 0.5s ease-out forwards !important;
+}
 
-  /* 💡 让卡片高度、边距归零，从而把下方的卡片"平滑拉上来" */
-  max-height: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  border: none !important;
+@keyframes swipeAndDelete {
+  0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    max-height: 1000px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+  /* 第一阶段 (0% -> 40%)：卡片快速向右滑出并淡出。高度保持足够大，避免边滑边缩 */
+  40% {
+    opacity: 0;
+    transform: translateX(60px) scale(0.95);
+    max-height: 1000px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+  /* 第二阶段 (40% -> 100%)：实体消失后，外壳高度平滑压缩到 0，把下面的列表顺滑拉上来 */
+  100% {
+    opacity: 0;
+    transform: translateX(60px) scale(0.95);
+    max-height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border: none;
+  }
 }
 
 .word-action-btn {
   position: absolute;
-  top: 16px;
+  top: 12px;
   right: 12px;
   width: 32px;
   height: 32px;
@@ -1337,6 +1370,7 @@ const onSearchConfirm = () => {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 10;
 }
 
 .word-action-btn:active {
@@ -1355,6 +1389,7 @@ const onSearchConfirm = () => {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 10;
 }
 
 .word-favorite-btn:active {
@@ -1378,6 +1413,10 @@ const onSearchConfirm = () => {
 .word-content {
   flex: 1;
   cursor: pointer;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .word-item:active {

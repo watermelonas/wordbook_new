@@ -1,15 +1,15 @@
 /**
- * 词书单词的"已斯"状态存储
- * 由于词书单词不存在于本地数据库，需要单独存储其"已斯"状态
- * 已斯列表是全局的，斯掉后在所有词书都不会出现
+ * 词书单词的"已斩"状态存储
+ * 由于词书单词不存在于本地数据库，需要单独存储其"已斩"状态
+ * 已斩列表是全局的，斯掉后在所有词书都不会出现
  */
 
 import { logger } from './errorHandler.js';
 const MASTERED_WORDBOOK_WORDS_KEY = 'mastered_wordbook_words_global_v1';
 
 /**
- * 获取全局已斯单词集合
- * @returns {Set<string>} 已斯单词的英文集合
+ * 获取全局已斩单词集合
+ * @returns {Set<string>} 已斩单词的英文集合
  */
 export const getGlobalMasteredWords = () => {
   try {
@@ -23,7 +23,7 @@ export const getGlobalMasteredWords = () => {
 };
 
 /**
- * 标记单词为全局已斯
+ * 标记单词为全局已斩
  * @param {string} english 单词英文
  */
 export const addGlobalMasteredWord = (english) => {
@@ -41,7 +41,7 @@ export const addGlobalMasteredWord = (english) => {
 };
 
 /**
- * 取消单词的全局已斯状态
+ * 取消单词的全局已斩状态
  * @param {string} english 单词英文
  */
 export const removeGlobalMasteredWord = (english) => {
@@ -67,42 +67,42 @@ export const isGlobalMasteredWord = (english) => {
 };
 
 /**
- * 获取某个词书的已斯单词集合（兼容旧代码）
+ * 获取某个词书的已斩单词集合（兼容旧代码）
  * @param {string} wordbookId 词书ID（已弃用，保留兼容性）
- * @returns {Set<string>} 已斯单词的英文集合
+ * @returns {Set<string>} 已斩单词的英文集合
  */
 export const getMasteredWordbookWords = (wordbookId) => {
-  // 返回全局已斯列表
+  // 返回全局已斩列表
   return getGlobalMasteredWords();
 };
 
 /**
- * 标记词书单词为已斯（兼容旧代码）
+ * 标记词书单词为已斩（兼容旧代码）
  * @param {string} wordbookId 词书ID（已弃用，保留兼容性）
  * @param {string} english 单词英文
  */
 export const addMasteredWordbookWord = (wordbookId, english) => {
-  // 使用全局已斯列表
+  // 使用全局已斩列表
   addGlobalMasteredWord(english);
 };
 
 /**
- * 取消词书单词的"已斯"状态（兼容旧代码）
+ * 取消词书单词的"已斩"状态（兼容旧代码）
  * @param {string} wordbookId 词书ID（已弃用，保留兼容性）
  * @param {string} english 单词英文
  */
 export const removeMasteredWordbookWord = (wordbookId, english) => {
-  // 使用全局已斯列表
+  // 使用全局已斩列表
   removeGlobalMasteredWord(english);
 };
 
 /**
- * 检查词书单词是否已斯（兼容旧代码）
+ * 检查词书单词是否已斩（兼容旧代码）
  * @param {string} wordbookId 词书ID（已弃用，保留兼容性）
  * @param {string} english 单词英文
  * @returns {boolean}
  */
 export const isWordbookWordMastered = (wordbookId, english) => {
-  // 使用全局已斯列表
+  // 使用全局已斩列表
   return isGlobalMasteredWord(english);
 };

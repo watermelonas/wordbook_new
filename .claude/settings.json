@@ -21,7 +21,11 @@
       "Bash(sed -i 's/b\\\\.repeat_count/b.repeatCount/g' pages/index/index.vue)",
       "Bash(sed -i 's/a\\\\.view_count/a.viewCount/g' pages/index/index.vue)",
       "Bash(sed -i 's/b\\\\.view_count/b.viewCount/g' pages/index/index.vue)",
-      "Bash(sed -i 's/a\\\\.create_time/a.createTime/g' pages/index/index.vue)"
+      "Bash(sed -i 's/a\\\\.create_time/a.createTime/g' pages/index/index.vue)",
+      "Bash(ls -1 *.js)",
+      "Bash(grep -r 已斯 --include=*.vue --include=*.js --include=*.md)",
+      "Bash(grep -r 已斩 --include=*.vue --include=*.js --include=*.md)",
+      "Bash(grep -r 艾宾浩斯 --include=*.md)"
     ],
     "additionalDirectories": [
       "E:\\vocal\\wordbook_new\\pages\\review"

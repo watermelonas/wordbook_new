@@ -274,6 +274,7 @@ to {
   font-size: 14px;
 }
 .word-item[data-v-1cf27b2a] {
+  /* --- 基础样式保持不变 --- */
   background-color: white;
   padding: 16px 20px;
   border-radius: 16px;
@@ -282,35 +283,57 @@ to {
   width: calc(100% - 20px);
   position: relative;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 
-  /* 💡 核心：同时赋予所有空间属性平滑过渡 */
+  /* ✅ 自适应高度，不限制内容显示 */
+  max-height: none;
   opacity: 1;
   transform: translateX(0) scale(1);
-  transition: margin 0.4s linear,
-              padding 0.4s linear,
-              opacity 0.3s ease-out,
-              transform 0.3s ease-out;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  overflow: hidden;
 }
 
 /* 斩击触发后的状态 */
-.word-item-removing[data-v-1cf27b2a] {
-  opacity: 0 !important;
-  transform: translateX(40px) scale(0.95) !important;
-
-  /* 💡 让卡片高度、边距归零，从而把下方的卡片"平滑拉上来" */
-  max-height: 0 !important;
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-  border: none !important;
+.word-item.word-item-removing[data-v-1cf27b2a] {
+  /* 总时长 0.5s，ease-out 会让动画先快后慢，更符合物理直觉 */
+  animation: swipeAndDelete-1cf27b2a 0.5s ease-out forwards !important;
+}
+@keyframes swipeAndDelete-1cf27b2a {
+0% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    max-height: 1000px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+  /* 第一阶段 (0% -> 40%)：卡片快速向右滑出并淡出。高度保持足够大，避免边滑边缩 */
+40% {
+    opacity: 0;
+    transform: translateX(60px) scale(0.95);
+    max-height: 1000px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+}
+  /* 第二阶段 (40% -> 100%)：实体消失后，外壳高度平滑压缩到 0，把下面的列表顺滑拉上来 */
+100% {
+    opacity: 0;
+    transform: translateX(60px) scale(0.95);
+    max-height: 0;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border: none;
+}
 }
 .word-action-btn[data-v-1cf27b2a] {
   position: absolute;
-  top: 16px;
+  top: 12px;
   right: 12px;
   width: 32px;
   height: 32px;
@@ -324,6 +347,7 @@ to {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 10;
 }
 .word-action-btn[data-v-1cf27b2a]:active {
   transform: scale(0.95);
@@ -340,6 +364,7 @@ to {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 10;
 }
 .word-favorite-btn[data-v-1cf27b2a]:active {
   transform: scale(0.95);
@@ -359,6 +384,10 @@ to {
 .word-content[data-v-1cf27b2a] {
   flex: 1;
   cursor: pointer;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .word-item[data-v-1cf27b2a]:active {
   transform: translateY(-1px);

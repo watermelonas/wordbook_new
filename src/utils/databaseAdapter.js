@@ -5,6 +5,7 @@
 
 import { bindSql, toJsonString, parseJsonSafe } from './sqlHelper.js';
 import { logger } from './errorHandler.js';
+import { validateWord, validateWordId } from './validators.js';
 
 const H5_STORAGE_KEY = 'wordbook_h5_words';
 
@@ -56,7 +57,12 @@ export class H5DatabaseAdapter {
   }
 
   async addWord(word) {
-    if (!word.english) throw new Error('单词不能为空');
+    try {
+      validateWord(word);
+    } catch (e) {
+      logger.error('H5Adapter', '单词验证失败', e);
+      throw e;
+    }
 
     const words = getH5Words();
     const newWord = {
@@ -75,7 +81,15 @@ export class H5DatabaseAdapter {
   }
 
   async updateWord(id, updates) {
-    if (!id) throw new Error('无效 id');
+    try {
+      validateWordId(id);
+      if (updates && typeof updates === 'object') {
+        validateWord({ ...updates, english: updates.english || 'temp' });
+      }
+    } catch (e) {
+      logger.error('H5Adapter', '更新参数验证失败', e);
+      throw e;
+    }
 
     const words = getH5Words();
     const idx = words.findIndex(w => w.id === id);

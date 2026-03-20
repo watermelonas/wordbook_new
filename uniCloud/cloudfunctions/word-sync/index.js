@@ -162,7 +162,7 @@ exports.main = async (event, context) => {
 		}
 
 	} else if (action === 'backup-mastered') {
-		// 备份已斯单词列表
+		// 备份已斩单词列表
 		if (!uid || !mastered) {
 			return {
 				code: -1,
@@ -173,12 +173,12 @@ exports.main = async (event, context) => {
 		try {
 			const masteredCollection = db.collection('user_mastered_words');
 
-			// 删除旧的已斯数据
+			// 删除旧的已斩数据
 			await masteredCollection.where({
 				user_id: uid
 			}).remove();
 
-			// 插入新的已斯数据
+			// 插入新的已斩数据
 			if (mastered && mastered.length > 0) {
 				const masteredData = mastered.map(english => ({
 					user_id: uid,
@@ -191,13 +191,13 @@ exports.main = async (event, context) => {
 
 			return {
 				code: 0,
-				msg: '已斯单词备份成功',
+				msg: '已斩单词备份成功',
 				count: mastered ? mastered.length : 0
 			};
 		} catch (e) {
 			return {
 				code: -3,
-				msg: '已斯单词备份失败: ' + e.message
+				msg: '已斩单词备份失败: ' + e.message
 			};
 		}
 

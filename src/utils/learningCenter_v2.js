@@ -74,7 +74,7 @@ export const normalizeWordKey = (word) => {
 /**
  * 规范化学习档案
  */
-const normalizeProfile = (profile = {}) => {
+export const normalizeProfile = (profile = {}) => {
   const key = normalizeWordKey(profile.english || profile.key || '');
   const bookIds = Array.isArray(profile.bookIds) ? [...new Set(profile.bookIds.filter(Boolean))] : [];
   const normalized = {
@@ -231,6 +231,53 @@ export const getAllProfiles = () => {
 };
 
 /**
+ * 初始化数据检查和修复（应用启动时调用）
+ */
+export const initializeDataIntegrity = async () => {
+  try {
+    const profiles = getProfilesMap();
+    if (!profiles || Object.keys(profiles).length === 0) {
+      logger.info('learningCenter', '没有档案数据需要检查');
+      return;
+    }
+
+    // 检测问题
+    let hasIssues = false;
+    for (const [key, profile] of Object.entries(profiles)) {
+      if (!profile || typeof profile !== 'object') {
+        hasIssues = true;
+        break;
+      }
+      if (!profile.english || typeof profile.english !== 'string') {
+        hasIssues = true;
+        break;
+      }
+    }
+
+    if (hasIssues) {
+      logger.warn('learningCenter', '检测到数据一致性问题，尝试修复');
+      try {
+        const { autoRepairStorageData } = await import('./dataRepair.js');
+        const result = await autoRepairStorageData(
+          PROFILE_KEY,
+          () => getProfilesMap(),
+          (repaired) => setProfilesMap(repaired)
+        );
+        if (result.success) {
+          logger.info('learningCenter', '数据修复成功', result.report);
+        } else {
+          logger.warn('learningCenter', '数据修复失败', result);
+        }
+      } catch (e) {
+        logger.error('learningCenter', '数据修复异常', e);
+      }
+    }
+  } catch (e) {
+    logger.error('learningCenter', '数据完整性检查失败', e);
+  }
+};
+
+/**
  * 保存单词档案
  */
 export const saveWordProfile = (word, patch = {}) => {
@@ -255,11 +302,17 @@ export const saveWordProfile = (word, patch = {}) => {
 };
 
 /**
- * 记录复习结果（带事务保护）
+ * 记录复习结果（带事务保护和参数验证）
  */
 export const recordReviewOutcome = (word, isCorrect, options = {}) => {
   const key = normalizeWordKey(word);
   if (!key) return null;
+
+  // ✅ 参数验证
+  if (typeof isCorrect !== 'boolean') {
+    logger.error('learningCenter', '复习结果验证失败：isCorrect 必须是布尔值', { isCorrect });
+    throw new Error('isCorrect 必须是布尔值');
+  }
 
   const now = new Date();
   const bookId = options.bookId || getCurrentWordbook() || 'self';
@@ -321,7 +374,10 @@ export const recordReviewOutcome = (word, isCorrect, options = {}) => {
     }
 
     oldMistake.english = next.english;
-    oldMistake.bookIds = [...new Set([...(oldMistake.bookIds || []), bookId])];
+    // ✅ 修复：确保 bookId 不为空才加入 bookIds
+    if (bookId) {
+      oldMistake.bookIds = [...new Set([...(oldMistake.bookIds || []), bookId])];
+    }
     oldMistake.updatedAt = now.toISOString();
     mistakes[key] = oldMistake;
     setMistakesMap(mistakes);
@@ -375,7 +431,11 @@ export const getMistakeWords = (bookId = '', onlyActive = true) => {
   return mistakes
     .filter((item) => item && item.english)
     .filter((item) => !onlyActive || !!item.active)
-    .filter((item) => !bookId || (Array.isArray(item.bookIds) && item.bookIds.includes(bookId)))
+    // ✅ 修复：如果指定了 bookId，则必须在 bookIds 中；如果没指定 bookId，则返回所有活跃错词
+    .filter((item) => {
+      if (!bookId) return true; // 没指定 bookId，返回所有
+      return Array.isArray(item.bookIds) && item.bookIds.includes(bookId);
+    })
     .sort((a, b) => {
       const diff = Number(b.errorCount || b.error_count || 0) - Number(a.errorCount || a.error_count || 0);
       if (diff !== 0) return diff;
@@ -567,4 +627,30 @@ export const saveWordExtra = (word, patch = {}) => {
 export const cleanupExpiredCaches = () => {
   profilesMemCache.cleanup();
   mistakesMemCache.cleanup();
+};
+
+/**
+ * 分页加载单词（优化内存占用）
+ * @param {Array} allWords - 所有单词列表
+ * @param {number} pageSize - 每页大小，默认 200
+ * @param {number} pageIndex - 页码（从 0 开始）
+ * @returns {Array} 该页的单词列表
+ */
+export const getWordsPage = (allWords, pageSize = 200, pageIndex = 0) => {
+  if (!Array.isArray(allWords) || allWords.length === 0) {
+    return [];
+  }
+  const start = pageIndex * pageSize;
+  const end = start + pageSize;
+  return allWords.slice(start, end);
+};
+
+/**
+ * 获取总页数
+ * @param {number} totalCount - 总单词数
+ * @param {number} pageSize - 每页大小
+ * @returns {number} 总页数
+ */
+export const getTotalPages = (totalCount, pageSize = 200) => {
+  return Math.ceil(Math.max(0, totalCount) / pageSize);
 };

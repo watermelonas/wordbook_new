@@ -42,10 +42,10 @@ export function getCloudWordbooks() {
       list = [{ id: SELF_ID, name: '自用单词' }, ...list];
     }
 
-    // 确保已斯单词本存在
+    // 确保已斩单词本存在
     const hasMastered = list.some((o) => o.id === 'mastered');
     if (!hasMastered) {
-      list = [...list, { id: 'mastered', name: '已斯单词本' }];
+      list = [...list, { id: 'mastered', name: '已斩单词本' }];
       uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(list));
     }
 
@@ -58,7 +58,7 @@ export function getCloudWordbooks() {
 
     return list;
   } catch (_) {
-    return [{ id: SELF_ID, name: '自用单词' }, { id: 'mastered', name: '已斯单词本' }, { id: 'favorite', name: '收藏' }];
+    return [{ id: SELF_ID, name: '自用单词' }, { id: 'mastered', name: '已斩单词本' }, { id: 'favorite', name: '收藏' }];
   }
 }
 
@@ -76,7 +76,7 @@ export function setCloudWordbooks(list) {
   }
 
   // 添加特殊单词本到末尾
-  finalList.push({ id: 'mastered', name: '已斯单词本' });
+  finalList.push({ id: 'mastered', name: '已斩单词本' });
   finalList.push({ id: 'favorite', name: '收藏' });
 
   uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(finalList));
@@ -89,7 +89,7 @@ export function addCloudWordbook(name) {
   setCloudWordbooks([
     { id: SELF_ID, name: '自用单词' },
     ...list,
-    { id: 'mastered', name: '已斯单词本' },
+    { id: 'mastered', name: '已斩单词本' },
     { id: 'favorite', name: '收藏' }
   ]);
   return id;

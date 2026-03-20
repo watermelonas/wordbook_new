@@ -21,9 +21,52 @@ const H5_STORAGE_KEY = 'wordbook_h5_words';
 const H5_MASTERED_KEY = 'wordbook_h5_mastered_words';
 
 /**
- * 解析单词对象
+ * LRU 缓存用于存储已解析的单词（避免重复 JSON 解析）
+ */
+class WordParseCache {
+  constructor(maxSize = 1000) {
+    this.maxSize = maxSize;
+    this.cache = new Map();
+  }
+
+  get(key) {
+    if (!this.cache.has(key)) return null;
+    // 移到最后（最近使用）
+    const value = this.cache.get(key);
+    this.cache.delete(key);
+    this.cache.set(key, value);
+    return value;
+  }
+
+  set(key, value) {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    } else if (this.cache.size >= this.maxSize) {
+      // 删除最旧的项（第一个）
+      const firstKey = this.cache.keys().next().value;
+      this.cache.delete(firstKey);
+    }
+    this.cache.set(key, value);
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+}
+
+const wordParseCache = new WordParseCache(1000);
+
+/**
+ * 解析单词对象（带缓存）
  */
 const parseWord = (item) => {
+  // ✅ 优化：检查缓存
+  const cacheKey = item.id || item.english;
+  if (cacheKey) {
+    const cached = wordParseCache.get(cacheKey);
+    if (cached) return cached;
+  }
+
   let examples = [], synonyms = [], antonyms = [];
   if (Array.isArray(item.examples)) examples = item.examples;
   else if (item.examples) examples = parseJsonSafe(item.examples, []);
@@ -36,7 +79,15 @@ const parseWord = (item) => {
 
   // 转换为 camelCase 并规范化字段
   const jsWord = dbToJs(item);
-  return { ...jsWord, ...normalizeReviewFields(jsWord), examples, synonyms, antonyms };
+  const parsed = { ...jsWord, ...normalizeReviewFields(jsWord), examples, synonyms, antonyms };
+
+  // ✅ 优化：冻结对象防止意外修改，缓存结果
+  Object.freeze(parsed);
+  if (cacheKey) {
+    wordParseCache.set(cacheKey, parsed);
+  }
+
+  return parsed;
 };
 
 /**
@@ -1147,6 +1198,47 @@ class DatabaseManager {
     }
     return null;
   }
+}
+
+/**
+ * 轻量级单词获取（仅基本字段，用于列表显示）
+ * @param {string} wordId - 单词 ID
+ * @returns {Promise<Object>} 轻量级单词对象
+ */
+export async function getWordByIdLight(wordId) {
+  const db = new DatabaseManager();
+  await db.init();
+  const word = await db.getWordById(wordId);
+  if (!word) return null;
+
+  return {
+    id: word.id,
+    english: word.english,
+    chinese: word.chinese,
+    importance: word.importance,
+    repeatCount: word.repeat_count || 0,
+  };
+}
+
+/**
+ * 完整单词获取（包含所有字段，用于详情页）
+ * @param {string} wordId - 单词 ID
+ * @returns {Promise<Object>} 完整单词对象
+ */
+export async function getWordByIdHeavy(wordId) {
+  const db = new DatabaseManager();
+  await db.init();
+  const word = await db.getWordById(wordId);
+  if (!word) return null;
+
+  return parseWord(word);
+}
+
+/**
+ * 清理单词缓存
+ */
+export function clearWordParseCache() {
+  wordParseCache.clear();
 }
 
 // 导出单例

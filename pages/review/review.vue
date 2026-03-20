@@ -689,7 +689,7 @@ const getCurrentBookTotalWords = async () => {
       totalCount = Array.isArray(list) ? list.length : 0;
     }
 
-    // 💡 关键：减去全局已斯的单词数
+    // 💡 关键：减去全局已斩的单词数
     const masteredWords = getMasteredWordbookWords(book);
     const masteredCount = masteredWords.size || 0;
 
@@ -706,14 +706,14 @@ const getCurrentBookWordPool = async () => {
 
   if (book === 'self') {
     const all = await db.getAllWords();
-    // 💡 过滤掉已斯的单词
+    // 💡 过滤掉已斩的单词
     return (Array.isArray(all) ? all : []).filter(w => !masteredSet.has((w.english || '').trim().toLowerCase()));
   }
   if (isLocalWordbookKey(book)) {
     const list = await loadLocalWordbook(book);
     const dictLookup = await masterDb.getWordBriefBatch(list.map((w) => w.english));
     return list
-      // 💡 过滤掉已斯的单词
+      // 💡 过滤掉已斩的单词
       .filter(w => !masteredSet.has((w.english || '').trim().toLowerCase()))
       .map((w) => {
         const v = dictLookup[(w.english || '').trim().toLowerCase()];
@@ -730,7 +730,7 @@ const getCurrentBookWordPool = async () => {
       });
   }
   const list = getWordbookWords(book) || [];
-  // 💡 过滤掉已斯的单词
+  // 💡 过滤掉已斩的单词
   return list.filter(w => !masteredSet.has((w.english || '').trim().toLowerCase()));
 };
 
@@ -1334,22 +1334,31 @@ const startReview = async () => {
 const startExtraRound20 = async () => startReviewInternal(20);
 
 const onPrimaryStartClick = async () => {
-  if (isTodayTargetDone.value) {
-    await startExtraRound20();
-    return;
+  // ✅ 立即显示加载状态，不要等待数据加载完成
+  uni.showLoading({ title: '加载中...', mask: true });
+
+  try {
+    if (isTodayTargetDone.value) {
+      await startExtraRound20();
+    } else {
+      await startReview();
+    }
+  } finally {
+    uni.hideLoading();
   }
-  await startReview();
 };
 
 // 新增：开始今日任务 - 只学习新词
 const startRecommendedReview = async () => {
-  const dailyTarget = Number(settings.value.count || 20);
-  const bookId = getCurrentBookId();
-
-  // 计算今日还需要学习的数量 - 使用 todayReviewed.value
-  const newWordsNeeded = Math.max(0, dailyTarget - todayReviewed.value);
+  uni.showLoading({ title: '加载中...', mask: true });
 
   try {
+    const dailyTarget = Number(settings.value.count || 20);
+    const bookId = getCurrentBookId();
+
+    // 计算今日还需要学习的数量 - 使用 todayReviewed.value
+    const newWordsNeeded = Math.max(0, dailyTarget - todayReviewed.value);
+
     // 获取所有单词列表
     let allWords = [];
     if (isSelfWordbook()) {
@@ -1385,6 +1394,8 @@ const startRecommendedReview = async () => {
   } catch (e) {
     logger.error('startRecommendedReview 失败:', e);
     uni.showToast({ title: '加载失败', icon: 'none' });
+  } finally {
+    uni.hideLoading();
   }
 };
 
