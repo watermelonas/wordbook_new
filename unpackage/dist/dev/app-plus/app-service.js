@@ -532,7 +532,7 @@ if (uni.restoreGlobal) {
   function I(e2) {
     return e2 && "string" == typeof e2 ? JSON.parse(e2) : e2;
   }
-  const S = true, b = "app", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), T = b, C = I('{"address":["127.0.0.1","192.168.1.222"],"servePort":7000,"debugPort":9000,"initialLaunchType":"remote","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), P = I('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
+  const S = true, b = "app", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), T = b, C = I('{"address":["127.0.0.1","192.168.1.222"],"servePort":7001,"debugPort":9001,"initialLaunchType":"remote","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), P = I('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
   let E = "";
   try {
     E = "__UNI__9F3DDBE";
@@ -6962,6 +6962,7 @@ ${i3}
       const showFilter = vue.ref(false);
       const showLearningCenter = vue.ref(false);
       const words = vue.ref([]);
+      const removingWords = vue.ref({});
       const refreshing = vue.ref(false);
       const sortBy = vue.ref("create_time");
       const filterType = vue.ref("none");
@@ -7251,7 +7252,7 @@ ${i3}
             allExternalWords = [];
             allExternalWordsLength.value = 0;
             enrichWordbookListInBackground(words.value, book, words);
-            formatAppLog("log", "at pages/index/index.vue:613", "极速加载：自用分页成功，数量:", words.value.length);
+            formatAppLog("log", "at pages/index/index.vue:614", "极速加载：自用分页成功，数量:", words.value.length);
             await loadLearningSnapshot();
             return;
           }
@@ -7265,18 +7266,18 @@ ${i3}
           allExternalWordsLength.value = allExternalWords.length;
           words.value = allExternalWords.slice(0, PAGE_SIZE);
           displayLimit.value = PAGE_SIZE;
-          formatAppLog("log", "at pages/index/index.vue:630", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
+          formatAppLog("log", "at pages/index/index.vue:631", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
           enrichWordbookListInBackground(words.value, book, words);
           await loadLearningSnapshot();
         } catch (error) {
-          formatAppLog("error", "at pages/index/index.vue:635", "加载失败:", error);
+          formatAppLog("error", "at pages/index/index.vue:636", "加载失败:", error);
           words.value = [];
         } finally {
           loadWordsInProgress = false;
         }
       };
       onLoad(() => {
-        formatAppLog("log", "at pages/index/index.vue:643", "首页 onLoad - 开始加载");
+        formatAppLog("log", "at pages/index/index.vue:644", "首页 onLoad - 开始加载");
         try {
           const v2 = uni.getStorageSync(SHOW_CHINESE_KEY);
           if (v2 === false || v2 === "false" || v2 === 0 || v2 === "0")
@@ -7284,7 +7285,7 @@ ${i3}
         } catch (_2) {
         }
         loadWords().catch((error) => {
-          formatAppLog("error", "at pages/index/index.vue:651", "首页加载单词失败:", error);
+          formatAppLog("error", "at pages/index/index.vue:652", "首页加载单词失败:", error);
           uni.showToast({
             title: "加载失败，请重试",
             icon: "error"
@@ -7458,6 +7459,9 @@ ${i3}
       const masterWord = async (word) => {
         if (!word || !word.english)
           return;
+        const wordKey = (word.english || "").trim().toLowerCase();
+        removingWords.value[wordKey] = true;
+        words.value = [...words.value];
         try {
           const bookId = getCurrentWordbook();
           if (bookId && bookId !== "self") {
@@ -7475,11 +7479,13 @@ ${i3}
             uni.showToast({ title: "已斩掉", icon: "success" });
           } else {
             await db.deleteWord(word.english);
-            uni.showToast({ title: "已删除", icon: "success" });
           }
+          await new Promise((resolve) => setTimeout(resolve, 300));
+          delete removingWords.value[wordKey];
           uni.$emit("refreshWordList");
         } catch (e2) {
-          formatAppLog("error", "at pages/index/index.vue:868", "斩掉单词失败:", e2);
+          formatAppLog("error", "at pages/index/index.vue:881", "斩掉单词失败:", e2);
+          delete removingWords.value[wordKey];
           uni.showToast({ title: "操作失败", icon: "none" });
         }
       };
@@ -7499,9 +7505,9 @@ ${i3}
               mastered: masteredList
             }
           });
-          formatAppLog("log", "at pages/index/index.vue:892", "✅ 已斯单词列表已上传到云端");
+          formatAppLog("log", "at pages/index/index.vue:907", "✅ 已斯单词列表已上传到云端");
         } catch (e2) {
-          formatAppLog("warn", "at pages/index/index.vue:894", "⚠️ 上传已斯单词列表失败:", e2);
+          formatAppLog("warn", "at pages/index/index.vue:909", "⚠️ 上传已斯单词列表失败:", e2);
         }
       };
       const uploadProgressToCloud = async () => {
@@ -7528,9 +7534,9 @@ ${i3}
               progress: progressData
             }
           });
-          formatAppLog("log", "at pages/index/index.vue:925", "✅ 个人单词本已上传到云端");
+          formatAppLog("log", "at pages/index/index.vue:940", "✅ 个人单词本已上传到云端");
         } catch (e2) {
-          formatAppLog("warn", "at pages/index/index.vue:927", "⚠️ 上传个人单词本失败:", e2);
+          formatAppLog("warn", "at pages/index/index.vue:942", "⚠️ 上传个人单词本失败:", e2);
         }
       };
       const isFavorited = (word) => {
@@ -7538,31 +7544,31 @@ ${i3}
       };
       const toggleFavorite = async (word) => {
         if (!word || !word.english) {
-          formatAppLog("log", "at pages/index/index.vue:939", "❌ 收藏失败：单词为空");
+          formatAppLog("log", "at pages/index/index.vue:954", "❌ 收藏失败：单词为空");
           return;
         }
         try {
           const isFav = word.is_favorite === true;
-          formatAppLog("log", "at pages/index/index.vue:945", "🔍 切换收藏:", word.english, "当前状态:", isFav);
+          formatAppLog("log", "at pages/index/index.vue:960", "🔍 切换收藏:", word.english, "当前状态:", isFav);
           const { getCloudWordbooks: getCloudWordbooks2, setWordbookWords: setWordbookWords2, getWordbookWords: getWordbookWords2, addCloudWordbook: addCloudWordbook2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
           let wordbooks = getCloudWordbooks2();
           let favoriteWordbook = wordbooks.find((wb) => wb.name === "收藏");
           if (!favoriteWordbook) {
-            formatAppLog("log", "at pages/index/index.vue:955", "📍 创建收藏单词本");
+            formatAppLog("log", "at pages/index/index.vue:970", "📍 创建收藏单词本");
             const id = addCloudWordbook2("收藏");
             favoriteWordbook = { id, name: "收藏" };
           }
           let wordbookWords = getWordbookWords2(favoriteWordbook.id) || [];
           const englishSet = new Set(wordbookWords.map((w2) => w2.english.toLowerCase()));
           if (isFav) {
-            formatAppLog("log", "at pages/index/index.vue:966", "📍 取消收藏:", word.english);
+            formatAppLog("log", "at pages/index/index.vue:981", "📍 取消收藏:", word.english);
             wordbookWords = wordbookWords.filter((w2) => w2.english.toLowerCase() !== word.english.toLowerCase());
             setWordbookWords2(favoriteWordbook.id, wordbookWords);
             word.is_favorite = false;
             favoriteWordsSet.delete(word.english.toLowerCase());
             uni.showToast({ title: "已取消收藏", icon: "success" });
           } else {
-            formatAppLog("log", "at pages/index/index.vue:974", "📍 添加收藏:", word.english);
+            formatAppLog("log", "at pages/index/index.vue:989", "📍 添加收藏:", word.english);
             if (!englishSet.has(word.english.toLowerCase())) {
               wordbookWords.push({
                 english: word.english,
@@ -7578,10 +7584,10 @@ ${i3}
             favoriteWordsSet.add(word.english.toLowerCase());
             uni.showToast({ title: "已收藏", icon: "success" });
           }
-          formatAppLog("log", "at pages/index/index.vue:991", "✅ 收藏操作完成");
+          formatAppLog("log", "at pages/index/index.vue:1006", "✅ 收藏操作完成");
         } catch (e2) {
-          formatAppLog("error", "at pages/index/index.vue:993", "❌ 切换收藏失败:", e2);
-          formatAppLog("error", "at pages/index/index.vue:994", "❌ 错误堆栈:", e2.stack);
+          formatAppLog("error", "at pages/index/index.vue:1008", "❌ 切换收藏失败:", e2);
+          formatAppLog("error", "at pages/index/index.vue:1009", "❌ 错误堆栈:", e2.stack);
           uni.showToast({ title: "操作失败: " + e2.message, icon: "none" });
         }
       };
@@ -7618,7 +7624,7 @@ ${i3}
         return masteredWordsSet;
       }, set masteredWordsSet(v2) {
         masteredWordsSet = v2;
-      }, mapSortByToDb, getFilters, normalizeListWord, updateFavoriteWordsSet, updateMasteredWordsSet, getExamCountForSort, sortExternalWords, filterExternalWords, prepareExternalWords, enrichOneWord, searchText, displayLimit, showFilter, showLearningCenter, words, refreshing, sortBy, filterType, filterValue, SHOW_CHINESE_KEY, showChinese, learningSnapshot, latestSession, sortOptions, sortLabels, sortOrderOptions, sortOrderLabels, sortOrder, showChineseLabels, hasMoreSelfWords, allExternalWordsLength, filterOptions, filterLabels, PRESET_TAGS, tagOptions, currentSortLabel, currentFilterLabel, currentBookLabel, latestAccuracyText, loadLearningSnapshot, onListRefresh, applyEnrichedToRef, buildChineseFromDefs: buildChineseFromDefs2, fallbackEnrichByFullDetail, countMissingChineseForList, retryEnrichUntilReady, enrichWordbookListInBackground, reEnrichCurrentWordbook, syncIncompleteWordsWithStats, loadWords, get searchDebounceTimer() {
+      }, mapSortByToDb, getFilters, normalizeListWord, updateFavoriteWordsSet, updateMasteredWordsSet, getExamCountForSort, sortExternalWords, filterExternalWords, prepareExternalWords, enrichOneWord, searchText, displayLimit, showFilter, showLearningCenter, words, removingWords, refreshing, sortBy, filterType, filterValue, SHOW_CHINESE_KEY, showChinese, learningSnapshot, latestSession, sortOptions, sortLabels, sortOrderOptions, sortOrderLabels, sortOrder, showChineseLabels, hasMoreSelfWords, allExternalWordsLength, filterOptions, filterLabels, PRESET_TAGS, tagOptions, currentSortLabel, currentFilterLabel, currentBookLabel, latestAccuracyText, loadLearningSnapshot, onListRefresh, applyEnrichedToRef, buildChineseFromDefs: buildChineseFromDefs2, fallbackEnrichByFullDetail, countMissingChineseForList, retryEnrichUntilReady, enrichWordbookListInBackground, reEnrichCurrentWordbook, syncIncompleteWordsWithStats, loadWords, get searchDebounceTimer() {
         return searchDebounceTimer;
       }, set searchDebounceTimer(v2) {
         searchDebounceTimer = v2;
@@ -7958,127 +7964,133 @@ ${i3}
           vue.Fragment,
           null,
           vue.renderList($setup.visibleWords, (word) => {
-            return vue.openBlock(), vue.createElementBlock("view", {
-              class: "word-item",
-              key: word.id || "wb-" + word.english
-            }, [
-              vue.createElementVNode("view", {
-                class: "word-content",
-                onClick: ($event) => $setup.goToDetail(word)
-              }, [
-                vue.createElementVNode("view", { class: "word-english" }, [
-                  vue.createTextVNode(
-                    vue.toDisplayString(word.english) + " ",
-                    1
-                    /* TEXT */
-                  ),
-                  vue.createElementVNode(
-                    "span",
-                    { class: "repeat-count" },
-                    "学习" + vue.toDisplayString(word.repeat_count || 0) + "次",
-                    1
-                    /* TEXT */
-                  )
-                ]),
-                $setup.showChinese ? (vue.openBlock(), vue.createElementBlock(
-                  "view",
-                  {
-                    key: 0,
-                    class: "word-chinese"
-                  },
-                  vue.toDisplayString(word.chinese || "—"),
-                  1
-                  /* TEXT */
-                )) : vue.createCommentVNode("v-if", true),
-                word.source_page || word.year || $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock("view", {
-                  key: 1,
-                  class: "word-source"
+            return vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                class: vue.normalizeClass(["word-item", { "word-item-removing": $setup.removingWords[(word.english || "").trim().toLowerCase()] }]),
+                key: word.id || "wb-" + word.english
+              },
+              [
+                vue.createElementVNode("view", {
+                  class: "word-content",
+                  onClick: ($event) => $setup.goToDetail(word)
                 }, [
-                  word.source_page || word.year ? (vue.openBlock(), vue.createElementBlock(
-                    vue.Fragment,
-                    { key: 0 },
-                    [
-                      vue.createTextVNode(
-                        "页码 " + vue.toDisplayString(word.source_page || "-") + " · 年份 " + vue.toDisplayString(word.year || "-"),
-                        1
-                        /* TEXT */
-                      )
-                    ],
-                    64
-                    /* STABLE_FRAGMENT */
-                  )) : vue.createCommentVNode("v-if", true),
-                  $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock(
-                    "text",
+                  vue.createElementVNode("view", { class: "word-english" }, [
+                    vue.createTextVNode(
+                      vue.toDisplayString(word.english) + " ",
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "span",
+                      { class: "repeat-count" },
+                      "学习" + vue.toDisplayString(word.repeat_count || 0) + "次",
+                      1
+                      /* TEXT */
+                    )
+                  ]),
+                  $setup.showChinese ? (vue.openBlock(), vue.createElementBlock(
+                    "view",
                     {
-                      key: 1,
-                      class: "word-exam-count"
+                      key: 0,
+                      class: "word-chinese"
                     },
-                    "真题 " + vue.toDisplayString($setup.getExamCount(word)) + "次",
+                    vue.toDisplayString(word.chinese || "—"),
                     1
                     /* TEXT */
-                  )) : vue.createCommentVNode("v-if", true)
-                ])) : vue.createCommentVNode("v-if", true),
-                word.tags ? (vue.openBlock(), vue.createElementBlock("view", {
-                  key: 2,
-                  class: "word-tags"
+                  )) : vue.createCommentVNode("v-if", true),
+                  word.source_page || word.year || $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock("view", {
+                    key: 1,
+                    class: "word-source"
+                  }, [
+                    word.source_page || word.year ? (vue.openBlock(), vue.createElementBlock(
+                      vue.Fragment,
+                      { key: 0 },
+                      [
+                        vue.createTextVNode(
+                          "页码 " + vue.toDisplayString(word.source_page || "-") + " · 年份 " + vue.toDisplayString(word.year || "-"),
+                          1
+                          /* TEXT */
+                        )
+                      ],
+                      64
+                      /* STABLE_FRAGMENT */
+                    )) : vue.createCommentVNode("v-if", true),
+                    $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock(
+                      "text",
+                      {
+                        key: 1,
+                        class: "word-exam-count"
+                      },
+                      "真题 " + vue.toDisplayString($setup.getExamCount(word)) + "次",
+                      1
+                      /* TEXT */
+                    )) : vue.createCommentVNode("v-if", true)
+                  ])) : vue.createCommentVNode("v-if", true),
+                  word.tags ? (vue.openBlock(), vue.createElementBlock("view", {
+                    key: 2,
+                    class: "word-tags"
+                  }, [
+                    (vue.openBlock(true), vue.createElementBlock(
+                      vue.Fragment,
+                      null,
+                      vue.renderList((word.tags || "").split(/[,，\s]+/).filter(Boolean), (t2, i2) => {
+                        return vue.openBlock(), vue.createElementBlock(
+                          "text",
+                          {
+                            key: i2,
+                            class: "tag-chip"
+                          },
+                          vue.toDisplayString(t2),
+                          1
+                          /* TEXT */
+                        );
+                      }),
+                      128
+                      /* KEYED_FRAGMENT */
+                    ))
+                  ])) : vue.createCommentVNode("v-if", true),
+                  vue.createElementVNode("view", { class: "word-importance" }, [
+                    (vue.openBlock(), vue.createElementBlock(
+                      vue.Fragment,
+                      null,
+                      vue.renderList(5, (star) => {
+                        return vue.createElementVNode(
+                          "span",
+                          {
+                            key: star,
+                            class: vue.normalizeClass(["star", { active: (word.importance || 0) >= star }])
+                          },
+                          "★",
+                          2
+                          /* CLASS */
+                        );
+                      }),
+                      64
+                      /* STABLE_FRAGMENT */
+                    ))
+                  ])
+                ], 8, ["onClick"]),
+                vue.createElementVNode("view", {
+                  class: "word-action-btn",
+                  onClick: vue.withModifiers(($event) => $setup.masterWord(word), ["stop"])
+                }, "斩", 8, ["onClick"]),
+                vue.createElementVNode("view", {
+                  class: "word-favorite-btn",
+                  onClick: vue.withModifiers(($event) => $setup.toggleFavorite(word), ["stop"])
                 }, [
-                  (vue.openBlock(true), vue.createElementBlock(
-                    vue.Fragment,
-                    null,
-                    vue.renderList((word.tags || "").split(/[,，\s]+/).filter(Boolean), (t2, i2) => {
-                      return vue.openBlock(), vue.createElementBlock(
-                        "text",
-                        {
-                          key: i2,
-                          class: "tag-chip"
-                        },
-                        vue.toDisplayString(t2),
-                        1
-                        /* TEXT */
-                      );
-                    }),
-                    128
-                    /* KEYED_FRAGMENT */
-                  ))
-                ])) : vue.createCommentVNode("v-if", true),
-                vue.createElementVNode("view", { class: "word-importance" }, [
-                  (vue.openBlock(), vue.createElementBlock(
-                    vue.Fragment,
-                    null,
-                    vue.renderList(5, (star) => {
-                      return vue.createElementVNode(
-                        "span",
-                        {
-                          key: star,
-                          class: vue.normalizeClass(["star", { active: (word.importance || 0) >= star }])
-                        },
-                        "★",
-                        2
-                        /* CLASS */
-                      );
-                    }),
-                    64
-                    /* STABLE_FRAGMENT */
-                  ))
-                ])
-              ], 8, ["onClick"]),
-              vue.createElementVNode("view", {
-                class: "word-action-btn",
-                onClick: vue.withModifiers(($event) => $setup.masterWord(word), ["stop"])
-              }, "斩", 8, ["onClick"]),
-              vue.createElementVNode("view", {
-                class: "word-favorite-btn",
-                onClick: vue.withModifiers(($event) => $setup.toggleFavorite(word), ["stop"])
-              }, [
-                word.is_favorite ? (vue.openBlock(), vue.createElementBlock("view", {
-                  key: 0,
-                  class: "favorite-icon-filled"
-                })) : (vue.openBlock(), vue.createElementBlock("view", {
-                  key: 1,
-                  class: "favorite-icon-empty"
-                }))
-              ], 8, ["onClick"])
-            ]);
+                  word.is_favorite ? (vue.openBlock(), vue.createElementBlock("view", {
+                    key: 0,
+                    class: "favorite-icon-filled"
+                  })) : (vue.openBlock(), vue.createElementBlock("view", {
+                    key: 1,
+                    class: "favorite-icon-empty"
+                  }))
+                ], 8, ["onClick"])
+              ],
+              2
+              /* CLASS */
+            );
           }),
           128
           /* KEYED_FRAGMENT */

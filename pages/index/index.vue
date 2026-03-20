@@ -124,7 +124,7 @@
         <view class="empty-text">{{ (searchText || (filterType !== 'none' && (filterValue !== '' && filterValue !== undefined))) ? '未找到匹配的单词' : '还没有单词，开始添加吧' }}</view>
         <button v-if="!searchText && (filterType === 'none' || (filterValue === '' || filterValue === undefined))" class="empty-btn" @click="goToQuickAdd">添加单词</button>
       </view>
-      <view class="word-item" v-for="word in visibleWords" :key="word.id || ('wb-' + word.english)">
+      <view class="word-item" v-for="word in visibleWords" :key="word.id || ('wb-' + word.english)" :class="{ 'word-item-removing': removingWords[(word.english || '').trim().toLowerCase()] }">
         <view class="word-content" @click="goToDetail(word)">
           <view class="word-english">{{ word.english }} <span class="repeat-count">学习{{ word.repeat_count || 0 }}次</span></view>
           <view v-if="showChinese" class="word-chinese">{{ word.chinese || '—' }}</view>
@@ -320,6 +320,7 @@ const displayLimit = ref(200);
 const showFilter = ref(false);
 const showLearningCenter = ref(false);
 const words = ref([]);
+const removingWords = ref({});
 const refreshing = ref(false);
 const sortBy = ref('create_time');
 const filterType = ref('none'); // 筛选类型：none, year, page
@@ -839,6 +840,13 @@ const goToMistakes = () => {
 const masterWord = async (word) => {
   if (!word || !word.english) return;
 
+  // 标记为正在移除
+  const wordKey = (word.english || '').trim().toLowerCase();
+  removingWords.value[wordKey] = true;
+
+  // 触发响应式更新，让卡片开始淡出动画
+  words.value = [...words.value];
+
   try {
     const bookId = getCurrentWordbook();
 
@@ -859,13 +867,20 @@ const masterWord = async (word) => {
     } else {
       // 自用词库，从数据库删除
       await db.deleteWord(word.english);
-      uni.showToast({ title: '已删除', icon: 'success' });
     }
+
+    // 等待动画完成后再刷新列表
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // 从移除集合中删除
+    delete removingWords.value[wordKey];
 
     // 刷新列表
     uni.$emit('refreshWordList');
   } catch (e) {
     console.error('斩掉单词失败:', e);
+    // 出错时也要清除移除状态
+    delete removingWords.value[wordKey];
     uni.showToast({ title: '操作失败', icon: 'none' });
   }
 };
@@ -1215,13 +1230,18 @@ const onSearchConfirm = () => {
   padding: 16px 20px;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(255, 133, 161, 0.08);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.3s ease;
   display: flex;
   align-items: flex-start;
   gap: 12px;
   margin: 8px 10px;
   width: calc(100% - 20px);
   position: relative;
+}
+
+.word-item-removing {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 .word-action-btn {

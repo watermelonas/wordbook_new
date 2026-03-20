@@ -255,13 +255,17 @@ to {
   padding: 16px 20px;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(255, 133, 161, 0.08);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.3s ease;
   display: flex;
   align-items: flex-start;
   gap: 12px;
   margin: 8px 10px;
   width: calc(100% - 20px);
   position: relative;
+}
+.word-item-removing[data-v-1cf27b2a] {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 .word-action-btn[data-v-1cf27b2a] {
   position: absolute;
