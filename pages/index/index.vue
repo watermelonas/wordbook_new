@@ -124,25 +124,33 @@
         <view class="empty-text">{{ (searchText || (filterType !== 'none' && (filterValue !== '' && filterValue !== undefined))) ? '未找到匹配的单词' : '还没有单词，开始添加吧' }}</view>
         <button v-if="!searchText && (filterType === 'none' || (filterValue === '' || filterValue === undefined))" class="empty-btn" @click="goToQuickAdd">添加单词</button>
       </view>
-      <view class="word-item" v-for="word in visibleWords" :key="word.id || ('wb-' + word.english)" :class="{ 'word-item-removing': removingWords[(word.english || '').trim().toLowerCase()] }">
-        <view class="word-content" @click="goToDetail(word)">
-          <view class="word-english">{{ word.english }} <span class="repeat-count">学习{{ word.repeat_count || 0 }}次</span></view>
-          <view v-if="showChinese" class="word-chinese">{{ word.chinese || '—' }}</view>
-          <view v-if="(word.source_page || word.year) || getExamCount(word)" class="word-source">
-            <template v-if="word.source_page || word.year">页码 {{ word.source_page || '-' }} · 年份 {{ word.year || '-' }}</template>
-            <text v-if="getExamCount(word)" class="word-exam-count">真题 {{ getExamCount(word) }}次</text>
+
+      <view class="word-list-container">
+        <view
+          class="word-item"
+          v-for="word in visibleWords"
+          :key="word.id || ('wb-' + word.english)"
+          :class="{ 'word-item-removing': removingWords[(word.english || '').trim().toLowerCase()] }"
+        >
+          <view class="word-content" @click="goToDetail(word)">
+            <view class="word-english">{{ word.english }} <span class="repeat-count">学习{{ word.repeat_count || 0 }}次</span></view>
+            <view v-if="showChinese" class="word-chinese">{{ word.chinese || '—' }}</view>
+            <view v-if="(word.source_page || word.year) || getExamCount(word)" class="word-source">
+              <template v-if="word.source_page || word.year">页码 {{ word.source_page || '-' }} · 年份 {{ word.year || '-' }}</template>
+              <text v-if="getExamCount(word)" class="word-exam-count">真题 {{ getExamCount(word) }}次</text>
+            </view>
+            <view v-if="word.tags" class="word-tags">
+              <text v-for="(t, i) in (word.tags || '').split(/[,，\s]+/).filter(Boolean)" :key="i" class="tag-chip">{{ t }}</text>
+            </view>
+            <view class="word-importance">
+              <span v-for="star in 5" :key="star" class="star" :class="{ active: (word.importance || 0) >= star }">★</span>
+            </view>
           </view>
-          <view v-if="word.tags" class="word-tags">
-            <text v-for="(t, i) in (word.tags || '').split(/[,，\s]+/).filter(Boolean)" :key="i" class="tag-chip">{{ t }}</text>
+          <view class="word-action-btn" @click.stop="masterWord(word)">斩</view>
+          <view class="word-favorite-btn" @click.stop="toggleFavorite(word)">
+            <view v-if="word.is_favorite" class="favorite-icon-filled"></view>
+            <view v-else class="favorite-icon-empty"></view>
           </view>
-          <view class="word-importance">
-            <span v-for="star in 5" :key="star" class="star" :class="{ active: (word.importance || 0) >= star }">★</span>
-          </view>
-        </view>
-        <view class="word-action-btn" @click.stop="masterWord(word)">斩</view>
-        <view class="word-favorite-btn" @click.stop="toggleFavorite(word)">
-          <view v-if="word.is_favorite" class="favorite-icon-filled"></view>
-          <view v-else class="favorite-icon-empty"></view>
         </view>
       </view>
       <view v-if="hasMoreWords" class="load-more" @click="onScrollToLower">加载更多</view>
@@ -233,9 +241,8 @@ async function updateFavoriteWordsSet() {
 /** 更新已斩单词集合 */
 async function updateMasteredWordsSet() {
   try {
-    const { getWordbookWords } = await import('../../src/utils/wordbookSource.js');
-    const masteredWords = getWordbookWords('mastered') || [];
-    masteredWordsSet = new Set(masteredWords.map(w => (w.english || '').trim().toLowerCase()));
+    const masteredWords = getMasteredWordbookWords();
+    masteredWordsSet = new Set(Array.from(masteredWords).map(w => (w || '').trim().toLowerCase()));
     console.log('🎯 已斩单词集合已更新，共', masteredWordsSet.size, '个');
   } catch (e) {
     console.warn('⚠️ 更新已斩单词集合失败:', e);
@@ -296,7 +303,11 @@ function filterExternalWords(list) {
 
 function prepareExternalWords(raw) {
   const normalized = (raw || []).map(normalizeListWord).filter(Boolean);
-  return sortExternalWords(filterExternalWords(normalized));
+  // 💡 过滤掉全局已斯的单词
+  const masteredWords = getMasteredWordbookWords();
+  const masteredSet = new Set(Array.from(masteredWords).map(w => (w || '').trim().toLowerCase()));
+  const filtered = normalized.filter(w => !masteredSet.has((w.english || '').trim().toLowerCase()));
+  return sortExternalWords(filterExternalWords(filtered));
 }
 
 /** 补全单条：优先用主库批量结果 chinese/examCount/tags/importance，缺项再用 pregen 兜底 */
@@ -840,19 +851,23 @@ const goToMistakes = () => {
 const masterWord = async (word) => {
   if (!word || !word.english) return;
 
-  // 标记为正在移除
   const wordKey = (word.english || '').trim().toLowerCase();
-  removingWords.value[wordKey] = true;
 
-  // 触发响应式更新，让卡片开始淡出动画
-  words.value = [...words.value];
+  // 1. 立即标记该单词，触发 CSS 渐隐和折叠动画
+  removingWords.value[wordKey] = true;
 
   try {
     const bookId = getCurrentWordbook();
 
-    // 如果是词书单词，添加到已斩列表
+    // 如果是词书单词，添加到已斩列表并从词书中移除
     if (bookId && bookId !== 'self') {
       const { getWordbookWords, setWordbookWords } = await import('../../src/utils/wordbookSource.js');
+      const { addGlobalMasteredWord } = await import('../../src/utils/masteredWordbookWords.js');
+
+      // 添加到全局已斯列表（这样在所有词书中都不会出现）
+      addGlobalMasteredWord(word.english);
+
+      // 添加到已斯词书列表
       const masteredWords = getWordbookWords('mastered') || [];
       const exists = masteredWords.some(w => (w.english || '').trim().toLowerCase() === (word.english || '').trim().toLowerCase());
       if (!exists) {
@@ -863,23 +878,28 @@ const masterWord = async (word) => {
         });
         setWordbookWords('mastered', masteredWords);
       }
+
+      // 💡 关键：从词书中移除该单词，这样总词数会自动下降
+      const bookWords = getWordbookWords(bookId) || [];
+      const filtered = bookWords.filter(w => (w.english || '').trim().toLowerCase() !== wordKey);
+      setWordbookWords(bookId, filtered);
+
       uni.showToast({ title: '已斩掉', icon: 'success' });
     } else {
       // 自用词库，从数据库删除
       await db.deleteWord(word.english);
+      uni.showToast({ title: '已斩掉', icon: 'success' });
     }
 
-    // 等待动画完成后再刷新列表
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // 2. 💡 极其重要：等待动画播放完毕。CSS动画是 400ms，这里等 450ms
+    await new Promise(resolve => setTimeout(resolve, 450));
 
-    // 从移除集合中删除
+    // 3. 动画结束后，真正从列表中移除元素
+    words.value = words.value.filter(w => (w.english || '').trim().toLowerCase() !== wordKey);
     delete removingWords.value[wordKey];
 
-    // 刷新列表
-    uni.$emit('refreshWordList');
   } catch (e) {
     console.error('斩掉单词失败:', e);
-    // 出错时也要清除移除状态
     delete removingWords.value[wordKey];
     uni.showToast({ title: '操作失败', icon: 'none' });
   }
@@ -1230,18 +1250,38 @@ const onSearchConfirm = () => {
   padding: 16px 20px;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(255, 133, 161, 0.08);
-  transition: transform 0.2s ease, opacity 0.3s ease;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
   margin: 8px 10px;
   width: calc(100% - 20px);
   position: relative;
+  box-sizing: border-box;
+
+  /* 💡 核心：同时赋予所有空间属性平滑过渡 */
+  max-height: 500px;
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  transition: max-height 0.4s linear,
+              margin 0.4s linear,
+              padding 0.4s linear,
+              opacity 0.3s ease-out,
+              transform 0.3s ease-out;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
 
+/* 斩击触发后的状态 */
 .word-item-removing {
-  opacity: 0;
-  transform: translateY(-10px);
+  opacity: 0 !important;
+  transform: translateX(40px) scale(0.95) !important;
+
+  /* 💡 让卡片高度、边距归零，从而把下方的卡片"平滑拉上来" */
+  max-height: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border: none !important;
 }
 
 .word-action-btn {

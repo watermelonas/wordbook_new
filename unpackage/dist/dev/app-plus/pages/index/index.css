@@ -255,17 +255,38 @@ to {
   padding: 16px 20px;
   border-radius: 16px;
   box-shadow: 0 2px 8px rgba(255, 133, 161, 0.08);
-  transition: transform 0.2s ease, opacity 0.3s ease;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
   margin: 8px 10px;
   width: calc(100% - 20px);
   position: relative;
+  box-sizing: border-box;
+
+  /* 💡 核心：同时赋予所有空间属性平滑过渡 */
+  max-height: 500px;
+  opacity: 1;
+  transform: translateX(0) scale(1);
+  transition: max-height 0.4s linear,
+              margin 0.4s linear,
+              padding 0.4s linear,
+              opacity 0.3s ease-out,
+              transform 0.3s ease-out;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
 }
+
+/* 斩击触发后的状态 */
 .word-item-removing[data-v-1cf27b2a] {
-  opacity: 0;
-  transform: translateY(-10px);
+  opacity: 0 !important;
+  transform: translateX(40px) scale(0.95) !important;
+
+  /* 💡 让卡片高度、边距归零，从而把下方的卡片"平滑拉上来" */
+  max-height: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border: none !important;
 }
 .word-action-btn[data-v-1cf27b2a] {
   position: absolute;

@@ -676,16 +676,24 @@ const checkProgress = () => {
 const getCurrentBookTotalWords = async () => {
   const book = getCurrentBookId();
   try {
+    let totalCount = 0;
+
     if (book === 'self') {
       const all = await db.getAllWords();
-      return Array.isArray(all) ? all.length : 0;
-    }
-    if (isLocalWordbookKey(book)) {
+      totalCount = Array.isArray(all) ? all.length : 0;
+    } else if (isLocalWordbookKey(book)) {
       const list = await loadLocalWordbook(book);
-      return Array.isArray(list) ? list.length : 0;
+      totalCount = Array.isArray(list) ? list.length : 0;
+    } else {
+      const list = getWordbookWords(book) || [];
+      totalCount = Array.isArray(list) ? list.length : 0;
     }
-    const list = getWordbookWords(book) || [];
-    return Array.isArray(list) ? list.length : 0;
+
+    // 💡 关键：减去全局已斯的单词数
+    const masteredWords = getMasteredWordbookWords(book);
+    const masteredCount = masteredWords.size || 0;
+
+    return Math.max(0, totalCount - masteredCount);
   } catch (_) {
     return 0;
   }
@@ -693,27 +701,37 @@ const getCurrentBookTotalWords = async () => {
 
 const getCurrentBookWordPool = async () => {
   const book = getCurrentBookId();
+  const masteredWords = getMasteredWordbookWords(book);
+  const masteredSet = new Set(Array.from(masteredWords).map(w => (w || '').trim().toLowerCase()));
+
   if (book === 'self') {
-    return await db.getAllWords();
+    const all = await db.getAllWords();
+    // 💡 过滤掉已斯的单词
+    return (Array.isArray(all) ? all : []).filter(w => !masteredSet.has((w.english || '').trim().toLowerCase()));
   }
   if (isLocalWordbookKey(book)) {
     const list = await loadLocalWordbook(book);
     const dictLookup = await masterDb.getWordBriefBatch(list.map((w) => w.english));
-    return list.map((w) => {
-      const v = dictLookup[(w.english || '').trim().toLowerCase()];
-      const chinese = (v && typeof v === 'object' && v.chinese != null) ? String(v.chinese).trim() : (typeof v === 'string' ? v : '').trim();
-      return {
-        id: null,
-        english: w.english,
-        chinese,
-        importance: w.importance,
-        examples: [],
-        synonyms: [],
-        antonyms: [],
-      };
-    });
+    return list
+      // 💡 过滤掉已斯的单词
+      .filter(w => !masteredSet.has((w.english || '').trim().toLowerCase()))
+      .map((w) => {
+        const v = dictLookup[(w.english || '').trim().toLowerCase()];
+        const chinese = (v && typeof v === 'object' && v.chinese != null) ? String(v.chinese).trim() : (typeof v === 'string' ? v : '').trim();
+        return {
+          id: null,
+          english: w.english,
+          chinese,
+          importance: w.importance,
+          examples: [],
+          synonyms: [],
+          antonyms: [],
+        };
+      });
   }
-  return getWordbookWords(book) || [];
+  const list = getWordbookWords(book) || [];
+  // 💡 过滤掉已斯的单词
+  return list.filter(w => !masteredSet.has((w.english || '').trim().toLowerCase()));
 };
 
 const refreshDashboardSnapshot = async () => {
