@@ -168,7 +168,8 @@ class DatabaseManager {
         "create_time" TEXT,
         "update_time" TEXT,
         "is_mastered" INTEGER DEFAULT 0,
-        "mastered_at" TEXT
+        "mastered_at" TEXT,
+        "is_favorite" INTEGER DEFAULT 0
       )`);
 
       // 创建已斩单词表
@@ -199,8 +200,13 @@ class DatabaseManager {
         "update_time" TEXT,
         "is_mastered" INTEGER DEFAULT 1,
         "mastered_at" TEXT,
-        "wordbook_type" TEXT DEFAULT 'self'
+        "wordbook_type" TEXT DEFAULT 'self',
+        "is_favorite" INTEGER DEFAULT 0
       )`);
+
+      // 迁移：添加缺失的列
+      await this.addColumnIfNotExists('words', 'is_favorite', 'INTEGER DEFAULT 0');
+      await this.addColumnIfNotExists('mastered_words', 'is_favorite', 'INTEGER DEFAULT 0');
 
       // 创建索引
       const indexes = [
@@ -217,6 +223,25 @@ class DatabaseManager {
       console.log('[db] 数据库架构初始化完成');
     } catch (error) {
       console.error('[db] 设置架构失败:', error);
+    }
+  }
+
+  /**
+   * 添加列如果不存在
+   */
+  async addColumnIfNotExists(tableName, columnName, columnType) {
+    try {
+      // 尝试添加列，如果已存在会忽略错误
+      await this.adapter.execute(`ALTER TABLE ${tableName} ADD COLUMN "${columnName}" ${columnType}`).catch((error) => {
+        // 如果是"duplicate column"错误，说明列已存在，忽略
+        if (error && error.message && error.message.includes('duplicate column')) {
+          console.log(`[db] 列 ${tableName}.${columnName} 已存在，跳过添加`);
+          return;
+        }
+        throw error;
+      });
+    } catch (error) {
+      console.warn(`[db] 添加列 ${tableName}.${columnName} 失败:`, error);
     }
   }
 

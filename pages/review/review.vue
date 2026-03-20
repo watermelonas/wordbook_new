@@ -35,14 +35,14 @@
         <view class="stat-detail-row">剩余 {{ remainingNewWords }} 词 · 预计 {{ remainDays }} 天完成</view>
       </view>
 
-      <!-- 推荐复习 -->
-      <view class="section-label">推荐复习</view>
+      <!-- 今日任务 -->
+      <view class="section-label">今日任务</view>
       <view class="card recommend-card" @click="startRecommendedReview">
         <view class="recommend-info">
           <text class="recommend-title">{{ recommendedPresetTitle }}</text>
           <text class="recommend-desc">{{ recommendedPresetDesc }}</text>
         </view>
-        <button class="start-btn">开始复习</button>
+        <button class="start-btn">开始学习</button>
       </view>
 
       <!-- 其他复习方式 -->
@@ -247,87 +247,100 @@
         <view class="word-display">
           <view class="word-english">{{ currentWord.english }}</view>
           <view v-if="currentWord.phonetic" class="word-phonetic">/{{ currentWord.phonetic }}/</view>
-        </view>
-        
-        <view class="options-grid">
-          <view 
-            v-for="(option, idx) in currentOptions" 
-            :key="idx"
-            class="option-card"
-            :class="{
-              'correct': showResult && currentWord.defs && currentWord.defs.length > 0 && option.chinese === currentWord.defs[0].trans,
-              'wrong': showResult && selectedOption && option.chinese === selectedOption.chinese && !(currentWord.defs && currentWord.defs.length > 0 && option.chinese === currentWord.defs[0].trans)
-            }"
-            @click="!showResult && handleChoice(option)"
-          >
-            <view class="option-content">
-              <text class="option-pos" v-if="option.pos">{{ option.pos }}</text>
-              <text class="option-text">{{ option.chinese }}</text>
-            </view>
-          </view>
+          <view v-if="currentWord.frequency" class="word-frequency">{{ currentWord.frequency }}次</view>
         </view>
 
-        <view v-if="showResult" class="action-buttons">
-          <view class="action-btn" @click="goToWordDetail">详情</view>
-          <view class="action-btn" @click="nextQuestion">{{ isLastQuestion ? '查看结果' : '下一题 →' }}</view>
+        <view class="options-and-buttons">
+          <view class="options-grid">
+            <view
+              v-for="(option, idx) in currentOptions"
+              :key="idx"
+              class="option-card"
+              :class="{
+                'correct': showResult && currentWord.defs && currentWord.defs.length > 0 && option.chinese === currentWord.defs[0].trans,
+                'wrong': showResult && selectedOption && option.chinese === selectedOption.chinese && !(currentWord.defs && currentWord.defs.length > 0 && option.chinese === currentWord.defs[0].trans)
+              }"
+              @click="!showResult && handleChoice(option)"
+            >
+              <view class="option-content">
+                <text class="option-pos" v-if="option.pos">{{ option.pos }}</text>
+                <text class="option-text">{{ option.chinese }}</text>
+              </view>
+            </view>
+          </view>
+
+          <view v-if="showResult" class="action-buttons">
+            <view class="action-btn" @click="goToWordDetail">详情</view>
+            <view class="action-btn" @click="nextQuestion">{{ isLastQuestion ? '查看结果' : '下一题 →' }}</view>
+          </view>
         </view>
       </view>
 
       <!-- 模式A': 看中文选英文（干扰项为词库中形式相近的单词，不调 AI） -->
       <view v-if="settings.mode === 'choice_en'" class="choice-mode">
         <view v-if="currentWord.__isOldReview" class="review-word-flag">复习巩固</view>
-        <view class="word-chinese-prompt">{{ currentWord.chinese }}</view>
-        
-        <view class="options-grid">
-          <view 
-            v-for="(option, idx) in currentOptions" 
-            :key="idx"
-            class="option-card"
-            :class="{
-              'correct': showResult && (option || '').trim().toLowerCase() === (currentWord.english || '').trim().toLowerCase(),
-              'wrong': showResult && option === selectedOption && (option || '').trim().toLowerCase() !== (currentWord.english || '').trim().toLowerCase()
-            }"
-            @click="!showResult && handleChoiceEn(option)"
-          >
-            <text class="option-text">{{ option }}</text>
-          </view>
+        <view class="word-display">
+          <view class="word-chinese-prompt">{{ currentWord.chinese }}</view>
+          <view v-if="currentWord.frequency" class="word-frequency">{{ currentWord.frequency }}次</view>
         </view>
 
-        <view v-if="showResult" class="action-buttons">
-          <view class="action-btn" @click="goToWordDetail">详情</view>
-          <view class="action-btn" @click="nextQuestion">{{ isLastQuestion ? '查看结果' : '下一题 →' }}</view>
+        <view class="options-and-buttons">
+          <view class="options-grid">
+            <view
+              v-for="(option, idx) in currentOptions"
+              :key="idx"
+              class="option-card"
+              :class="{
+                'correct': showResult && (option || '').trim().toLowerCase() === (currentWord.english || '').trim().toLowerCase(),
+                'wrong': showResult && option === selectedOption && (option || '').trim().toLowerCase() !== (currentWord.english || '').trim().toLowerCase()
+              }"
+              @click="!showResult && handleChoiceEn(option)"
+            >
+              <text class="option-text">{{ option }}</text>
+            </view>
+          </view>
+
+          <view v-if="showResult" class="action-buttons">
+            <view class="action-btn" @click="goToWordDetail">详情</view>
+            <view class="action-btn" @click="nextQuestion">{{ isLastQuestion ? '查看结果' : '下一题 →' }}</view>
+          </view>
         </view>
       </view>
 
       <!-- 模式B: AI例句填空 -->
       <view v-if="settings.mode === 'fill'" class="fill-mode">
         <view v-if="currentWord.__isOldReview" class="review-word-flag">复习巩固</view>
-        <view class="fill-sentence">
-          <rich-text :nodes="formatHighlight(currentSentence)"></rich-text>
-        </view>
-
-        <view class="options-grid">
-          <view 
-            v-for="(option, idx) in fillOptions" 
-            :key="idx"
-            class="option-card"
-            :class="{
-              'correct': showResult && option === fillAnswer,
-              'wrong': showResult && option === selectedOption && option !== fillAnswer
-            }"
-            @click="!showResult && handleFillChoice(option)"
-          >
-            <text class="option-text">{{ option }}</text>
+        <view class="word-display">
+          <view class="fill-sentence">
+            <rich-text :nodes="formatHighlight(currentSentence)"></rich-text>
           </view>
+          <view v-if="currentWord.frequency" class="word-frequency">{{ currentWord.frequency }}次</view>
         </view>
 
-        <view v-if="showResult && currentFillSentenceChinese" class="fill-result">
-          <view class="sentence-chinese">句子释义：<rich-text :nodes="formatHighlight(currentFillSentenceChinese)"></rich-text></view>
-        </view>
+        <view class="options-and-buttons">
+          <view class="options-grid">
+            <view
+              v-for="(option, idx) in fillOptions"
+              :key="idx"
+              class="option-card"
+              :class="{
+                'correct': showResult && option === fillAnswer,
+                'wrong': showResult && option === selectedOption && option !== fillAnswer
+              }"
+              @click="!showResult && handleFillChoice(option)"
+            >
+              <text class="option-text">{{ option }}</text>
+            </view>
+          </view>
 
-        <view v-if="showResult" class="action-buttons">
-          <view class="action-btn" @click="goToWordDetail">详情</view>
-          <view class="action-btn" @click="nextQuestion">{{ isLastQuestion ? '查看结果' : '下一题 →' }}</view>
+          <view v-if="showResult && currentFillSentenceChinese" class="fill-result">
+            <view class="sentence-chinese">句子释义：<rich-text :nodes="formatHighlight(currentFillSentenceChinese)"></rich-text></view>
+          </view>
+
+          <view v-if="showResult" class="action-buttons">
+            <view class="action-btn" @click="goToWordDetail">详情</view>
+            <view class="action-btn" @click="nextQuestion">{{ isLastQuestion ? '查看结果' : '下一题 →' }}</view>
+          </view>
         </view>
       </view>
 
@@ -467,6 +480,7 @@ import {
   getDueProfilesForWords,
   getLatestSession,
   logStudySession,
+  getWordProfile,
 } from '../../src/utils/learningCenter.js';
 import { logger, errorHandler } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
@@ -934,9 +948,9 @@ const isTodayTargetDone = computed(() => {
 const primaryStartText = computed(() => {
   if (reviewPreset.value === 'due') return '开始到期复习';
   if (reviewPreset.value === 'new') return '开始新词学习';
-  if (reviewPreset.value === 'wrong') return '开始错词再练';
+  if (reviewPreset.value === 'wrong') return '开始错词复习';
   if (reviewPreset.value === 'old') return '开始旧词复习';
-  return isTodayTargetDone.value ? '再来一组20' : '开始复习';
+  return isTodayTargetDone.value ? '再来一组20' : '开始学习';
 });
 
 // 新增：今日进度百分比
@@ -950,11 +964,7 @@ const todayProgressPercent = computed(() => {
 
 // 新增：智能推荐的复习预设
 const recommendedPreset = computed(() => {
-  // 推荐复习流程：新词 > 错词 > 旧词
-  const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
-  if (newWordsNeeded > 0) return 'new';
-  if (dashboardSnapshot.value.mistakeCount > 0) return 'wrong';
-  if (dashboardSnapshot.value.dueCount > 0) return 'old';
+  // 今日任务：固定为新词
   return 'new';
 });
 
@@ -963,38 +973,23 @@ const recommendedPresetIcon = computed(() => {
 });
 
 const recommendedPresetTitle = computed(() => {
-  const titles = { new: '今日新词', wrong: '错词本', old: '复习旧词' };
-  return titles[recommendedPreset.value] || '今日新词';
+  return '今日任务';
 });
 
 const recommendedPresetDesc = computed(() => {
-  const preset = recommendedPreset.value;
   const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
-  if (preset === 'new') return `还需学习 ${newWordsNeeded} 个新词`;
-  if (preset === 'wrong') return `${dashboardSnapshot.value.mistakeCount} 个单词需要巩固`;
-  if (preset === 'old') return `${dashboardSnapshot.value.dueCount} 个单词待复习`;
-  return '从所有单词中随机抽取';
+  return `还需学习 ${newWordsNeeded} 个新词`;
 });
 
-// 新增：其他复习方式列表 - 显示推荐复习之外的两个阶段
+// 新增：其他复习方式列表 - 只显示错词和旧词
 const otherPresets = computed(() => {
-  const preset = recommendedPreset.value;
-  const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
-
   const allPresets = {
-    new: { key: 'new', icon: '', title: '今日新词', count: newWordsNeeded },
-    wrong: { key: 'wrong', icon: '', title: '错词本', count: dashboardSnapshot.value.mistakeCount },
-    old: { key: 'old', icon: '', title: '复习旧词', count: dashboardSnapshot.value.dueCount },
+    wrong: { key: 'wrong', icon: '', title: '错词复习', count: dashboardSnapshot.value.mistakeCount },
+    old: { key: 'old', icon: '', title: '旧词复习', count: dashboardSnapshot.value.dueCount },
   };
 
-  // 返回除了推荐复习之外的两个阶段
-  const all = [];
-  for (const [key, item] of Object.entries(allPresets)) {
-    if (key !== preset) {
-      all.push(item);
-    }
-  }
-  return all;
+  // 返回错词和旧词
+  return Object.values(allPresets);
 });
 
 const currentWordbookName = computed(() => {
@@ -1174,63 +1169,71 @@ const saveReviewResult = () => {
   lastReviewResult.value = result;
 };
 
-const buildPresetQueue = (list, count) => {
+const buildPresetQueue = async (list, count) => {
   const preset = reviewPreset.value || 'due';
   if (!Array.isArray(list) || !list.length) return [];
 
+  // 先过滤掉已斩的单词
+  const filteredList = await filterOutMasteredWords(list);
+  if (!filteredList.length) return [];
+
   // 今日新词：从未复习过的单词中筛选
   if (preset === 'new') {
-    const profiles = list.map((item) => getWordProfile(item)).filter(Boolean);
+    const profiles = filteredList.map((item) => getWordProfile(item)).filter(Boolean);
     const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
     return shuffleList(newWords.map((p) => ({ english: p.english, chinese: p.chinese }))).slice(0, count);
   }
 
   if (preset === 'wrong') {
     const wrongSet = new Set(getMistakeWords(getCurrentBookId(), true).map((item) => getWordKey(item)));
-    return shuffleList(filterWordsByKeys(list, wrongSet)).slice(0, count);
+    return shuffleList(filterWordsByKeys(filteredList, wrongSet)).slice(0, count);
   }
 
   // 复习旧词：按遗忘曲线，每个单词最多出现3次
   if (preset === 'old') {
-    const dueProfiles = getDueProfilesForWords(list, getCurrentBookId());
+    const dueProfiles = getDueProfilesForWords(filteredList, getCurrentBookId());
     // 过滤出复习次数少于3次的单词
     const filtered = dueProfiles.filter((item) => {
       const reviewCount = Number(item.review_count || 0);
       return reviewCount < 3;
     });
     const dueSet = new Set(filtered.map((item) => getWordKey(item)));
-    return shuffleList(filterWordsByKeys(list, dueSet)).slice(0, count);
+    return shuffleList(filterWordsByKeys(filteredList, dueSet)).slice(0, count);
   }
 
   if (preset === 'due') {
-    const dueProfiles = getDueProfilesForWords(list, getCurrentBookId());
+    const dueProfiles = getDueProfilesForWords(filteredList, getCurrentBookId());
     const dueSet = new Set(dueProfiles.map((item) => getWordKey(item)));
-    return shuffleList(filterWordsByKeys(list, dueSet)).slice(0, count);
+    return shuffleList(filterWordsByKeys(filteredList, dueSet)).slice(0, count);
   }
 
   return [];
 };
 
-// 构建词书复习队列（过滤已斯单词）
+// 构建词书复习队列（过滤已斩单词）
+const filterOutMasteredWords = async (list) => {
+  try {
+    const { getWordbookWords } = await import('../../src/utils/wordbookSource.js');
+    const masteredWords = getWordbookWords('mastered') || [];
+    const masteredSet = new Set(masteredWords.map(w => (w.english || '').trim().toLowerCase()));
+
+    return list.filter(item => {
+      const english = (item.english || '').trim().toLowerCase();
+      return !masteredSet.has(english);
+    });
+  } catch (e) {
+    console.warn('filterOutMasteredWords: 过滤已斩单词失败', e);
+    return list;
+  }
+};
+
 const buildBookReviewQueue = async (list, count) => {
   if (!Array.isArray(list) || !list.length) return [];
-  
-  const bookId = getCurrentBookId();
-  let filteredList = list;
-  
-  // 如果是词书单词，过滤已斯的单词
-  if (bookId && bookId !== 'self') {
-    try {
-      const masteredSet = getMasteredWordbookWords(bookId);
-      filteredList = list.filter(item => {
-        const english = (item.english || '').trim().toLowerCase();
-        return !masteredSet.has(english);
-      });
-    } catch (e) {
-      console.error('buildBookReviewQueue: 过滤已斯单词失败', e);
-    }
-  }
-  
+
+  // 过滤掉已斩的单词
+  const filteredList = filterOutMasteredWords(list);
+  if (!filteredList.length) return [];
+
   // 随机打乱并取前count个
   return shuffleList(filteredList).slice(0, count);
 };
@@ -1260,18 +1263,21 @@ const startReviewInternal = async (forceCount = null) => {
     // 推荐复习流程，直接使用已设置的 reviewWords
   } else if (isSelfWordbook()) {
     if (reviewPreset.value === 'due') {
-      reviewWords.value = await db.getReviewWords({
+      let words = await db.getReviewWords({
         sortBy: settings.value.sortBy,
         count,
         difficulty: 'normal'
       });
+      // 过滤掉已斩的单词
+      words = await filterOutMasteredWords(words);
+      reviewWords.value = words;
     } else {
       const allWords = await db.getAllWords();
-      reviewWords.value = buildPresetQueue(allWords, count);
+      reviewWords.value = await buildPresetQueue(allWords, count);
     }
   } else {
     const list = await getCurrentBookWordPool();
-    const presetQueue = buildPresetQueue(list, count);
+    const presetQueue = await buildPresetQueue(list, count);
     reviewWords.value = presetQueue.length ? presetQueue : await buildBookReviewQueue(list, count);
   }
 
@@ -1317,21 +1323,13 @@ const onPrimaryStartClick = async () => {
   await startReview();
 };
 
-// 新增：开始推荐的复习 - 顺序流程：新词 > 错词 > 旧词
+// 新增：开始今日任务 - 只学习新词
 const startRecommendedReview = async () => {
-  const count = Number(settings.value.count || 20);
+  const dailyTarget = Number(settings.value.count || 20);
   const bookId = getCurrentBookId();
 
-  // 初始化推荐复习状态
-  recommendedReviewState.value = {
-    newWords: [],
-    wrongWords: [],
-    oldWords: [],
-    currentStage: 'new',
-    newCompleted: false,
-    wrongCompleted: false,
-    oldCompleted: false,
-  };
+  // 计算今日还需要学习的数量 - 使用 todayReviewed.value
+  const newWordsNeeded = Math.max(0, dailyTarget - todayReviewed.value);
 
   try {
     // 获取所有单词列表
@@ -1342,31 +1340,27 @@ const startRecommendedReview = async () => {
       allWords = await getCurrentBookWordPool();
     }
 
-    // 1. 收集新词
-    const profiles = allWords.map((item) => getWordProfile(item)).filter(Boolean);
-    const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
-    recommendedReviewState.value.newWords = shuffleList(newWords.map((p) => ({ english: p.english, chinese: p.chinese }))).slice(0, count);
-
-    // 2. 收集错词
-    const wrongSet = new Set(getMistakeWords(bookId, true).map((item) => getWordKey(item)));
-    recommendedReviewState.value.wrongWords = shuffleList(filterWordsByKeys(allWords, wrongSet));
-
-    // 3. 收集旧词（复习次数 < 3）
-    const dueProfiles = getDueProfilesForWords(allWords, bookId);
-    const oldWordsFiltered = dueProfiles.filter((item) => {
-      const reviewCount = Number(item.review_count || 0);
-      return reviewCount < 3;
+    // 收集新词 - 使用今日剩余需要学习的数量
+    // 新词是指那些还没有学过的单词（seen_count === 0 或没有学习记录）
+    let newWords = allWords.filter((item) => {
+      const profile = getWordProfile(item);
+      // 如果没有学习记录，或者 seen_count 为 0，就是新词
+      return !profile || !profile.seen_count || Number(profile.seen_count) === 0;
     });
-    const oldSet = new Set(oldWordsFiltered.map((item) => getWordKey(item)));
-    recommendedReviewState.value.oldWords = shuffleList(filterWordsByKeys(allWords, oldSet));
 
-    // 开始第一阶段：新词
+    // 过滤掉已斩的单词
+    newWords = await filterOutMasteredWords(newWords);
+
+    // 如果今日进度已满，newWordsNeeded 会是 0，此时不限制新词数量
+    const newWordsCount = newWordsNeeded > 0 ? newWordsNeeded : newWords.length;
+    reviewWords.value = shuffleList(newWords.map((p) => ({ english: p.english, chinese: p.chinese }))).slice(0, newWordsCount);
+
+    // 开始新词学习
     reviewPreset.value = 'new';
-    reviewWords.value = recommendedReviewState.value.newWords;
 
     if (reviewWords.value.length === 0) {
-      // 如果没有新词，跳到错词
-      await continueRecommendedReview('wrong');
+      // 没有新词可学
+      uni.showToast({ title: '暂无新词可学', icon: 'none' });
     } else {
       await startReviewInternal(null);
     }
@@ -1377,59 +1371,12 @@ const startRecommendedReview = async () => {
 };
 
 // 继续推荐复习的下一阶段
-const continueRecommendedReview = async (nextStage) => {
-  recommendedReviewState.value.currentStage = nextStage;
-
-  if (nextStage === 'wrong') {
-    recommendedReviewState.value.newCompleted = true;
-    reviewPreset.value = 'wrong';
-    reviewWords.value = recommendedReviewState.value.wrongWords;
-
-    if (reviewWords.value.length === 0) {
-      // 如果没有错词，跳到旧词
-      await continueRecommendedReview('old');
-    } else {
-      await startReviewInternal(null);
-    }
-  } else if (nextStage === 'old') {
-    recommendedReviewState.value.wrongCompleted = true;
-    reviewPreset.value = 'old';
-    reviewWords.value = recommendedReviewState.value.oldWords;
-
-    if (reviewWords.value.length === 0) {
-      // 所有阶段完成
-      recommendedReviewState.value.oldCompleted = true;
-      // 重置推荐复习状态，以便下次使用
-      recommendedReviewState.value = {
-        newWords: [],
-        wrongWords: [],
-        oldWords: [],
-        currentStage: '',
-        newCompleted: false,
-        wrongCompleted: false,
-        oldCompleted: false,
-      };
-      uni.showToast({ title: '推荐复习已完成！', icon: 'success' });
-    } else {
-      await startReviewInternal(null);
-    }
-  }
-};
-
 // 新增：开始指定预设的复习
 const startPresetReview = async (preset) => {
   reviewPreset.value = preset;
-  // 重置推荐复习状态，因为用户选择了其他复习方式
-  recommendedReviewState.value = {
-    newWords: [],
-    wrongWords: [],
-    oldWords: [],
-    currentStage: '',
-    newCompleted: false,
-    wrongCompleted: false,
-    oldCompleted: false,
-  };
-  // 直接开始新的复习，startReviewInternal 会处理进度清除
+  // 清除之前的单词列表，让 startReviewInternal 重新加载
+  reviewWords.value = [];
+  // 直接开始新的复习，startReviewInternal 会处理进度清除和单词加载
   await startReviewInternal(null);
 };
 
@@ -1471,6 +1418,7 @@ const loadCurrentQuestion = async () => {
           antonyms: Array.isArray(detail.antonyms) && detail.antonyms.length ? detail.antonyms : (currentWord.value.antonyms || []),
           defs: Array.isArray(detail.defs) ? detail.defs : (currentWord.value.defs || []),
           exam_tip: detail.exam_tip || currentWord.value.exam_tip || '',
+          frequency: detail.frequency || currentWord.value.frequency || 0,
         };
         currentWord.value = merged;
         reviewWords.value[currentIndex.value] = merged;
@@ -1749,7 +1697,13 @@ const applyReviewOutcome = async (isCorrect, wrongPayload = null) => {
     return;
   }
   wrongCount.value++;
-  queueRetryWord();
+
+  // 新词学习不需要重试，选错了直接跳过
+  // 错词本里的单词错了才会重试
+  if (reviewPreset.value !== 'new') {
+    queueRetryWord();
+  }
+
   if (wrongPayload) {
     wrongWords.value.push(wrongPayload);
   }
@@ -1923,15 +1877,6 @@ const finishReview = async () => {
     mistakeCount: wrongWords.value.length,
   });
   refreshPlanStats();
-
-  // 检查是否在推荐复习流程中，如果是则继续下一阶段
-  if (recommendedReviewState.value.currentStage === 'new' && !recommendedReviewState.value.newCompleted) {
-    // 新词阶段完成，继续错词
-    await continueRecommendedReview('wrong');
-  } else if (recommendedReviewState.value.currentStage === 'wrong' && !recommendedReviewState.value.wrongCompleted) {
-    // 错词阶段完成，继续旧词
-    await continueRecommendedReview('old');
-  }
 };
 
 const restartReview = () => {
@@ -1979,16 +1924,16 @@ const markCurrentWordAsMastered = async () => {
       addMasteredWordbookWord(bookId, currentWord.value.english);
     } else if (currentWord.value.id) {
       // 自用词库单词：有id，直接操作数据库
-      console.log('markCurrentWordAsMastered: 自用词库单词，使用id斯掉');
+      console.log('markCurrentWordAsMastered: 自用词库单词，使用id斩掉');
       await db.masterWord(currentWord.value.id);
     } else {
       // 其他情况：尝试用english查询
-      console.log('markCurrentWordAsMastered: 其他情况，使用english斯掉');
+      console.log('markCurrentWordAsMastered: 其他情况，使用english斩掉');
       await db.masterWordByEnglish(currentWord.value.english);
     }
 
-    console.log('markCurrentWordAsMastered: 斯掉成功');
-    uni.showToast({ title: '已斯掉！', icon: 'success' });
+    console.log('markCurrentWordAsMastered: 斩掉成功');
+    uni.showToast({ title: '已斩掉！', icon: 'success' });
     showMasteredConfirm.value = false;
 
     // 自动跳到下一题
@@ -1996,8 +1941,8 @@ const markCurrentWordAsMastered = async () => {
       nextQuestion();
     }, 500);
   } catch (error) {
-    console.error('markCurrentWordAsMastered: 斯掉失败', error);
-    uni.showToast({ title: '斯掉失败: ' + (error.message || '未知错误'), icon: 'none' });
+    console.error('markCurrentWordAsMastered: 斩掉失败', error);
+    uni.showToast({ title: '斩掉失败: ' + (error.message || '未知错误'), icon: 'none' });
     showMasteredConfirm.value = false;
   }
 };
@@ -2107,7 +2052,7 @@ onBackPress(() => {
 
 /* 分类标签 */
 .section-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #9B7BA8;
   margin-bottom: 1px;
@@ -2183,7 +2128,7 @@ onBackPress(() => {
 }
 
 .stat-detail-row {
-  font-size: 10px;
+  font-size: 12px;
   color: #9B7BA8;
   text-align: center;
   line-height: 1.1;
@@ -2196,7 +2141,7 @@ onBackPress(() => {
 }
 
 .stat-left-text {
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
   font-weight: 500;
 }
@@ -2228,13 +2173,13 @@ onBackPress(() => {
 }
 
 .recommend-title {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: #2D1B2E;
 }
 
 .recommend-desc {
-  font-size: 11px;
+  font-size: 13px;
   color: #9B7BA8;
   line-height: 1.2;
 }
@@ -2283,7 +2228,7 @@ onBackPress(() => {
 }
 
 .btn-title {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: #2D1B2E;
   text-align: center;
@@ -2291,7 +2236,7 @@ onBackPress(() => {
 }
 
 .btn-count {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: #FF6B9D;
 }
@@ -3126,6 +3071,8 @@ onBackPress(() => {
   height: 100%;
   box-sizing: border-box;
   justify-content: space-between;
+  padding-top: 30px;
+  padding-bottom: 0;
 }
 
 .review-word-flag {
@@ -3170,6 +3117,14 @@ onBackPress(() => {
   font-style: italic;
 }
 
+.word-frequency {
+  font-size: 13px;
+  color: #FF85A1;
+  text-align: center;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
 .word-chinese-prompt {
   font-size: 32px;
   font-weight: 700;
@@ -3192,9 +3147,18 @@ onBackPress(() => {
   flex-direction: column;
   width: 100%;
   gap: 12px;
-  padding: 0 16px 16px 16px;
+  padding: 0 16px 0 16px;
   box-sizing: border-box;
   flex-shrink: 0;
+  height: 360px;
+}
+
+.options-and-buttons {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex-shrink: 0;
+  height: 432px;
 }
 
 .option-card {
@@ -3940,7 +3904,7 @@ onBackPress(() => {
 .action-buttons {
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 0;
   width: 100%;
   max-width: 400px;
   padding: 0 16px 16px 16px;
@@ -3948,6 +3912,7 @@ onBackPress(() => {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  flex: 1;
 }
 
 .action-btn {

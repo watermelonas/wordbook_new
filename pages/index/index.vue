@@ -139,6 +139,11 @@
             <span v-for="star in 5" :key="star" class="star" :class="{ active: (word.importance || 0) >= star }">★</span>
           </view>
         </view>
+        <view class="word-action-btn" @click.stop="masterWord(word)">斩</view>
+        <view class="word-favorite-btn" @click.stop="toggleFavorite(word)">
+          <view v-if="word.is_favorite" class="favorite-icon-filled"></view>
+          <view v-else class="favorite-icon-empty"></view>
+        </view>
       </view>
       <view v-if="hasMoreWords" class="load-more" @click="onScrollToLower">加载更多</view>
     </scroll-view>
@@ -163,6 +168,7 @@ import { getCurrentWordbook, isSelfWordbook, isLocalWordbookKey, loadLocalWordbo
 import { getLearningDashboard, getLatestSession } from '../../src/utils/learningCenter.js';
 import { logger, errorHandler } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
+import { getMasteredWordbookWords } from '../../src/utils/masteredWordbookWords.js';
 
 const ENRICH_CHUNK = 200;
 const FIRST_SCREEN_COUNT = 120;
@@ -172,6 +178,10 @@ let loadWordsInProgress = false;
 /** 非响应式全量缓存，仅外部/本地单词本使用，避免 6000+ 词进 ref 导致卡顿 */
 let allExternalWords = [];
 let plusReadyHandler = null;
+/** 收藏单词集合缓存 */
+let favoriteWordsSet = new Set();
+/** 已斩单词集合缓存 */
+let masteredWordsSet = new Set();
 
 const mapSortByToDb = (sortBy) => {
   const map = { create_time: 'create_time', alphabetical: 'english', importance: 'importance', repeat_count: 'repeat_count', view_count: 'view_count', exam_count: 'create_time' };
@@ -186,6 +196,11 @@ const getFilters = () => ({
 });
 
 function normalizeListWord(w) {
+  // 如果单词已斩，返回 null 表示过滤掉
+  if (masteredWordsSet.has((w.english || '').trim().toLowerCase())) {
+    return null;
+  }
+
   return {
     ...w,
     id: w.id || null,
@@ -199,7 +214,32 @@ function normalizeListWord(w) {
     view_count: Number(w.view_count) || 0,
     exam_count: w.exam_count != null ? (Number(w.exam_count) || 0) : undefined,
     create_time: w.create_time || '',
+    is_favorite: favoriteWordsSet.has((w.english || '').trim().toLowerCase()),
   };
+}
+
+/** 更新收藏单词集合 */
+async function updateFavoriteWordsSet() {
+  try {
+    const { getWordbookWords } = await import('../../src/utils/wordbookSource.js');
+    const favoriteWords = getWordbookWords('favorite') || [];
+    favoriteWordsSet = new Set(favoriteWords.map(w => (w.english || '').trim().toLowerCase()));
+    console.log('📍 收藏单词集合已更新，共', favoriteWordsSet.size, '个');
+  } catch (e) {
+    console.warn('⚠️ 更新收藏单词集合失败:', e);
+  }
+}
+
+/** 更新已斩单词集合 */
+async function updateMasteredWordsSet() {
+  try {
+    const { getWordbookWords } = await import('../../src/utils/wordbookSource.js');
+    const masteredWords = getWordbookWords('mastered') || [];
+    masteredWordsSet = new Set(masteredWords.map(w => (w.english || '').trim().toLowerCase()));
+    console.log('🎯 已斩单词集合已更新，共', masteredWordsSet.size, '个');
+  } catch (e) {
+    console.warn('⚠️ 更新已斩单词集合失败:', e);
+  }
 }
 
 function getExamCountForSort(word) {
@@ -225,6 +265,15 @@ function sortExternalWords(list) {
 
 function filterExternalWords(list) {
   let out = [...list];
+
+  // 过滤已斯的单词
+  const bookId = getCurrentWordbook();
+  const masteredSet = getMasteredWordbookWords(bookId);
+  out = out.filter((w) => {
+    const english = (w.english || '').trim().toLowerCase();
+    return !masteredSet.has(english);
+  });
+
   const q = (searchText.value || '').trim().toLowerCase();
   if (q) {
     out = out.filter((w) =>
@@ -246,7 +295,7 @@ function filterExternalWords(list) {
 }
 
 function prepareExternalWords(raw) {
-  const normalized = (raw || []).map(normalizeListWord);
+  const normalized = (raw || []).map(normalizeListWord).filter(Boolean);
   return sortExternalWords(filterExternalWords(normalized));
 }
 
@@ -548,11 +597,15 @@ const loadWords = async () => {
   if (loadWordsInProgress) return;
   loadWordsInProgress = true;
   try {
+    // 更新收藏单词集合和已斩单词集合
+    await updateFavoriteWordsSet();
+    await updateMasteredWordsSet();
+
     const book = getCurrentWordbook();
 
     if (book === 'self') {
       const list = await db.getWordsForList(PAGE_SIZE, 0, mapSortByToDb(sortBy.value), sortOrder.value, getFilters());
-      words.value = list.map(normalizeListWord);
+      words.value = list.map(normalizeListWord).filter(Boolean);
       hasMoreSelfWords.value = list.length >= PAGE_SIZE;
       allExternalWords = [];
       allExternalWordsLength.value = 0;
@@ -684,7 +737,7 @@ const hasMoreWords = computed(() => {
 const loadMoreSelfWords = async () => {
   if (!hasMoreSelfWords.value || !isSelfWordbook()) return;
   const next = await db.getWordsForList(PAGE_SIZE, words.value.length, mapSortByToDb(sortBy.value), sortOrder.value, getFilters());
-  const normalizedNext = next.map(normalizeListWord);
+  const normalizedNext = next.map(normalizeListWord).filter(Boolean);
   words.value = [...words.value, ...normalizedNext];
   // 仅补全新增页，保持滚动流畅并修复释义/标签缺失
   enrichWordbookListInBackground(normalizedNext, getCurrentWordbook(), words);
@@ -780,6 +833,167 @@ const goToStats = () => {
 
 const goToMistakes = () => {
   uni.navigateTo({ url: '/pages/mistakes/mistakes' });
+};
+
+/** 斩掉单词 */
+const masterWord = async (word) => {
+  if (!word || !word.english) return;
+
+  try {
+    const bookId = getCurrentWordbook();
+
+    // 如果是词书单词，添加到已斩列表
+    if (bookId && bookId !== 'self') {
+      const { getWordbookWords, setWordbookWords } = await import('../../src/utils/wordbookSource.js');
+      const masteredWords = getWordbookWords('mastered') || [];
+      const exists = masteredWords.some(w => (w.english || '').trim().toLowerCase() === (word.english || '').trim().toLowerCase());
+      if (!exists) {
+        masteredWords.push({
+          english: word.english,
+          chinese: word.chinese || '',
+          mastered_at: new Date().toISOString()
+        });
+        setWordbookWords('mastered', masteredWords);
+      }
+      uni.showToast({ title: '已斩掉', icon: 'success' });
+    } else {
+      // 自用词库，从数据库删除
+      await db.deleteWord(word.english);
+      uni.showToast({ title: '已删除', icon: 'success' });
+    }
+
+    // 刷新列表
+    uni.$emit('refreshWordList');
+  } catch (e) {
+    console.error('斩掉单词失败:', e);
+    uni.showToast({ title: '操作失败', icon: 'none' });
+  }
+};
+
+/** 上传已斯单词列表到云端 */
+const uploadMasteredWordsToCloud = async () => {
+  try {
+    const uid = uni.getStorageSync('uid');
+    if (!uid) return; // 未登录，不上传
+
+    const { getGlobalMasteredWords } = await import('../../src/utils/masteredWordbookWords.js');
+    const masteredSet = getGlobalMasteredWords();
+    const masteredList = Array.from(masteredSet);
+
+    await uniCloud.callFunction({
+      name: 'word-sync',
+      data: {
+        action: 'backup-mastered',
+        uid: uid,
+        mastered: masteredList
+      }
+    });
+
+    console.log('✅ 已斯单词列表已上传到云端');
+  } catch (e) {
+    console.warn('⚠️ 上传已斯单词列表失败:', e);
+  }
+};
+
+/** 上传个人单词本到云端 */
+const uploadProgressToCloud = async () => {
+  try {
+    const uid = uni.getStorageSync('uid');
+    if (!uid) return; // 未登录，不上传
+
+    const words = await db.getAllWords();
+    const progressData = words.map(w => ({
+      english: w.english,
+      repeat_count: w.repeat_count || 1,
+      view_count: w.view_count || 0,
+      error_rate: w.error_rate || 0,
+      review_frequency: w.review_frequency || 0,
+      importance: w.importance || 3,
+      is_favorite: w.is_favorite || false,
+      update_time: w.update_time || new Date().toISOString()
+    }));
+
+    await uniCloud.callFunction({
+      name: 'word-sync',
+      data: {
+        action: 'backup-progress',
+        uid: uid,
+        progress: progressData
+      }
+    });
+
+    console.log('✅ 个人单词本已上传到云端');
+  } catch (e) {
+    console.warn('⚠️ 上传个人单词本失败:', e);
+  }
+};
+
+/** 检查单词是否已收藏 */
+const isFavorited = (word) => {
+  return word && word.is_favorite === true;
+};
+
+/** 切换收藏状态 */
+const toggleFavorite = async (word) => {
+  if (!word || !word.english) {
+    console.log('❌ 收藏失败：单词为空');
+    return;
+  }
+
+  try {
+    const isFav = word.is_favorite === true;
+    console.log('🔍 切换收藏:', word.english, '当前状态:', isFav);
+
+    // 获取或创建收藏单词本
+    const { getCloudWordbooks, setWordbookWords, getWordbookWords, addCloudWordbook } = await import('../../src/utils/wordbookSource.js');
+
+    let wordbooks = getCloudWordbooks();
+    let favoriteWordbook = wordbooks.find(wb => wb.name === '收藏');
+
+    if (!favoriteWordbook) {
+      // 创建收藏单词本
+      console.log('📍 创建收藏单词本');
+      const id = addCloudWordbook('收藏');
+      favoriteWordbook = { id, name: '收藏' };
+    }
+
+    // 获取收藏单词本的单词
+    let wordbookWords = getWordbookWords(favoriteWordbook.id) || [];
+    const englishSet = new Set(wordbookWords.map(w => w.english.toLowerCase()));
+
+    if (isFav) {
+      // 取消收藏 - 从收藏单词本移除
+      console.log('📍 取消收藏:', word.english);
+      wordbookWords = wordbookWords.filter(w => w.english.toLowerCase() !== word.english.toLowerCase());
+      setWordbookWords(favoriteWordbook.id, wordbookWords);
+      word.is_favorite = false;
+      favoriteWordsSet.delete(word.english.toLowerCase());
+      uni.showToast({ title: '已取消收藏', icon: 'success' });
+    } else {
+      // 添加收藏 - 添加到收藏单词本
+      console.log('📍 添加收藏:', word.english);
+      if (!englishSet.has(word.english.toLowerCase())) {
+        wordbookWords.push({
+          english: word.english,
+          chinese: word.chinese || '',
+          source_page: word.source_page || '',
+          year: word.year || '',
+          tags: word.tags || '',
+          importance: word.importance || 0
+        });
+        setWordbookWords(favoriteWordbook.id, wordbookWords);
+      }
+      word.is_favorite = true;
+      favoriteWordsSet.add(word.english.toLowerCase());
+      uni.showToast({ title: '已收藏', icon: 'success' });
+    }
+
+    console.log('✅ 收藏操作完成');
+  } catch (e) {
+    console.error('❌ 切换收藏失败:', e);
+    console.error('❌ 错误堆栈:', e.stack);
+    uni.showToast({ title: '操作失败: ' + e.message, icon: 'none' });
+  }
 };
 
 /** 真题总出现次数（单词本词用 CSV 的 exam_count，自用词用静态数据） */
@@ -1007,6 +1221,61 @@ const onSearchConfirm = () => {
   gap: 12px;
   margin: 8px 10px;
   width: calc(100% - 20px);
+  position: relative;
+}
+
+.word-action-btn {
+  position: absolute;
+  top: 16px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  background-color: #FF85A1;
+  color: white;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.word-action-btn:active {
+  transform: scale(0.95);
+  opacity: 0.8;
+}
+
+.word-favorite-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.word-favorite-btn:active {
+  transform: scale(0.95);
+}
+
+.favorite-icon-empty {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #FF85A1;
+  border-radius: 4px;
+}
+
+.favorite-icon-filled {
+  width: 20px;
+  height: 20px;
+  background-color: #FF85A1;
+  border-radius: 4px;
 }
 
 .word-content {

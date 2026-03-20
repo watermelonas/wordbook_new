@@ -76,7 +76,7 @@
 
 /* 分类标签 */
 .section-label[data-v-7018a65d] {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: #9B7BA8;
   margin-bottom: 1px;
@@ -145,7 +145,7 @@
   transition: width 0.3s ease;
 }
 .stat-detail-row[data-v-7018a65d] {
-  font-size: 10px;
+  font-size: 12px;
   color: #9B7BA8;
   text-align: center;
   line-height: 1.1;
@@ -156,7 +156,7 @@
   align-items: center;
 }
 .stat-left-text[data-v-7018a65d] {
-  font-size: 12px;
+  font-size: 14px;
   color: #666;
   font-weight: 500;
 }
@@ -185,12 +185,12 @@
   min-width: 0;
 }
 .recommend-title[data-v-7018a65d] {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: #2D1B2E;
 }
 .recommend-desc[data-v-7018a65d] {
-  font-size: 11px;
+  font-size: 13px;
   color: #9B7BA8;
   line-height: 1.2;
 }
@@ -235,14 +235,14 @@
   box-shadow: 0 2px 8px rgba(255, 133, 161, 0.1);
 }
 .btn-title[data-v-7018a65d] {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: #2D1B2E;
   text-align: center;
   line-height: 1.1;
 }
 .btn-count[data-v-7018a65d] {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 800;
   color: #FF6B9D;
 }
@@ -972,6 +972,8 @@
   height: 100%;
   box-sizing: border-box;
   justify-content: space-between;
+  padding-top: 30px;
+  padding-bottom: 0;
 }
 .review-word-flag[data-v-7018a65d] {
   align-self: center;
@@ -1011,6 +1013,13 @@
   text-align: center;
   font-style: italic;
 }
+.word-frequency[data-v-7018a65d] {
+  font-size: 13px;
+  color: #FF85A1;
+  text-align: center;
+  margin-top: 8px;
+  font-weight: 500;
+}
 .word-chinese-prompt[data-v-7018a65d] {
   font-size: 32px;
   font-weight: 700;
@@ -1032,9 +1041,17 @@
   flex-direction: column;
   width: 100%;
   gap: 12px;
-  padding: 0 16px 16px 16px;
+  padding: 0 16px 0 16px;
   box-sizing: border-box;
   flex-shrink: 0;
+  height: 360px;
+}
+.options-and-buttons[data-v-7018a65d] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex-shrink: 0;
+  height: 432px;
 }
 .option-card[data-v-7018a65d] {
   width: 100%;
@@ -1690,7 +1707,7 @@ to {
 .action-buttons[data-v-7018a65d] {
   display: flex;
   gap: 12px;
-  margin-top: 20px;
+  margin-top: 0;
   width: 100%;
   max-width: 400px;
   padding: 0 16px 16px 16px;
@@ -1698,6 +1715,7 @@ to {
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  flex: 1;
 }
 .action-btn[data-v-7018a65d] {
   flex: 1;

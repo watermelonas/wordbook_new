@@ -74,6 +74,11 @@ class AppInitializer {
       this.setupPerformanceMonitoring();
       console.log('[AppInitializer] 性能监控设置完成');
 
+      // 6. 检查云端同步状态
+      console.log('[AppInitializer] 检查云端同步状态...');
+      this.checkCloudSyncStatus();
+      console.log('[AppInitializer] 云端同步检查完成');
+
       logger.info('AppInitializer', '应用初始化完成');
       console.log('[AppInitializer] 应用初始化完成');
       this.initialized = true;
@@ -215,6 +220,58 @@ class AppInitializer {
     } catch (error) {
       console.error('[AppInitializer.setupPerformanceMonitoring] 设置失败:', error);
       logger.error('AppInitializer', '性能监控设置失败', error);
+    }
+  }
+
+  /**
+   * 检查云端同步状态
+   */
+  checkCloudSyncStatus() {
+    console.log('[AppInitializer.checkCloudSyncStatus] 检查云端同步状态...');
+    try {
+      const uid = uni.getStorageSync('uid');
+      if (!uid) {
+        console.log('[AppInitializer.checkCloudSyncStatus] 用户未登录，跳过同步检查');
+        return;
+      }
+
+      // 异步执行同步检查，不阻塞初始化
+      setTimeout(async () => {
+        try {
+          console.log('[AppInitializer.checkCloudSyncStatus] 开始检查云端同步...');
+          const words = await db.getAllWords();
+
+          if (words && words.length > 0) {
+            const progressData = words.map(w => ({
+              english: w.english,
+              repeat_count: w.repeat_count || 1,
+              view_count: w.view_count || 0,
+              error_rate: w.error_rate || 0,
+              review_frequency: w.review_frequency || 0,
+              importance: w.importance || 3,
+              update_time: w.update_time || new Date().toISOString()
+            }));
+
+            await uniCloud.callFunction({
+              name: 'word-sync',
+              data: {
+                action: 'backup-progress',
+                uid: uid,
+                progress: progressData
+              }
+            });
+
+            console.log('✅ 启动时云端同步完成');
+            logger.info('AppInitializer', '启动时云端同步完成');
+          }
+        } catch (error) {
+          console.warn('⚠️ 启动时云端同步失败:', error);
+          logger.warn('AppInitializer', '启动时云端同步失败', error);
+        }
+      }, 2000); // 延迟 2 秒执行，避免影响启动速度
+    } catch (error) {
+      console.error('[AppInitializer.checkCloudSyncStatus] 检查失败:', error);
+      logger.error('AppInitializer', '云端同步检查失败', error);
     }
   }
 

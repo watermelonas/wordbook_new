@@ -31,6 +31,63 @@ if (uni.restoreGlobal) {
 }
 (function(vue) {
   "use strict";
+  const scriptRel = "modulepreload";
+  const assetsURL = function(dep) {
+    return "/" + dep;
+  };
+  const seen = {};
+  const __vitePreload = function preload(baseModule, deps, importerUrl) {
+    let promise = Promise.resolve();
+    if (false) {
+      const links = document.getElementsByTagName("link");
+      const cspNonceMeta = document.querySelector("meta[property=csp-nonce]");
+      const cspNonce = (cspNonceMeta == null ? void 0 : cspNonceMeta.nonce) || (cspNonceMeta == null ? void 0 : cspNonceMeta.getAttribute("nonce"));
+      promise = Promise.all(deps.map((dep) => {
+        dep = assetsURL(dep);
+        if (dep in seen)
+          return;
+        seen[dep] = true;
+        const isCss = dep.endsWith(".css");
+        const cssSelector = isCss ? '[rel="stylesheet"]' : "";
+        const isBaseRelative = !!importerUrl;
+        if (isBaseRelative) {
+          for (let i2 = links.length - 1; i2 >= 0; i2--) {
+            const link2 = links[i2];
+            if (link2.href === dep && (!isCss || link2.rel === "stylesheet")) {
+              return;
+            }
+          }
+        } else if (document.querySelector(`link[href="${dep}"]${cssSelector}`)) {
+          return;
+        }
+        const link = document.createElement("link");
+        link.rel = isCss ? "stylesheet" : scriptRel;
+        if (!isCss) {
+          link.as = "script";
+          link.crossOrigin = "";
+        }
+        link.href = dep;
+        if (cspNonce) {
+          link.setAttribute("nonce", cspNonce);
+        }
+        document.head.appendChild(link);
+        if (isCss) {
+          return new Promise((res, rej) => {
+            link.addEventListener("load", res);
+            link.addEventListener("error", () => rej(new Error(`Unable to preload CSS for ${dep}`)));
+          });
+        }
+      }));
+    }
+    return promise.then(() => baseModule()).catch((err) => {
+      const e2 = new Event("vite:preloadError", { cancelable: true });
+      e2.payload = err;
+      window.dispatchEvent(e2);
+      if (!e2.defaultPrevented) {
+        throw err;
+      }
+    });
+  };
   const ON_SHOW = "onShow";
   const ON_HIDE = "onHide";
   const ON_LOAD = "onLoad";
@@ -77,9893 +134,6 @@ if (uni.restoreGlobal) {
     2
     /* HookFlags.PAGE */
   );
-  const _export_sfc = (sfc, props) => {
-    const target = sfc.__vccOpts || sfc;
-    for (const [key, val] of props) {
-      target[key] = val;
-    }
-    return target;
-  };
-  const _sfc_main$c = {
-    __name: "vocal-color-block-selector",
-    props: {
-      range: { type: Array, default: () => [] },
-      value: { type: Number, default: 0 }
-    },
-    emits: ["change"],
-    setup(__props, { expose: __expose, emit: __emit }) {
-      __expose();
-      const props = __props;
-      const emit = __emit;
-      const visible = vue.ref(false);
-      const currentIndex = vue.ref(0);
-      const displayRange = vue.computed(() => {
-        const r2 = props.range;
-        return Array.isArray(r2) ? r2 : [];
-      });
-      vue.watch(() => props.value, (v2) => {
-        currentIndex.value = Math.max(0, Math.min(Number(v2) || 0, displayRange.value.length - 1));
-      }, { immediate: true });
-      function open() {
-        currentIndex.value = Math.max(0, Math.min(props.value, displayRange.value.length - 1));
-        visible.value = true;
-      }
-      function close() {
-        visible.value = false;
-      }
-      function select(idx) {
-        emit("change", { detail: { value: idx } });
-        close();
-      }
-      const __returned__ = { props, emit, visible, currentIndex, displayRange, open, close, select, ref: vue.ref, computed: vue.computed, watch: vue.watch };
-      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
-      return __returned__;
-    }
-  };
-  function _sfc_render$c(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock("view", { class: "vocal-selector" }, [
-      vue.createElementVNode("view", {
-        class: "selector-trigger",
-        onClick: $setup.open
-      }, [
-        vue.renderSlot(_ctx.$slots, "default", {}, void 0, true)
-      ]),
-      $setup.visible ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 0,
-        class: "selector-overlay",
-        onClick: $setup.close
-      })) : vue.createCommentVNode("v-if", true),
-      $setup.visible ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 1,
-        class: "selector-drawer"
-      }, [
-        vue.createElementVNode("view", { class: "drawer-handle" }),
-        vue.createElementVNode("scroll-view", {
-          "scroll-y": "",
-          class: "drawer-body"
-        }, [
-          (vue.openBlock(true), vue.createElementBlock(
-            vue.Fragment,
-            null,
-            vue.renderList($setup.displayRange, (item, idx) => {
-              return vue.openBlock(), vue.createElementBlock("view", {
-                key: idx,
-                class: vue.normalizeClass(["block-option", { selected: idx === $setup.currentIndex }]),
-                onClick: ($event) => $setup.select(idx)
-              }, [
-                vue.createElementVNode(
-                  "text",
-                  { class: "block-text" },
-                  vue.toDisplayString(item),
-                  1
-                  /* TEXT */
-                )
-              ], 10, ["onClick"]);
-            }),
-            128
-            /* KEYED_FRAGMENT */
-          ))
-        ])
-      ])) : vue.createCommentVNode("v-if", true)
-    ]);
-  }
-  const VocalColorBlockSelector = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["render", _sfc_render$c], ["__scopeId", "data-v-62b10f5c"], ["__file", "E:/vocal/wordbook_new/components/vocal-color-block-selector/vocal-color-block-selector.vue"]]);
-  const REVIEW_DEFAULTS = {
-    difficulty_score: 0.35,
-    stability: 0.6,
-    retrievability: 0.92,
-    interval_days: 0,
-    lapse_count: 0,
-    review_count: 0,
-    next_review_time: "",
-    last_reviewed_at: ""
-  };
-  const clamp = (num, min, max) => Math.min(max, Math.max(min, num));
-  const normalizeReviewFields = (word = {}) => ({
-    difficulty_score: clamp(Number(word.difficulty_score ?? REVIEW_DEFAULTS.difficulty_score) || REVIEW_DEFAULTS.difficulty_score, 0.15, 0.98),
-    stability: Math.max(0.2, Number(word.stability ?? REVIEW_DEFAULTS.stability) || REVIEW_DEFAULTS.stability),
-    retrievability: clamp(Number(word.retrievability ?? REVIEW_DEFAULTS.retrievability) || REVIEW_DEFAULTS.retrievability, 0.05, 0.99),
-    interval_days: Math.max(0, Number(word.interval_days ?? REVIEW_DEFAULTS.interval_days) || 0),
-    lapse_count: Math.max(0, Number(word.lapse_count ?? REVIEW_DEFAULTS.lapse_count) || 0),
-    review_count: Math.max(0, Number(word.review_count ?? word.review_frequency ?? REVIEW_DEFAULTS.review_count) || 0),
-    next_review_time: word.next_review_time || "",
-    last_reviewed_at: word.last_reviewed_at || ""
-  });
-  const computeElapsedDays = (word = {}, now = /* @__PURE__ */ new Date()) => {
-    const base = word.last_reviewed_at || word.update_time || word.create_time;
-    if (!base)
-      return 999;
-    return Math.max(0, (now - new Date(base)) / (1e3 * 60 * 60 * 24));
-  };
-  const computeRetrievabilityByStability = (stability, elapsedDays) => {
-    const s2 = Math.max(0.2, Number(stability) || REVIEW_DEFAULTS.stability);
-    return clamp(Math.exp(-elapsedDays / s2), 0.02, 0.999);
-  };
-  const scheduleReviewState = (word = {}, isCorrect = false, now = /* @__PURE__ */ new Date()) => {
-    const importance = clamp(Number(word.importance) || 3, 0, 5);
-    const prev = normalizeReviewFields(word);
-    const elapsedDays = computeElapsedDays(word, now);
-    const recallProb = computeRetrievabilityByStability(prev.stability, elapsedDays);
-    const nextReviewCount = prev.review_count + 1;
-    let difficulty = prev.difficulty_score;
-    let stability = prev.stability;
-    let lapseCount = prev.lapse_count;
-    let retrievability = prev.retrievability;
-    let intervalDays = prev.interval_days;
-    if (isCorrect) {
-      difficulty = clamp(
-        difficulty - 0.06 + (1 - recallProb) * 0.05 - importance / 100,
-        0.15,
-        0.95
-      );
-      stability = Math.max(
-        0.5,
-        stability * (1.55 + (1 - difficulty) * 0.65 + recallProb * 0.35 + importance * 0.04)
-      );
-      intervalDays = clamp(stability * (0.7 + (1 - difficulty) * 0.9), 0.5, 90);
-      retrievability = 0.97;
-    } else {
-      difficulty = clamp(
-        difficulty + 0.12 + (1 - recallProb) * 0.12 + 0.02 * Math.max(0, 3 - importance),
-        0.2,
-        0.98
-      );
-      stability = Math.max(0.2, stability * (0.42 + (1 - difficulty) * 0.22));
-      lapseCount += 1;
-      intervalDays = 0.125;
-      retrievability = 0.35;
-    }
-    return {
-      difficulty_score: Number(difficulty.toFixed(4)),
-      stability: Number(stability.toFixed(4)),
-      retrievability: Number(retrievability.toFixed(4)),
-      interval_days: Number(intervalDays.toFixed(4)),
-      lapse_count: lapseCount,
-      review_count: nextReviewCount,
-      review_frequency: nextReviewCount,
-      next_review_time: new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1e3).toISOString(),
-      last_reviewed_at: now.toISOString()
-    };
-  };
-  const calculateReviewPriority = (word = {}, hardMode = false) => {
-    const now = /* @__PURE__ */ new Date();
-    const fields = normalizeReviewFields(word);
-    const elapsedDays = computeElapsedDays(word, now);
-    const forgetProb = 1 - computeRetrievabilityByStability(fields.stability, elapsedDays);
-    const dueAt = fields.next_review_time ? new Date(fields.next_review_time) : new Date(word.last_reviewed_at || word.update_time || word.create_time || now.toISOString());
-    const overdueDays = Math.max(0, (now - dueAt) / (1e3 * 60 * 60 * 24));
-    const importance = clamp(Number(word.importance) || 3, 0, 5);
-    let score = forgetProb * 55 + fields.difficulty_score * 22 + overdueDays * 12 + fields.lapse_count * 8 + importance * 4;
-    if (hardMode)
-      score += forgetProb * 10 + fields.difficulty_score * 8 + (word.error_rate || 0) * 0.2;
-    return {
-      score,
-      forget_probability: Number(forgetProb.toFixed(4)),
-      overdue_days: Number(overdueDays.toFixed(3))
-    };
-  };
-  const calculateMastery = (word = {}) => {
-    const fields = normalizeReviewFields(word);
-    const elapsedDays = computeElapsedDays(word, /* @__PURE__ */ new Date());
-    const forgetProbability = 1 - computeRetrievabilityByStability(fields.stability, elapsedDays);
-    return clamp(
-      Math.round((1 - (forgetProbability * 0.72 + fields.difficulty_score * 0.28)) * 100),
-      1,
-      99
-    );
-  };
-  const sqlLiteral = (value) => {
-    if (value === null || value === void 0)
-      return "NULL";
-    if (typeof value === "number")
-      return Number.isFinite(value) ? String(value) : "NULL";
-    if (typeof value === "boolean")
-      return value ? "1" : "0";
-    return `'${String(value).replace(/'/g, "''")}'`;
-  };
-  const bindSql = (sql, params = []) => {
-    let i2 = 0;
-    return String(sql).replace(/\?/g, () => sqlLiteral(params[i2++]));
-  };
-  const toJsonString = (value, fallback = []) => {
-    if (typeof value === "string")
-      return value;
-    try {
-      return JSON.stringify(value ?? fallback);
-    } catch (_2) {
-      return JSON.stringify(fallback);
-    }
-  };
-  const parseJsonSafe$1 = (jsonStr, fallback = null) => {
-    if (!jsonStr)
-      return fallback;
-    try {
-      return JSON.parse(jsonStr);
-    } catch (_2) {
-      return fallback;
-    }
-  };
-  const H5_STORAGE_KEY$1 = "wordbook_h5_words";
-  const getH5Words$1 = () => {
-    try {
-      const raw = uni.getStorageSync(H5_STORAGE_KEY$1);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e2) {
-      formatAppLog("error", "at src/utils/databaseAdapter.js:18", "[H5Adapter] 读取 H5 单词列表失败:", e2);
-      return [];
-    }
-  };
-  const setH5Words$1 = (words) => {
-    try {
-      uni.setStorageSync(H5_STORAGE_KEY$1, JSON.stringify(words));
-    } catch (e2) {
-      formatAppLog("error", "at src/utils/databaseAdapter.js:30", "[H5Adapter] 保存 H5 单词列表失败:", e2);
-    }
-  };
-  class H5DatabaseAdapter {
-    async init() {
-      return Promise.resolve();
-    }
-    async query(sql, params = []) {
-      return Promise.resolve([]);
-    }
-    async execute(sql, params = []) {
-      return Promise.resolve();
-    }
-    async getWords() {
-      return Promise.resolve(getH5Words$1());
-    }
-    async addWord(word) {
-      if (!word.english)
-        throw new Error("单词不能为空");
-      const words = getH5Words$1();
-      const newWord = {
-        ...word,
-        id: Date.now().toString(),
-        create_time: (/* @__PURE__ */ new Date()).toISOString(),
-        update_time: (/* @__PURE__ */ new Date()).toISOString(),
-        examples: word.examples || [],
-        synonyms: word.synonyms || [],
-        antonyms: word.antonyms || [],
-        view_count: 0
-      };
-      words.unshift(newWord);
-      setH5Words$1(words);
-      return Promise.resolve(newWord);
-    }
-    async updateWord(id, updates) {
-      if (!id)
-        throw new Error("无效 id");
-      const words = getH5Words$1();
-      const idx = words.findIndex((w2) => w2.id === id);
-      if (idx === -1)
-        throw new Error("未找到单词");
-      words[idx] = {
-        ...words[idx],
-        ...updates,
-        update_time: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      setH5Words$1(words);
-      return Promise.resolve();
-    }
-    async deleteWord(id) {
-      if (!id)
-        throw new Error("无效 id");
-      const words = getH5Words$1().filter((w2) => w2.id !== id);
-      setH5Words$1(words);
-      return Promise.resolve();
-    }
-    async getWordById(id) {
-      if (!id)
-        return Promise.resolve(null);
-      const words = getH5Words$1();
-      const found = words.find((w2) => w2.id === id);
-      return Promise.resolve(found || null);
-    }
-    async getWordByEnglish(english) {
-      if (!english)
-        return Promise.resolve(null);
-      const key = String(english).trim().toLowerCase();
-      const words = getH5Words$1();
-      const found = words.find((w2) => (w2.english || "").toLowerCase() === key);
-      return Promise.resolve(found || null);
-    }
-    async getRandomDistractors(excludeId, count = 3) {
-      const words = getH5Words$1().filter((w2) => w2.id !== excludeId);
-      for (let i2 = words.length - 1; i2 > 0; i2--) {
-        const j2 = Math.floor(Math.random() * (i2 + 1));
-        [words[i2], words[j2]] = [words[j2], words[i2]];
-      }
-      return Promise.resolve(words.slice(0, count).map((w2) => w2.chinese));
-    }
-    async getWordsByTag(tag, excludeId) {
-      if (!tag || !tag.trim())
-        return Promise.resolve([]);
-      const t2 = tag.trim();
-      const words = getH5Words$1();
-      return Promise.resolve(
-        words.filter((w2) => w2.id !== excludeId && (w2.tags || "").split(/[,，\s]+/).map((x2) => x2.trim()).filter(Boolean).includes(t2)).slice(0, 20).map((w2) => ({ id: w2.id, english: w2.english, chinese: w2.chinese }))
-      );
-    }
-  }
-  class AppDatabaseAdapter {
-    constructor(dbName = "wordbook_db", dbPath = "_doc/wordbook.db") {
-      this.dbName = dbName;
-      this.dbPath = dbPath;
-      this.isOpen = false;
-    }
-    async init() {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:154", "[AppAdapter] init() 被调用");
-      if (this.isOpen) {
-        formatAppLog("log", "at src/utils/databaseAdapter.js:156", "[AppAdapter] 数据库已打开，跳过初始化");
-        return Promise.resolve();
-      }
-      try {
-        formatAppLog("log", "at src/utils/databaseAdapter.js:161", "[AppAdapter] 检查数据库是否已打开...");
-        formatAppLog("log", "at src/utils/databaseAdapter.js:162", "[AppAdapter] plus:", typeof plus);
-        formatAppLog("log", "at src/utils/databaseAdapter.js:163", "[AppAdapter] plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
-        if (plus && plus.sqlite && plus.sqlite.isOpenDatabase({ name: this.dbName, path: this.dbPath })) {
-          formatAppLog("log", "at src/utils/databaseAdapter.js:166", "[AppAdapter] 数据库已打开");
-          this.isOpen = true;
-          return Promise.resolve();
-        }
-        formatAppLog("log", "at src/utils/databaseAdapter.js:171", "[AppAdapter] 打开数据库...");
-        await this.openDatabase();
-        this.isOpen = true;
-        formatAppLog("log", "at src/utils/databaseAdapter.js:174", "[AppAdapter] 数据库打开成功");
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/databaseAdapter.js:177", "[AppAdapter] 初始化失败:", error);
-        throw error;
-      }
-    }
-    openDatabase() {
-      return new Promise((resolve, reject) => {
-        plus.sqlite.openDatabase({
-          name: this.dbName,
-          path: this.dbPath,
-          success: () => {
-            formatAppLog("log", "at src/utils/databaseAdapter.js:188", "[AppAdapter] 数据库打开成功");
-            resolve();
-          },
-          fail: (e2) => {
-            formatAppLog("error", "at src/utils/databaseAdapter.js:192", "[AppAdapter] 数据库打开失败:", e2);
-            reject(e2);
-          }
-        });
-      });
-    }
-    async query(sql, params = []) {
-      await this.init();
-      return new Promise((resolve) => {
-        plus.sqlite.selectSql({
-          name: this.dbName,
-          sql: bindSql(sql, params),
-          success: (data) => resolve(data || []),
-          fail: (e2) => {
-            formatAppLog("error", "at src/utils/databaseAdapter.js:208", "[AppAdapter] 查询失败:", e2);
-            resolve([]);
-          }
-        });
-      });
-    }
-    async execute(sql, params = []) {
-      await this.init();
-      return new Promise((resolve, reject) => {
-        plus.sqlite.executeSql({
-          name: this.dbName,
-          sql: bindSql(sql, params),
-          success: resolve,
-          fail: reject
-        });
-      });
-    }
-    async transaction(callback) {
-      await this.init();
-      try {
-        await this.execute("BEGIN TRANSACTION");
-        await callback();
-        await this.execute("COMMIT");
-      } catch (error) {
-        await this.execute("ROLLBACK").catch(() => {
-        });
-        throw error;
-      }
-    }
-    async getWords() {
-      const data = await this.query("SELECT * FROM words ORDER BY create_time DESC");
-      return data || [];
-    }
-    async addWord(word) {
-      if (!word.english)
-        return Promise.reject("单词不能为空");
-      const wordId = Date.now().toString();
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const sql = `INSERT INTO words (
-      id, english, chinese, tags, source_page, year, importance, repeat_count, view_count,
-      difficulty_score, stability, retrievability, interval_days, lapse_count, review_count,
-      next_review_time, last_reviewed_at, examples, synonyms, antonyms, create_time, update_time
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      const params = [
-        wordId,
-        word.english,
-        word.chinese || "",
-        word.tags || "",
-        word.source_page || "",
-        word.year || "",
-        word.importance || 3,
-        word.repeat_count || 1,
-        word.view_count != null ? word.view_count : 0,
-        word.difficulty_score || 0.35,
-        word.stability || 0.6,
-        word.retrievability || 0.92,
-        word.interval_days || 0,
-        word.lapse_count || 0,
-        word.review_count || 0,
-        word.next_review_time || "",
-        word.last_reviewed_at || "",
-        toJsonString(word.examples || []),
-        toJsonString(word.synonyms || []),
-        toJsonString(word.antonyms || []),
-        now,
-        now
-      ];
-      await this.execute(sql, params);
-      return Promise.resolve({ ...word, id: wordId });
-    }
-    async updateWord(id, updates) {
-      if (!id)
-        return Promise.reject("无效 id");
-      const fields = [];
-      const params = [];
-      for (const [key, value] of Object.entries(updates)) {
-        if (value === void 0)
-          continue;
-        fields.push(`${key} = ?`);
-        params.push(value);
-      }
-      if (fields.length === 0)
-        return Promise.resolve();
-      fields.push("update_time = ?");
-      params.push((/* @__PURE__ */ new Date()).toISOString());
-      params.push(id);
-      const sql = `UPDATE words SET ${fields.join(", ")} WHERE id = ?`;
-      await this.execute(sql, params);
-      return Promise.resolve();
-    }
-    async deleteWord(id) {
-      if (!id)
-        return Promise.reject("无效 id");
-      await this.execute("DELETE FROM words WHERE id = ?", [id]);
-      return Promise.resolve();
-    }
-    async getWordById(id) {
-      if (!id)
-        return Promise.resolve(null);
-      const data = await this.query("SELECT * FROM words WHERE id = ?", [id]);
-      return Promise.resolve(data && data.length ? data[0] : null);
-    }
-    async getWordByEnglish(english) {
-      if (!english)
-        return Promise.resolve(null);
-      const key = String(english).trim().toLowerCase();
-      const data = await this.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
-      return Promise.resolve(data && data.length ? data[0] : null);
-    }
-    async getRandomDistractors(excludeId, count = 3) {
-      const data = await this.query(
-        "SELECT id, chinese FROM words WHERE id != ? ORDER BY RANDOM() LIMIT ?",
-        [excludeId, count + 5]
-      );
-      return Promise.resolve((data || []).slice(0, count).map((item) => item.chinese));
-    }
-    async getWordsByTag(tag, excludeId) {
-      if (!tag || !tag.trim())
-        return Promise.resolve([]);
-      const t2 = tag.trim();
-      const data = await this.query(
-        "SELECT id, english, chinese, tags FROM words WHERE (tags LIKE ? OR tags LIKE ? OR tags LIKE ? OR tags = ?) LIMIT 30",
-        [`%,${t2},%`, `${t2},%`, `%,${t2}`, t2]
-      );
-      return Promise.resolve(
-        (data || []).filter((item) => item.id !== excludeId && (item.tags || "").split(/[,，\s]+/).map((x2) => x2.trim()).filter(Boolean).includes(t2)).slice(0, 20).map((item) => ({ id: item.id, english: item.english, chinese: item.chinese }))
-      );
-    }
-  }
-  function createDatabaseAdapter() {
-    formatAppLog("log", "at src/utils/databaseAdapter.js:363", "[databaseAdapter] 检查运行环境...");
-    formatAppLog("log", "at src/utils/databaseAdapter.js:364", "[databaseAdapter] typeof plus:", typeof plus);
-    formatAppLog("log", "at src/utils/databaseAdapter.js:365", "[databaseAdapter] typeof plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
-    const isApp2 = typeof plus !== "undefined" && typeof plus.sqlite !== "undefined";
-    formatAppLog("log", "at src/utils/databaseAdapter.js:369", "[databaseAdapter] isApp:", isApp2);
-    if (isApp2) {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:372", "[databaseAdapter] 使用 AppDatabaseAdapter");
-      return new AppDatabaseAdapter();
-    } else {
-      formatAppLog("log", "at src/utils/databaseAdapter.js:375", "[databaseAdapter] 使用 H5DatabaseAdapter");
-      return new H5DatabaseAdapter();
-    }
-  }
-  const H5_STORAGE_KEY = "wordbook_h5_words";
-  const H5_MASTERED_KEY = "wordbook_h5_mastered_words";
-  const parseWord = (item) => {
-    let examples = [], synonyms = [], antonyms = [];
-    if (Array.isArray(item.examples))
-      examples = item.examples;
-    else if (item.examples)
-      examples = parseJsonSafe$1(item.examples, []);
-    if (Array.isArray(item.synonyms))
-      synonyms = item.synonyms;
-    else if (item.synonyms)
-      synonyms = parseJsonSafe$1(item.synonyms, []);
-    if (Array.isArray(item.antonyms))
-      antonyms = item.antonyms;
-    else if (item.antonyms)
-      antonyms = parseJsonSafe$1(item.antonyms, []);
-    return { ...item, ...normalizeReviewFields(item), examples, synonyms, antonyms };
-  };
-  const getH5Words = () => {
-    try {
-      const raw = uni.getStorageSync(H5_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e2) {
-      formatAppLog("error", "at src/utils/db_v2.js:46", "[db] 读取 H5 单词列表失败:", e2);
-      return [];
-    }
-  };
-  const setH5Words = (words) => {
-    try {
-      uni.setStorageSync(H5_STORAGE_KEY, JSON.stringify(words));
-    } catch (e2) {
-      formatAppLog("error", "at src/utils/db_v2.js:55", "[db] 保存 H5 单词列表失败:", e2);
-    }
-  };
-  const getH5MasteredWords = () => {
-    try {
-      const raw = uni.getStorageSync(H5_MASTERED_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e2) {
-      return [];
-    }
-  };
-  const setH5MasteredWords = (words) => {
-    try {
-      uni.setStorageSync(H5_MASTERED_KEY, JSON.stringify(words));
-    } catch (e2) {
-    }
-  };
-  class DatabaseManager {
-    constructor() {
-      formatAppLog("log", "at src/utils/db_v2.js:79", "[db] DatabaseManager 构造函数被调用");
-      this.adapter = createDatabaseAdapter();
-      this.isH5 = null;
-      formatAppLog("log", "at src/utils/db_v2.js:83", "[db] adapter 类型:", this.adapter.constructor.name);
-    }
-    /**
-     * 初始化数据库
-     */
-    async init() {
-      try {
-        formatAppLog("log", "at src/utils/db_v2.js:91", "[db] 开始初始化数据库...");
-        formatAppLog("log", "at src/utils/db_v2.js:92", "[db] 调用 adapter.init()...");
-        if (typeof plus === "undefined") {
-          formatAppLog("warn", "at src/utils/db_v2.js:97", "[db] plus 对象未就绪，等待 plusready 事件...");
-          await Promise.race([
-            new Promise((resolve) => {
-              const checkPlus = () => {
-                if (typeof plus !== "undefined") {
-                  formatAppLog("log", "at src/utils/db_v2.js:102", "[db] plus 对象已就绪");
-                  resolve();
-                } else {
-                  setTimeout(checkPlus, 100);
-                }
-              };
-              checkPlus();
-            }),
-            new Promise(
-              (_2, reject) => setTimeout(() => reject(new Error("[db] plus 初始化超时（5秒）")), 5e3)
-            )
-          ]);
-        }
-        this.isH5 = typeof plus === "undefined";
-        formatAppLog("log", "at src/utils/db_v2.js:118", "[db] isH5:", this.isH5);
-        await this.adapter.init();
-        formatAppLog("log", "at src/utils/db_v2.js:121", "[db] adapter.init() 完成");
-        if (!this.isH5) {
-          formatAppLog("log", "at src/utils/db_v2.js:124", "[db] 设置数据库架构...");
-          await this.setupSchema();
-          formatAppLog("log", "at src/utils/db_v2.js:126", "[db] 数据库架构设置完成");
-        } else {
-          formatAppLog("log", "at src/utils/db_v2.js:128", "[db] H5 环境，跳过架构设置");
-        }
-        formatAppLog("log", "at src/utils/db_v2.js:130", "[db] 数据库初始化完成");
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:132", "[db] 初始化失败:", error);
-        throw error;
-      }
-    }
-    /**
-     * 设置数据库架构（仅 App）
-     */
-    async setupSchema() {
-      if (this.isH5)
-        return;
-      try {
-        await this.adapter.execute(`CREATE TABLE IF NOT EXISTS words (
-        "id" TEXT PRIMARY KEY,
-        "english" TEXT NOT NULL,
-        "chinese" TEXT,
-        "tags" TEXT,
-        "source_page" TEXT,
-        "year" TEXT,
-        "importance" INTEGER,
-        "error_rate" REAL,
-        "review_frequency" INTEGER,
-        "repeat_count" INTEGER DEFAULT 1,
-        "view_count" INTEGER DEFAULT 0,
-        "difficulty_score" REAL DEFAULT 0.35,
-        "stability" REAL DEFAULT 0.6,
-        "retrievability" REAL DEFAULT 0.92,
-        "interval_days" REAL DEFAULT 0,
-        "lapse_count" INTEGER DEFAULT 0,
-        "review_count" INTEGER DEFAULT 0,
-        "next_review_time" TEXT,
-        "last_reviewed_at" TEXT,
-        "examples" TEXT,
-        "synonyms" TEXT,
-        "antonyms" TEXT,
-        "create_time" TEXT,
-        "update_time" TEXT,
-        "is_mastered" INTEGER DEFAULT 0,
-        "mastered_at" TEXT
-      )`);
-        await this.adapter.execute(`CREATE TABLE IF NOT EXISTS mastered_words (
-        "id" TEXT PRIMARY KEY,
-        "english" TEXT NOT NULL,
-        "chinese" TEXT,
-        "tags" TEXT,
-        "source_page" TEXT,
-        "year" TEXT,
-        "importance" INTEGER,
-        "error_rate" REAL,
-        "review_frequency" INTEGER,
-        "repeat_count" INTEGER DEFAULT 1,
-        "view_count" INTEGER DEFAULT 0,
-        "difficulty_score" REAL DEFAULT 0.35,
-        "stability" REAL DEFAULT 0.6,
-        "retrievability" REAL DEFAULT 0.92,
-        "interval_days" REAL DEFAULT 0,
-        "lapse_count" INTEGER DEFAULT 0,
-        "review_count" INTEGER DEFAULT 0,
-        "next_review_time" TEXT,
-        "last_reviewed_at" TEXT,
-        "examples" TEXT,
-        "synonyms" TEXT,
-        "antonyms" TEXT,
-        "create_time" TEXT,
-        "update_time" TEXT,
-        "is_mastered" INTEGER DEFAULT 1,
-        "mastered_at" TEXT,
-        "wordbook_type" TEXT DEFAULT 'self'
-      )`);
-        const indexes = [
-          "CREATE INDEX IF NOT EXISTS idx_words_importance ON words(importance)",
-          "CREATE INDEX IF NOT EXISTS idx_words_english ON words(english)",
-          "CREATE INDEX IF NOT EXISTS idx_words_create_time ON words(create_time)",
-          "CREATE INDEX IF NOT EXISTS idx_words_next_review_time ON words(next_review_time)"
-        ];
-        for (const sql of indexes) {
-          await this.adapter.execute(sql).catch(() => {
-          });
-        }
-        formatAppLog("log", "at src/utils/db_v2.js:217", "[db] 数据库架构初始化完成");
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:219", "[db] 设置架构失败:", error);
-      }
-    }
-    /**
-     * 获取分页单词列表
-     */
-    async getWordsForList(limit = 20, offset = 0, orderBy = "create_time", orderDir = "desc", filters = {}) {
-      await this.init();
-      if (this.isH5) {
-        return this.getWordsForListH5(limit, offset, orderBy, orderDir, filters);
-      }
-      const safeOrderBy = { create_time: "create_time", english: "english", importance: "importance", repeat_count: "repeat_count", view_count: "view_count" }[orderBy] || "create_time";
-      const safeDir = orderDir === "asc" ? "ASC" : "DESC";
-      const conditions = [];
-      const params = [];
-      if (!filters.showMastered) {
-        conditions.push("(is_mastered IS NULL OR is_mastered = 0)");
-      }
-      if ((filters.search || "").trim()) {
-        const q2 = `%${filters.search.trim()}%`;
-        conditions.push("(english LIKE ? OR chinese LIKE ?)");
-        params.push(q2, q2);
-      }
-      if ((filters.tag || "").trim()) {
-        const t2 = filters.tag.trim();
-        conditions.push("(tags LIKE ? OR tags LIKE ? OR tags LIKE ? OR tags = ?)");
-        params.push(`%,${t2},%`, `${t2},%`, `%,${t2}`, t2);
-      }
-      if (filters.year != null && filters.year !== "") {
-        conditions.push("year = ?");
-        params.push(String(filters.year));
-      }
-      if (filters.page != null && filters.page !== "") {
-        conditions.push("source_page = ?");
-        params.push(String(filters.page));
-      }
-      const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
-      const sql = `SELECT id, english, chinese, tags, source_page, year, importance, repeat_count, view_count, create_time FROM words${where} ORDER BY ${safeOrderBy} ${safeDir} LIMIT ${Math.max(0, limit)} OFFSET ${Math.max(0, offset)}`;
-      try {
-        return await this.adapter.query(sql, params);
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:270", "[db] getWordsForList 失败:", error);
-        return [];
-      }
-    }
-    /**
-     * H5 环境的分页单词列表
-     */
-    getWordsForListH5(limit, offset, orderBy, orderDir, filters) {
-      const all = getH5Words();
-      let list = all.map((w2) => ({
-        id: w2.id,
-        english: w2.english,
-        chinese: w2.chinese,
-        tags: w2.tags,
-        source_page: w2.source_page,
-        year: w2.year,
-        importance: w2.importance,
-        repeat_count: w2.repeat_count,
-        view_count: w2.view_count,
-        create_time: w2.create_time,
-        is_mastered: w2.is_mastered
-      }));
-      if (!filters.showMastered) {
-        list = list.filter((w2) => !w2.is_mastered);
-      }
-      const search = (filters.search || "").trim().toLowerCase();
-      if (search) {
-        list = list.filter((w2) => (w2.english || "").toLowerCase().includes(search) || (w2.chinese || "").toLowerCase().includes(search));
-      }
-      if (filters.tag) {
-        const tag = String(filters.tag).trim();
-        list = list.filter((w2) => (w2.tags || "").split(/[,，\s]+/).map((t2) => t2.trim()).includes(tag));
-      }
-      if (filters.year != null && filters.year !== "")
-        list = list.filter((w2) => w2.year == filters.year);
-      if (filters.page != null && filters.page !== "")
-        list = list.filter((w2) => w2.source_page == filters.page);
-      const col = { create_time: "create_time", english: "english", importance: "importance", repeat_count: "repeat_count", view_count: "view_count" }[orderBy] || "create_time";
-      const mul = orderDir === "asc" ? 1 : -1;
-      list.sort((a2, b2) => {
-        const va = a2[col];
-        const vb = b2[col];
-        if (col === "create_time")
-          return (new Date(va || 0) - new Date(vb || 0)) * mul;
-        if (col === "english")
-          return (va || "").localeCompare(vb || "") * mul;
-        return ((Number(va) || 0) - (Number(vb) || 0)) * mul;
-      });
-      return Promise.resolve(list.slice(offset, offset + limit));
-    }
-    /**
-     * 添加单词
-     */
-    async addWord(word) {
-      if (!word.english)
-        return Promise.reject("单词不能为空");
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const newWord = {
-          ...word,
-          id: Date.now().toString(),
-          create_time: (/* @__PURE__ */ new Date()).toISOString(),
-          update_time: (/* @__PURE__ */ new Date()).toISOString(),
-          examples: word.examples || [],
-          synonyms: word.synonyms || [],
-          antonyms: word.antonyms || [],
-          view_count: 0
-        };
-        words.unshift(newWord);
-        setH5Words(words);
-        return Promise.resolve(newWord);
-      }
-      const wordId = Date.now().toString();
-      const now = (/* @__PURE__ */ new Date()).toISOString();
-      const reviewFields = normalizeReviewFields(word);
-      const sql = `INSERT INTO words (
-      id, english, chinese, tags, source_page, year, importance, repeat_count, view_count,
-      difficulty_score, stability, retrievability, interval_days, lapse_count, review_count,
-      next_review_time, last_reviewed_at, examples, synonyms, antonyms, create_time, update_time
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-      const params = [
-        wordId,
-        word.english,
-        word.chinese || "",
-        word.tags || "",
-        word.source_page || "",
-        word.year || "",
-        word.importance || 3,
-        word.repeat_count || 1,
-        word.view_count != null ? word.view_count : 0,
-        reviewFields.difficulty_score,
-        reviewFields.stability,
-        reviewFields.retrievability,
-        reviewFields.interval_days,
-        reviewFields.lapse_count,
-        reviewFields.review_count,
-        reviewFields.next_review_time,
-        reviewFields.last_reviewed_at,
-        toJsonString(word.examples || []),
-        toJsonString(word.synonyms || []),
-        toJsonString(word.antonyms || []),
-        now,
-        now
-      ];
-      try {
-        await this.adapter.execute(sql, params);
-        return Promise.resolve({ ...word, id: wordId });
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:389", "[db] addWord 失败:", error);
-        throw error;
-      }
-    }
-    /**
-     * 获取所有单词
-     */
-    async getWords() {
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words().map(parseWord).sort((a2, b2) => new Date(b2.create_time || 0) - new Date(a2.create_time || 0));
-        return Promise.resolve(words);
-      }
-      try {
-        const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC");
-        return Promise.resolve((data || []).map(parseWord));
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:409", "[db] getWords 失败:", error);
-        return Promise.resolve([]);
-      }
-    }
-    /**
-     * 根据 ID 获取单词
-     */
-    async getWordById(id) {
-      if (!id)
-        return Promise.resolve(null);
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const found = words.find((w2) => w2.id === id);
-        return Promise.resolve(found ? parseWord(found) : null);
-      }
-      try {
-        const data = await this.adapter.query("SELECT * FROM words WHERE id = ?", [id]);
-        return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:432", "[db] getWordById 失败:", error);
-        return Promise.resolve(null);
-      }
-    }
-    /**
-     * 根据英文获取单词
-     */
-    async getWordByEnglish(english) {
-      if (!english)
-        return Promise.resolve(null);
-      await this.init();
-      const key = String(english).trim().toLowerCase();
-      if (this.isH5) {
-        const found = getH5Words().find((w2) => (w2.english || "").toLowerCase() === key);
-        return Promise.resolve(found ? parseWord(found) : null);
-      }
-      try {
-        const data = await this.adapter.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
-        return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:456", "[db] getWordByEnglish 失败:", error);
-        return Promise.resolve(null);
-      }
-    }
-    /**
-     * 更新单词
-     */
-    async updateWord(id, updates) {
-      if (!id)
-        return Promise.reject("无效 id");
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const idx = words.findIndex((w2) => w2.id === id);
-        if (idx === -1)
-          return Promise.reject("未找到单词");
-        words[idx] = {
-          ...words[idx],
-          ...updates,
-          update_time: (/* @__PURE__ */ new Date()).toISOString()
-        };
-        setH5Words(words);
-        return Promise.resolve();
-      }
-      try {
-        await this.adapter.updateWord(id, updates);
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:487", "[db] updateWord 失败:", error);
-        throw error;
-      }
-    }
-    /**
-     * 删除单词
-     */
-    async deleteWord(id) {
-      if (!id)
-        return Promise.reject("无效 id");
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words().filter((w2) => w2.id !== id);
-        setH5Words(words);
-        return Promise.resolve();
-      }
-      try {
-        await this.adapter.deleteWord(id);
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:510", "[db] deleteWord 失败:", error);
-        throw error;
-      }
-    }
-    /**
-     * 更新错误率（带事务保护）
-     */
-    async updateErrorRate(id, isCorrect) {
-      if (!id)
-        return Promise.resolve();
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const idx = words.findIndex((w3) => w3.id === id);
-        if (idx === -1)
-          return Promise.resolve();
-        const w2 = words[idx];
-        const er2 = w2.error_rate || 0;
-        const reviewState = scheduleReviewState(w2, isCorrect);
-        words[idx] = {
-          ...w2,
-          ...reviewState,
-          error_rate: isCorrect ? Math.max(0, er2 - 8) : Math.min(100, er2 + 18),
-          update_time: (/* @__PURE__ */ new Date()).toISOString()
-        };
-        setH5Words(words);
-        return Promise.resolve();
-      }
-      try {
-        const word = await this.getWordById(id);
-        if (!word)
-          return Promise.resolve();
-        const currentErrorRate = word.error_rate || 0;
-        const reviewState = scheduleReviewState(word, isCorrect);
-        const newErrorRate = isCorrect ? Math.max(0, currentErrorRate - 8) : Math.min(100, currentErrorRate + 18);
-        await this.updateWord(id, {
-          error_rate: newErrorRate,
-          review_frequency: reviewState.review_frequency,
-          difficulty_score: reviewState.difficulty_score,
-          stability: reviewState.stability,
-          retrievability: reviewState.retrievability,
-          interval_days: reviewState.interval_days,
-          lapse_count: reviewState.lapse_count,
-          review_count: reviewState.review_count,
-          next_review_time: reviewState.next_review_time,
-          last_reviewed_at: reviewState.last_reviewed_at
-        });
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:565", "[db] updateErrorRate 失败:", error);
-        return Promise.resolve();
-      }
-    }
-    /**
-     * 获取复习单词列表
-     */
-    async getReviewWords(params = {}) {
-      const { sortBy = "smart", count = 20, difficulty = "normal" } = params;
-      const hardMode = difficulty === "hard";
-      await this.init();
-      if (this.isH5) {
-        let list = getH5Words().map((w2) => parseWord(w2));
-        list = list.map((w2) => ({
-          ...w2,
-          ...calculateReviewPriority(w2, hardMode)
-        }));
-        if (sortBy === "error") {
-          list.sort((a2, b2) => (b2.forget_probability || 0) - (a2.forget_probability || 0) || (b2.error_rate || 0) - (a2.error_rate || 0));
-        } else if (sortBy === "new") {
-          list.sort((a2, b2) => new Date(b2.create_time) - new Date(a2.create_time));
-        } else {
-          list.sort((a2, b2) => b2.score - a2.score);
-        }
-        return Promise.resolve(list.slice(0, count));
-      }
-      try {
-        const data = await this.adapter.query("SELECT * FROM words");
-        if (!data || data.length === 0)
-          return Promise.resolve([]);
-        let words = data.map((item) => {
-          const priority = calculateReviewPriority(item, hardMode);
-          return { ...parseWord(item), ...priority };
-        });
-        if (sortBy === "error") {
-          words.sort((a2, b2) => (b2.forget_probability || 0) - (a2.forget_probability || 0) || (b2.error_rate || 0) - (a2.error_rate || 0));
-        } else if (sortBy === "new") {
-          words.sort((a2, b2) => new Date(b2.create_time) - new Date(a2.create_time));
-        } else if (sortBy === "smart") {
-          words.sort((a2, b2) => b2.score - a2.score);
-        }
-        return Promise.resolve(words.slice(0, count));
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:616", "[db] getReviewWords 失败:", error);
-        return Promise.resolve([]);
-      }
-    }
-    /**
-     * 获取随机干扰项
-     */
-    async getRandomDistractors(excludeId, count = 3) {
-      await this.init();
-      return this.adapter.getRandomDistractors(excludeId, count);
-    }
-    /**
-     * 获取同标签单词
-     */
-    async getWordsByTag(tag, excludeId) {
-      await this.init();
-      return this.adapter.getWordsByTag(tag, excludeId);
-    }
-    /**
-     * 斩掉单词
-     */
-    async masterWord(id) {
-      if (!id)
-        return Promise.reject("无效 id");
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const idx = words.findIndex((w2) => w2.id === id);
-        if (idx === -1)
-          return Promise.reject("未找到单词");
-        const word = words[idx];
-        word.is_mastered = 1;
-        word.mastered_at = (/* @__PURE__ */ new Date()).toISOString();
-        words.splice(idx, 1);
-        setH5Words(words);
-        const masteredWords = getH5MasteredWords();
-        masteredWords.push(word);
-        setH5MasteredWords(masteredWords);
-        return Promise.resolve();
-      }
-      try {
-        const word = await this.getWordById(id);
-        if (!word)
-          return Promise.reject("未找到单词");
-        await this.adapter.transaction(async () => {
-          const sql = `INSERT INTO mastered_words (
-          id, english, chinese, tags, source_page, year, importance, error_rate, review_frequency,
-          repeat_count, view_count, difficulty_score, stability, retrievability, interval_days,
-          lapse_count, review_count, next_review_time, last_reviewed_at, examples, synonyms,
-          antonyms, create_time, update_time, is_mastered, mastered_at, wordbook_type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-          const params = [
-            word.id,
-            word.english,
-            word.chinese,
-            word.tags,
-            word.source_page,
-            word.year,
-            word.importance,
-            word.error_rate,
-            word.review_frequency,
-            word.repeat_count,
-            word.view_count,
-            word.difficulty_score,
-            word.stability,
-            word.retrievability,
-            word.interval_days,
-            word.lapse_count,
-            word.review_count,
-            word.next_review_time,
-            word.last_reviewed_at,
-            toJsonString(word.examples),
-            toJsonString(word.synonyms),
-            toJsonString(word.antonyms),
-            word.create_time,
-            (/* @__PURE__ */ new Date()).toISOString(),
-            1,
-            (/* @__PURE__ */ new Date()).toISOString(),
-            "self"
-          ];
-          await this.adapter.execute(sql, params);
-          await this.adapter.deleteWord(id);
-        });
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:695", "[db] masterWord 失败:", error);
-        throw error;
-      }
-    }
-    /**
-     * 获取已斩单词
-     */
-    async getMasteredWords() {
-      await this.init();
-      if (this.isH5) {
-        return Promise.resolve(getH5MasteredWords().map(parseWord));
-      }
-      try {
-        const data = await this.adapter.query("SELECT * FROM mastered_words ORDER BY mastered_at DESC");
-        return Promise.resolve((data || []).map(parseWord));
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:714", "[db] getMasteredWords 失败:", error);
-        return Promise.resolve([]);
-      }
-    }
-    /**
-     * 获取单词轻量信息（仅基础字段，用于详情页首帧）
-     */
-    async getWordByIdLight(id) {
-      if (!id)
-        return Promise.resolve(null);
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const found = words.find((w2) => w2.id === id);
-        if (!found)
-          return Promise.resolve(null);
-        return Promise.resolve({
-          id: found.id,
-          english: found.english,
-          chinese: found.chinese,
-          tags: found.tags,
-          source_page: found.source_page,
-          year: found.year,
-          importance: found.importance,
-          repeat_count: found.repeat_count,
-          view_count: found.view_count,
-          create_time: found.create_time
-        });
-      }
-      try {
-        const data = await this.adapter.query(
-          "SELECT id, english, chinese, tags, source_page, year, importance, repeat_count, view_count, create_time FROM words WHERE id = ? LIMIT 1",
-          [id]
-        );
-        return Promise.resolve(data && data.length ? data[0] : null);
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:752", "[db] getWordByIdLight 失败:", error);
-        return Promise.resolve(null);
-      }
-    }
-    /**
-     * 获取单词重型信息（examples/synonyms/antonyms，用于详情页异步补全）
-     */
-    async getWordByIdHeavy(id) {
-      if (!id)
-        return Promise.resolve(null);
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const found = words.find((w2) => w2.id === id);
-        if (!found)
-          return Promise.resolve(null);
-        return Promise.resolve({
-          examples: Array.isArray(found.examples) ? found.examples : parseJsonSafe$1(found.examples, []),
-          synonyms: Array.isArray(found.synonyms) ? found.synonyms : parseJsonSafe$1(found.synonyms, []),
-          antonyms: Array.isArray(found.antonyms) ? found.antonyms : parseJsonSafe$1(found.antonyms, [])
-        });
-      }
-      try {
-        const data = await this.adapter.query(
-          "SELECT examples, synonyms, antonyms FROM words WHERE id = ? LIMIT 1",
-          [id]
-        );
-        if (!data || !data.length)
-          return Promise.resolve(null);
-        const row = data[0];
-        return Promise.resolve({
-          examples: parseJsonSafe$1(row.examples, []),
-          synonyms: parseJsonSafe$1(row.synonyms, []),
-          antonyms: parseJsonSafe$1(row.antonyms, [])
-        });
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:790", "[db] getWordByIdHeavy 失败:", error);
-        return Promise.resolve(null);
-      }
-    }
-    /**
-     * 根据英文单词标记为已掌握（用于复习页）
-     */
-    async masterWordByEnglish(english) {
-      if (!english)
-        return Promise.reject("单词不能为空");
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const idx = words.findIndex((w2) => (w2.english || "").toLowerCase() === String(english).trim().toLowerCase());
-        if (idx === -1)
-          return Promise.reject("未找到单词");
-        const word = words[idx];
-        word.is_mastered = 1;
-        word.mastered_at = (/* @__PURE__ */ new Date()).toISOString();
-        words.splice(idx, 1);
-        setH5Words(words);
-        const masteredWords = getH5MasteredWords();
-        masteredWords.push(word);
-        setH5MasteredWords(masteredWords);
-        return Promise.resolve();
-      }
-      try {
-        const key = String(english).trim().toLowerCase();
-        const word = await this.adapter.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
-        if (!word || !word.length)
-          return Promise.reject("未找到单词");
-        const wordData = parseWord(word[0]);
-        await this.adapter.transaction(async () => {
-          const sql = `INSERT INTO mastered_words (
-          id, english, chinese, tags, source_page, year, importance, error_rate, review_frequency,
-          repeat_count, view_count, difficulty_score, stability, retrievability, interval_days,
-          lapse_count, review_count, next_review_time, last_reviewed_at, examples, synonyms,
-          antonyms, create_time, update_time, is_mastered, mastered_at, wordbook_type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-          const params = [
-            wordData.id,
-            wordData.english,
-            wordData.chinese,
-            wordData.tags,
-            wordData.source_page,
-            wordData.year,
-            wordData.importance,
-            wordData.error_rate,
-            wordData.review_frequency,
-            wordData.repeat_count,
-            wordData.view_count,
-            wordData.difficulty_score,
-            wordData.stability,
-            wordData.retrievability,
-            wordData.interval_days,
-            wordData.lapse_count,
-            wordData.review_count,
-            wordData.next_review_time,
-            wordData.last_reviewed_at,
-            toJsonString(wordData.examples),
-            toJsonString(wordData.synonyms),
-            toJsonString(wordData.antonyms),
-            wordData.create_time,
-            (/* @__PURE__ */ new Date()).toISOString(),
-            1,
-            (/* @__PURE__ */ new Date()).toISOString(),
-            "self"
-          ];
-          await this.adapter.execute(sql, params);
-          await this.adapter.deleteWord(wordData.id);
-        });
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:856", "[db] masterWordByEnglish 失败:", error);
-        throw error;
-      }
-    }
-    /**
-     * 清空并批量插入单词（用于云端恢复）
-     * 先删除所有现有单词，再插入新单词
-     */
-    async clearAndInsertWords(words) {
-      if (!Array.isArray(words) || words.length === 0) {
-        formatAppLog("warn", "at src/utils/db_v2.js:867", "[db] clearAndInsertWords: 单词列表为空");
-        return Promise.resolve();
-      }
-      await this.init();
-      if (this.isH5) {
-        const newWords = words.map((w2, idx) => ({
-          ...w2,
-          id: w2.id || Date.now().toString() + idx,
-          create_time: w2.create_time || (/* @__PURE__ */ new Date()).toISOString(),
-          update_time: w2.update_time || (/* @__PURE__ */ new Date()).toISOString(),
-          examples: Array.isArray(w2.examples) ? w2.examples : [],
-          synonyms: Array.isArray(w2.synonyms) ? w2.synonyms : [],
-          antonyms: Array.isArray(w2.antonyms) ? w2.antonyms : [],
-          view_count: w2.view_count != null ? w2.view_count : 0
-        }));
-        setH5Words(newWords);
-        formatAppLog("log", "at src/utils/db_v2.js:886", "[db] H5 环境：已清空并插入", newWords.length, "个单词");
-        return Promise.resolve();
-      }
-      try {
-        await this.adapter.transaction(async () => {
-          await this.adapter.execute("DELETE FROM words");
-          formatAppLog("log", "at src/utils/db_v2.js:895", "[db] 已清空 words 表");
-          const now = (/* @__PURE__ */ new Date()).toISOString();
-          for (const word of words) {
-            const wordId = word.id || Date.now().toString() + Math.random();
-            const reviewFields = normalizeReviewFields(word);
-            const sql = `INSERT INTO words (
-            id, english, chinese, tags, source_page, year, importance, repeat_count, view_count,
-            difficulty_score, stability, retrievability, interval_days, lapse_count, review_count,
-            next_review_time, last_reviewed_at, examples, synonyms, antonyms, create_time, update_time
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-            const params = [
-              wordId,
-              word.english,
-              word.chinese || "",
-              word.tags || "",
-              word.source_page || "",
-              word.year || "",
-              word.importance || 3,
-              word.repeat_count || 1,
-              word.view_count != null ? word.view_count : 0,
-              reviewFields.difficulty_score,
-              reviewFields.stability,
-              reviewFields.retrievability,
-              reviewFields.interval_days,
-              reviewFields.lapse_count,
-              reviewFields.review_count,
-              reviewFields.next_review_time,
-              reviewFields.last_reviewed_at,
-              toJsonString(word.examples || []),
-              toJsonString(word.synonyms || []),
-              toJsonString(word.antonyms || []),
-              word.create_time || now,
-              word.update_time || now
-            ];
-            await this.adapter.execute(sql, params);
-          }
-          formatAppLog("log", "at src/utils/db_v2.js:937", "[db] 已插入", words.length, "个单词");
-        });
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:942", "[db] clearAndInsertWords 失败:", error);
-        throw error;
-      }
-    }
-    /**
-     * 获取所有单词（别名，兼容旧代码）
-     */
-    async getAllWords() {
-      return this.getWords();
-    }
-    /**
-     * 获取最后添加的单词
-     */
-    async getLastWord() {
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        return Promise.resolve(words.length ? parseWord(words[0]) : null);
-      }
-      try {
-        const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC LIMIT 1");
-        return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:969", "[db] getLastWord 失败:", error);
-        return Promise.resolve(null);
-      }
-    }
-    /**
-     * 增加单词查看次数
-     */
-    async incrementViewCount(id) {
-      if (!id)
-        return Promise.resolve();
-      await this.init();
-      if (this.isH5) {
-        const words = getH5Words();
-        const idx = words.findIndex((w2) => w2.id === id);
-        if (idx !== -1) {
-          words[idx].view_count = (words[idx].view_count || 0) + 1;
-          words[idx].update_time = (/* @__PURE__ */ new Date()).toISOString();
-          setH5Words(words);
-        }
-        return Promise.resolve();
-      }
-      try {
-        const word = await this.getWordById(id);
-        if (!word)
-          return Promise.resolve();
-        const newViewCount = (word.view_count || 0) + 1;
-        await this.updateWord(id, { view_count: newViewCount });
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:1001", "[db] incrementViewCount 失败:", error);
-        return Promise.resolve();
-      }
-    }
-    /**
-     * 取消已掌握标记（将单词从已掌握表移回主表）
-     */
-    async unmasterWord(id) {
-      if (!id)
-        return Promise.reject("无效 id");
-      await this.init();
-      if (this.isH5) {
-        const masteredWords = getH5MasteredWords();
-        const idx = masteredWords.findIndex((w2) => w2.id === id);
-        if (idx === -1)
-          return Promise.reject("未找到已掌握单词");
-        const word = masteredWords[idx];
-        word.is_mastered = 0;
-        word.mastered_at = null;
-        masteredWords.splice(idx, 1);
-        setH5MasteredWords(masteredWords);
-        const words = getH5Words();
-        words.unshift(word);
-        setH5Words(words);
-        return Promise.resolve();
-      }
-      try {
-        const word = await this.adapter.query("SELECT * FROM mastered_words WHERE id = ? LIMIT 1", [id]);
-        if (!word || !word.length)
-          return Promise.reject("未找到已掌握单词");
-        const wordData = parseWord(word[0]);
-        await this.adapter.transaction(async () => {
-          const sql = `INSERT INTO words (
-          id, english, chinese, tags, source_page, year, importance, error_rate, review_frequency,
-          repeat_count, view_count, difficulty_score, stability, retrievability, interval_days,
-          lapse_count, review_count, next_review_time, last_reviewed_at, examples, synonyms,
-          antonyms, create_time, update_time, is_mastered, mastered_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-          const params = [
-            wordData.id,
-            wordData.english,
-            wordData.chinese,
-            wordData.tags,
-            wordData.source_page,
-            wordData.year,
-            wordData.importance,
-            wordData.error_rate,
-            wordData.review_frequency,
-            wordData.repeat_count,
-            wordData.view_count,
-            wordData.difficulty_score,
-            wordData.stability,
-            wordData.retrievability,
-            wordData.interval_days,
-            wordData.lapse_count,
-            wordData.review_count,
-            wordData.next_review_time,
-            wordData.last_reviewed_at,
-            toJsonString(wordData.examples),
-            toJsonString(wordData.synonyms),
-            toJsonString(wordData.antonyms),
-            wordData.create_time,
-            (/* @__PURE__ */ new Date()).toISOString(),
-            0,
-            null
-          ];
-          await this.adapter.execute(sql, params);
-          await this.adapter.execute("DELETE FROM mastered_words WHERE id = ?", [id]);
-        });
-        return Promise.resolve();
-      } catch (error) {
-        formatAppLog("error", "at src/utils/db_v2.js:1066", "[db] unmasterWord 失败:", error);
-        throw error;
-      }
-    }
-    /**
-     * 获取复习洞察（用于复习页显示单词状态）
-     */
-    getReviewInsight(word) {
-      if (!word)
-        return {};
-      const insight = {
-        repeatCount: word.repeat_count || 0,
-        viewCount: word.view_count || 0,
-        errorRate: word.error_rate || 0,
-        reviewCount: word.review_count || 0,
-        lapseCount: word.lapse_count || 0,
-        stability: word.stability || 0.6,
-        retrievability: word.retrievability || 0.92,
-        nextReviewTime: word.next_review_time || null,
-        lastReviewedAt: word.last_reviewed_at || null
-      };
-      return insight;
-    }
-    /**
-     * 预览复习状态（用于复习页显示答题后的状态变化）
-     */
-    previewReviewState(word, isCorrect) {
-      if (!word)
-        return {};
-      const reviewState = scheduleReviewState(word, isCorrect);
-      const currentErrorRate = word.error_rate || 0;
-      const newErrorRate = isCorrect ? Math.max(0, currentErrorRate - 8) : Math.min(100, currentErrorRate + 18);
-      return {
-        ...reviewState,
-        error_rate: newErrorRate
-      };
-    }
-    /**
-     * 获取内存使用情况（用于调试）
-     */
-    getMemoryStats() {
-      if (typeof performance !== "undefined" && performance.memory) {
-        return {
-          usedJSHeapSize: performance.memory.usedJSHeapSize,
-          totalJSHeapSize: performance.memory.totalJSHeapSize,
-          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
-        };
-      }
-      return null;
-    }
-  }
-  const db = new DatabaseManager();
-  const PREGEN_DB_NAME = "pregen_db";
-  const PREGEN_DB_PATH = "_doc/pregen_data.db";
-  const PREGEN_DB_SOURCE = "_www/static/pregen_data.db";
-  let pregenDbOpen = false;
-  let _ensureOpenPromise = null;
-  const _pregenCache = /* @__PURE__ */ new Map();
-  const PREGEN_CACHE_MAX = 300;
-  function setPregenCache(key, value) {
-    if (_pregenCache.size >= PREGEN_CACHE_MAX) {
-      const keys = _pregenCache.keys();
-      for (let i2 = 0; i2 < 30; i2++) {
-        const k = keys.next().value;
-        if (k !== void 0)
-          _pregenCache.delete(k);
-      }
-    }
-    _pregenCache.set(key, value);
-  }
-  function isApp$1() {
-    return typeof plus !== "undefined" && plus.sqlite;
-  }
-  function copyPregenDbToDoc() {
-    return new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        formatAppLog("error", "at src/utils/pregenVocab.js:38", "[pregenVocab] 复制超时");
-        resolve(false);
-      }, 15e3);
-      const cleanup = (res) => {
-        clearTimeout(timer);
-        resolve(res);
-      };
-      if (typeof plus === "undefined" || !plus.io)
-        return cleanup(false);
-      plus.io.resolveLocalFileSystemURL(PREGEN_DB_SOURCE, (entry) => {
-        plus.io.resolveLocalFileSystemURL("_doc/", (dir) => {
-          entry.copyTo(
-            dir,
-            "pregen_data.db",
-            () => {
-              formatAppLog("log", "at src/utils/pregenVocab.js:46", "[pregenVocab] copyTo 完成");
-              cleanup(true);
-            },
-            (err) => {
-              formatAppLog("error", "at src/utils/pregenVocab.js:47", "[pregenVocab] copyTo 失败", err);
-              cleanup(false);
-            }
-          );
-        }, (e2) => {
-          formatAppLog("error", "at src/utils/pregenVocab.js:49", "[pregenVocab] 解析 _doc 失败", e2);
-          cleanup(false);
-        });
-      }, (e2) => {
-        formatAppLog("error", "at src/utils/pregenVocab.js:50", "[pregenVocab] 解析源文件失败", e2);
-        cleanup(false);
-      });
-    });
-  }
-  function ensureOpen() {
-    if (pregenDbOpen)
-      return Promise.resolve(true);
-    if (_ensureOpenPromise)
-      return _ensureOpenPromise;
-    if (!isApp$1())
-      return Promise.resolve(false);
-    _ensureOpenPromise = copyPregenDbToDoc().then((copied) => {
-      if (!copied)
-        return false;
-      return new Promise((resolve) => {
-        try {
-          if (plus.sqlite.isOpenDatabase({ name: PREGEN_DB_NAME, path: PREGEN_DB_PATH })) {
-            pregenDbOpen = true;
-            _ensureOpenPromise = null;
-            return resolve(true);
-          }
-        } catch (_2) {
-        }
-        plus.sqlite.openDatabase({
-          name: PREGEN_DB_NAME,
-          path: PREGEN_DB_PATH,
-          success: () => {
-            pregenDbOpen = true;
-            formatAppLog("log", "at src/utils/pregenVocab.js:75", "[pregenVocab] pregen_data.db 已打开");
-            plus.sqlite.executeSql({
-              name: PREGEN_DB_NAME,
-              sql: "CREATE UNIQUE INDEX IF NOT EXISTS idx_english ON vocab(english)",
-              success: () => {
-                _ensureOpenPromise = null;
-                resolve(true);
-              },
-              fail: () => {
-                _ensureOpenPromise = null;
-                resolve(true);
-              }
-            });
-          },
-          fail: (e2) => {
-            formatAppLog("error", "at src/utils/pregenVocab.js:84", "[pregenVocab] openDatabase 失败", e2);
-            _ensureOpenPromise = null;
-            resolve(false);
-          }
-        });
-      });
-    }).catch(() => {
-      _ensureOpenPromise = null;
-      return false;
-    });
-    return _ensureOpenPromise;
-  }
-  function parsePregenRow(r2) {
-    let examples = [], synonyms = [], antonyms = [];
-    try {
-      if (r2.examples)
-        examples = JSON.parse(r2.examples);
-    } catch (_2) {
-    }
-    try {
-      if (r2.synonyms)
-        synonyms = JSON.parse(r2.synonyms);
-    } catch (_2) {
-    }
-    try {
-      if (r2.antonyms)
-        antonyms = JSON.parse(r2.antonyms);
-    } catch (_2) {
-    }
-    return {
-      chinese: (r2.chinese || "").trim(),
-      examples: Array.isArray(examples) ? examples : [],
-      synonyms: Array.isArray(synonyms) ? synonyms : [],
-      antonyms: Array.isArray(antonyms) ? antonyms : []
-    };
-  }
-  function sqlLiteralStr$1(value) {
-    if (value === null || value === void 0)
-      return "NULL";
-    return `'${String(value).replace(/'/g, "''")}'`;
-  }
-  function getPregenWord(english) {
-    if (!english || typeof english !== "string")
-      return Promise.resolve(null);
-    const key = english.trim().toLowerCase();
-    if (!key)
-      return Promise.resolve(null);
-    if (!isApp$1())
-      return Promise.resolve(null);
-    if (_pregenCache.has(key))
-      return Promise.resolve(_pregenCache.get(key));
-    return ensureOpen().then((ok) => {
-      if (!ok)
-        return null;
-      return new Promise((resolve) => {
-        const sql = `SELECT * FROM vocab WHERE english = ${sqlLiteralStr$1(key)} LIMIT 1`;
-        try {
-          plus.sqlite.selectSql({
-            name: PREGEN_DB_NAME,
-            sql,
-            success: (rows) => {
-              try {
-                if (!rows || rows.length === 0) {
-                  setPregenCache(key, null);
-                  resolve(null);
-                  return;
-                }
-                const result = parsePregenRow(rows[0]);
-                setPregenCache(key, result);
-                resolve(result);
-              } catch (err) {
-                formatAppLog("error", "at src/utils/pregenVocab.js:145", "getPregenWord 解析结果异常", err);
-                resolve(null);
-              }
-            },
-            fail: (e2) => {
-              formatAppLog("error", "at src/utils/pregenVocab.js:150", "pregen selectSql 失败", e2);
-              resolve(null);
-            }
-          });
-        } catch (err) {
-          formatAppLog("error", "at src/utils/pregenVocab.js:155", "getPregenWord selectSql 调用异常", err);
-          resolve(null);
-        }
-      });
-    });
-  }
-  function getPregenWordsBatch(englishList) {
-    if (!Array.isArray(englishList) || englishList.length === 0)
-      return Promise.resolve({});
-    const keys = [...new Set(englishList.map((w2) => (w2 || "").trim().toLowerCase()).filter(Boolean))];
-    if (keys.length === 0)
-      return Promise.resolve({});
-    if (!isApp$1())
-      return Promise.resolve({});
-    return ensureOpen().then((ok) => {
-      if (!ok)
-        return {};
-      return new Promise((resolve) => {
-        const safeKeys = keys.map((k) => sqlLiteralStr$1(k));
-        const inClause = safeKeys.slice(0, 500).join(",");
-        const sql = `SELECT * FROM vocab WHERE english IN (${inClause})`;
-        plus.sqlite.selectSql({
-          name: PREGEN_DB_NAME,
-          sql,
-          success: (rows) => {
-            const out = {};
-            if (!rows || !rows.length) {
-              resolve(out);
-              return;
-            }
-            for (const r2 of rows) {
-              const english = (r2.english || "").trim().toLowerCase();
-              if (!english)
-                continue;
-              out[english] = parsePregenRow(r2);
-            }
-            resolve(out);
-          },
-          fail: () => resolve({})
-        });
-      });
-    });
-  }
-  function loadPregenVocab() {
-    return Promise.resolve(null);
-  }
-  async function getPregenVocabCache(englishList) {
-    if (Array.isArray(englishList) && englishList.length > 0) {
-      return getPregenWordsBatch(englishList);
-    }
-    return {};
-  }
-  const pregenVocab = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    getPregenVocabCache,
-    getPregenWord,
-    getPregenWordsBatch,
-    loadPregenVocab
-  }, Symbol.toStringTag, { value: "Module" }));
-  const MASTER_DB_NAME = "master_db";
-  const MASTER_DB_PATH = "_doc/vocal_master.db";
-  const MASTER_DB_SOURCE = "_www/static/vocal_master.db";
-  const MASTER_DB_VERSION = 4;
-  const MASTER_DB_VERSION_KEY = "vocal_master_db_version";
-  let masterDbOpen = false;
-  let initPromise = null;
-  let repairPromise = null;
-  function isApp() {
-    return typeof plus !== "undefined" && plus.sqlite;
-  }
-  function normalizeRow(r2) {
-    if (!r2 || typeof r2 !== "object")
-      return r2;
-    const out = {};
-    for (const k of Object.keys(r2))
-      out[k.toLowerCase()] = r2[k];
-    return out;
-  }
-  function checkDocDbExists() {
-    return new Promise((resolve) => {
-      if (typeof plus === "undefined" || !plus.io) {
-        resolve(false);
-        return;
-      }
-      plus.io.resolveLocalFileSystemURL(MASTER_DB_PATH, () => resolve(true), () => resolve(false));
-    });
-  }
-  function getStoredDbVersion() {
-    try {
-      return Number(uni.getStorageSync(MASTER_DB_VERSION_KEY) || 0);
-    } catch (_2) {
-      return 0;
-    }
-  }
-  function setStoredDbVersion(version) {
-    try {
-      uni.setStorageSync(MASTER_DB_VERSION_KEY, Number(version) || 0);
-    } catch (_2) {
-    }
-  }
-  function rawSelectSqlRows(sql) {
-    return new Promise((resolve) => {
-      plus.sqlite.selectSql({
-        name: MASTER_DB_NAME,
-        sql,
-        success: (rows) => resolve(rows || []),
-        fail: (e2) => {
-          formatAppLog("error", "at src/utils/masterDb.js:62", "[masterDb] selectSql 失败", e2);
-          resolve({ __error: e2, __rows: [] });
-        }
-      });
-    });
-  }
-  function isMissingExamTableError(err) {
-    const msg = String(err && (err.message || err.errMsg) || "").toLowerCase();
-    return Number(err && err.code) === -1404 && (msg.includes("no such table: word_exam_stats") || msg.includes("no such table: word_exam_sentences") || msg.includes("no such table: word_exam_"));
-  }
-  async function validateMasterSchema() {
-    if (!isApp())
-      return false;
-    const rows = await rawSelectSqlRows(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('vocab_master','word_exam_stats','word_exam_sentences')"
-    );
-    if (!Array.isArray(rows))
-      return false;
-    const names = rows.map((row) => String((normalizeRow(row) || {}).name || "").trim());
-    return names.includes("vocab_master") && names.includes("word_exam_stats") && names.includes("word_exam_sentences");
-  }
-  async function repairMasterDbFromStatic() {
-    if (repairPromise)
-      return repairPromise;
-    repairPromise = (async () => {
-      formatAppLog("warn", "at src/utils/masterDb.js:92", "[masterDb] 检测到主库缺表，开始强制重建 _doc 主库副本");
-      masterDbOpen = false;
-      initPromise = null;
-      await closeMasterDbIfOpen();
-      const copied = await copyMasterDbToDoc(true);
-      if (!copied) {
-        formatAppLog("error", "at src/utils/masterDb.js:98", "[masterDb] 强制重拷贝主库失败");
-        return false;
-      }
-      masterDbOpen = false;
-      initPromise = null;
-      const reopened = await initMasterDb();
-      if (!reopened)
-        return false;
-      const schemaOk = await validateMasterSchema();
-      if (!schemaOk) {
-        formatAppLog("error", "at src/utils/masterDb.js:107", "[masterDb] 重建后仍缺少必要数据表");
-        return false;
-      }
-      formatAppLog("log", "at src/utils/masterDb.js:110", "[masterDb] 主库缺表自愈完成");
-      return true;
-    })().finally(() => {
-      repairPromise = null;
-    });
-    return repairPromise;
-  }
-  function closeMasterDbIfOpen() {
-    return new Promise((resolve) => {
-      try {
-        const isOpen = plus.sqlite.isOpenDatabase({
-          name: MASTER_DB_NAME,
-          path: MASTER_DB_PATH
-        });
-        if (!isOpen) {
-          masterDbOpen = false;
-          resolve(true);
-          return;
-        }
-        plus.sqlite.closeDatabase({
-          name: MASTER_DB_NAME,
-          success: () => {
-            masterDbOpen = false;
-            resolve(true);
-          },
-          fail: () => {
-            masterDbOpen = false;
-            resolve(false);
-          }
-        });
-      } catch (_2) {
-        masterDbOpen = false;
-        resolve(false);
-      }
-    });
-  }
-  function removeDocDbFile() {
-    return new Promise((resolve) => {
-      if (typeof plus === "undefined" || !plus.io) {
-        resolve(false);
-        return;
-      }
-      plus.io.resolveLocalFileSystemURL(
-        MASTER_DB_PATH,
-        (entry) => {
-          entry.remove(() => resolve(true), () => resolve(false));
-        },
-        () => resolve(true)
-      );
-    });
-  }
-  function copyMasterDbToDoc(forceReplace = false) {
-    return new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        formatAppLog("error", "at src/utils/masterDb.js:168", "[masterDb] 复制操作超时，强制退出");
-        resolve(false);
-      }, 15e3);
-      const cleanup = (res) => {
-        clearTimeout(timer);
-        resolve(res);
-      };
-      if (typeof plus === "undefined" || !plus.io)
-        return cleanup(false);
-      formatAppLog("log", "at src/utils/masterDb.js:179", "[masterDb] 准备从:", MASTER_DB_SOURCE);
-      const doCopy = () => {
-        plus.io.resolveLocalFileSystemURL(MASTER_DB_SOURCE, (entry) => {
-          plus.io.resolveLocalFileSystemURL("_doc/", (dir) => {
-            entry.copyTo(dir, "vocal_master.db", () => {
-              formatAppLog("log", "at src/utils/masterDb.js:184", "[masterDb] 原生 copyTo 物理完成！");
-              cleanup(true);
-            }, (err) => {
-              formatAppLog("error", "at src/utils/masterDb.js:187", "[masterDb] copyTo 失败:", err);
-              cleanup(false);
-            });
-          }, (e2) => {
-            formatAppLog("error", "at src/utils/masterDb.js:191", "[masterDb] 解析 _doc 失败", e2);
-            cleanup(false);
-          });
-        }, (e2) => {
-          formatAppLog("error", "at src/utils/masterDb.js:195", "[masterDb] 解析源文件失败，请确认 MASTER_DB_SOURCE 路径正确:", e2);
-          cleanup(false);
-        });
-      };
-      if (!forceReplace) {
-        doCopy();
-        return;
-      }
-      closeMasterDbIfOpen().then(() => removeDocDbFile()).then(() => doCopy()).catch(() => cleanup(false));
-    });
-  }
-  function initMasterDb() {
-    if (masterDbOpen) {
-      formatAppLog("log", "at src/utils/masterDb.js:217", "[masterDb] 主库已打开，直接返回");
-      return Promise.resolve(true);
-    }
-    if (initPromise) {
-      formatAppLog("log", "at src/utils/masterDb.js:221", "[masterDb] 初始化进行中，等待同一 Promise（避免重复复制）");
-      return initPromise;
-    }
-    if (!isApp())
-      return Promise.resolve(false);
-    formatAppLog("log", "at src/utils/masterDb.js:226", "[masterDb] 首次初始化：复制并打开主库（仅此一次）");
-    const initWork = checkDocDbExists().then((exists) => {
-      const shouldForceReplace = getStoredDbVersion() !== MASTER_DB_VERSION;
-      if (exists) {
-        if (!shouldForceReplace) {
-          formatAppLog("log", "at src/utils/masterDb.js:231", "[masterDb] _doc 下已存在 vocal_master.db 且版本匹配，跳过复制");
-          return true;
-        }
-        formatAppLog("log", "at src/utils/masterDb.js:234", "[masterDb] 检测到主库版本变更，开始刷新 _doc/vocal_master.db");
-        return copyMasterDbToDoc(true).then((copied) => {
-          if (copied)
-            formatAppLog("log", "at src/utils/masterDb.js:236", "[masterDb] 主库刷新完成");
-          else
-            formatAppLog("warn", "at src/utils/masterDb.js:237", "[masterDb] 主库刷新失败");
-          return copied;
-        });
-      }
-      formatAppLog("log", "at src/utils/masterDb.js:241", "[masterDb] 目标文件不存在，开始从 static 复制 22MB...");
-      return copyMasterDbToDoc().then((copied) => {
-        if (copied)
-          formatAppLog("log", "at src/utils/masterDb.js:243", "[masterDb] 复制完成");
-        else
-          formatAppLog("warn", "at src/utils/masterDb.js:244", "[masterDb] 复制未成功");
-        return copied;
-      });
-    }).then((ready) => {
-      if (!ready)
-        return false;
-      return new Promise((resolve) => {
-        const isOpen = plus.sqlite.isOpenDatabase({
-          name: MASTER_DB_NAME,
-          path: MASTER_DB_PATH
-        });
-        if (isOpen) {
-          formatAppLog("log", "at src/utils/masterDb.js:255", "[masterDb] 检测到数据库已在打开状态，直接进入查询阶段");
-          masterDbOpen = true;
-          return resolve(true);
-        }
-        plus.sqlite.openDatabase({
-          name: MASTER_DB_NAME,
-          path: MASTER_DB_PATH,
-          success: async () => {
-            masterDbOpen = true;
-            formatAppLog("log", "at src/utils/masterDb.js:265", "[masterDb] 数据库真正打开成功！name=", MASTER_DB_NAME, "path=", MASTER_DB_PATH);
-            formatAppLog("log", "at src/utils/masterDb.js:266", "[masterDb] 库已就绪，开始执行挂起的查询");
-            plus.sqlite.executeSql({
-              name: MASTER_DB_NAME,
-              sql: "CREATE UNIQUE INDEX IF NOT EXISTS idx_word ON vocab_master(english)",
-              success: async () => {
-                formatAppLog("log", "at src/utils/masterDb.js:271", "[masterDb] idx_word 索引已确保");
-                setStoredDbVersion(MASTER_DB_VERSION);
-                const schemaOk = await validateMasterSchema();
-                if (!schemaOk) {
-                  const repaired = await repairMasterDbFromStatic();
-                  resolve(repaired);
-                  return;
-                }
-                resolve(true);
-              },
-              fail: async (e2) => {
-                formatAppLog("warn", "at src/utils/masterDb.js:282", "[masterDb] 创建索引失败(可忽略)", e2);
-                setStoredDbVersion(MASTER_DB_VERSION);
-                const schemaOk = await validateMasterSchema();
-                if (!schemaOk) {
-                  const repaired = await repairMasterDbFromStatic();
-                  resolve(repaired);
-                  return;
-                }
-                resolve(true);
-              }
-            });
-          },
-          fail: (e2) => {
-            const code = e2 && e2.code;
-            const msg = e2 && (e2.message || e2.errMsg) || "";
-            if (code === -1402 || typeof msg === "string" && msg.includes("Already Open")) {
-              formatAppLog("log", "at src/utils/masterDb.js:298", "[masterDb] 忽略 -1402 错误（库已打开），继续执行");
-              masterDbOpen = true;
-              setStoredDbVersion(MASTER_DB_VERSION);
-              return resolve(true);
-            }
-            formatAppLog("error", "at src/utils/masterDb.js:303", "[masterDb] openDatabase 失败", e2);
-            initPromise = null;
-            if (typeof uni !== "undefined" && uni.showModal) {
-              uni.showModal({ title: "主库打开失败", content: msg || JSON.stringify(e2), showCancel: false });
-            }
-            resolve(false);
-          }
-        });
-      });
-    }).catch((e2) => {
-      formatAppLog("error", "at src/utils/masterDb.js:313", "[masterDb] initMasterDb 异常", e2);
-      initPromise = null;
-      return false;
-    });
-    const timeoutMs = 3e4;
-    const timeoutPromise = new Promise((_2, reject) => {
-      setTimeout(() => {
-        if (!masterDbOpen) {
-          formatAppLog("error", "at src/utils/masterDb.js:322", "[masterDb] 初始化超时", timeoutMs, "ms");
-          initPromise = null;
-          if (typeof uni !== "undefined" && uni.showModal) {
-            uni.showModal({
-              title: "主库初始化超时",
-              content: timeoutMs / 1e3 + " 秒内未完成复制或打开，请检查 static 下是否有 vocal_master.db，或稍后重试。",
-              showCancel: false
-            });
-          }
-          reject(new Error("主库初始化超时"));
-        }
-      }, timeoutMs);
-    });
-    initPromise = Promise.race([initWork, timeoutPromise]).then((v2) => v2, () => false);
-    return initPromise;
-  }
-  function ensureMasterOpen() {
-    return initMasterDb();
-  }
-  function safeSqlValue(value) {
-    if (value === null || value === void 0)
-      return "";
-    if (typeof value === "number")
-      return Number.isFinite(value) ? String(value) : "";
-    if (typeof value === "boolean")
-      return value ? "1" : "0";
-    return String(value).replace(/'/g, "''");
-  }
-  function sqlLiteralStr(value) {
-    if (value === null || value === void 0)
-      return "NULL";
-    return `'${safeSqlValue(String(value))}'`;
-  }
-  function selectSqlRows(sql) {
-    return rawSelectSqlRows(sql).then(async (result) => {
-      if (Array.isArray(result))
-        return result;
-      const err = result && result.__error;
-      if (isMissingExamTableError(err)) {
-        const repaired = await repairMasterDbFromStatic();
-        if (repaired) {
-          const retry = await rawSelectSqlRows(sql);
-          return Array.isArray(retry) ? retry : [];
-        }
-      }
-      return [];
-    });
-  }
-  function parseJsonSafe(raw, fallback) {
-    try {
-      const data = typeof raw === "string" ? JSON.parse(raw || "") : raw;
-      return data == null ? fallback : data;
-    } catch (_2) {
-      return fallback;
-    }
-  }
-  function normalizeDefType(rawType) {
-    const value = String(rawType || "").trim().toLowerCase();
-    if (!value)
-      return "normal";
-    if ([
-      "freq",
-      "important",
-      "important_meaning",
-      "importantmeaning",
-      "重点",
-      "重点义",
-      "重要",
-      "重要义",
-      "重要意思",
-      "常考",
-      "高频"
-    ].includes(value)) {
-      return "freq";
-    }
-    if ([
-      "rare",
-      "rare_meaning",
-      "raremeaning",
-      "僻义",
-      "熟词僻义",
-      "熟词生义",
-      "生义"
-    ].includes(value)) {
-      return "rare";
-    }
-    return "normal";
-  }
-  function normalizeDefs(defs) {
-    if (!Array.isArray(defs))
-      return [];
-    return defs.map((item) => {
-      if (!item || typeof item !== "object")
-        return null;
-      const pos = String(item.pos || "").trim();
-      const trans = String(item.trans || "").trim();
-      if (!trans)
-        return null;
-      return {
-        ...item,
-        pos,
-        trans,
-        type: normalizeDefType(item.type)
-      };
-    }).filter(Boolean);
-  }
-  function buildChineseFromDefs(defs, fallback = "") {
-    if (!Array.isArray(defs) || defs.length === 0)
-      return fallback || "";
-    const parts = [];
-    for (const d2 of defs) {
-      if (!d2 || typeof d2 !== "object")
-        continue;
-      const pos = String(d2.pos || "").trim();
-      const trans = String(d2.trans || "").trim();
-      if (!trans)
-        continue;
-      parts.push(pos ? `${pos} ${trans}` : trans);
-      if (parts.length >= 4)
-        break;
-    }
-    return parts.length ? parts.join("；") : fallback || "";
-  }
-  function parseCoreRow(row) {
-    const nr2 = normalizeRow(row || {});
-    const data = parseJsonSafe(nr2.data_json, {}) || {};
-    const defs = normalizeDefs(data.defs);
-    return {
-      english: (nr2.english || "").trim().toLowerCase(),
-      chinese: buildChineseFromDefs(defs, (nr2.chinese || "").trim()),
-      examples: Array.isArray(data.examples) ? data.examples : [],
-      synonyms: Array.isArray(data.synonyms) ? data.synonyms : [],
-      antonyms: Array.isArray(data.antonyms) ? data.antonyms : [],
-      defs,
-      exam_tip: typeof data.exam_tip === "string" ? data.exam_tip : "",
-      sentiment: data.sentiment === "pos" || data.sentiment === "neg" || data.sentiment === "neu" ? data.sentiment : "neu",
-      data_json: {
-        ...data,
-        defs
-      }
-    };
-  }
-  function parseExamStatsRow(row) {
-    if (!row)
-      return null;
-    const nr2 = normalizeRow(row);
-    const years = parseJsonSafe(nr2.years_json, []);
-    const byYear = parseJsonSafe(nr2.by_year_json, {});
-    const bySection = parseJsonSafe(nr2.by_section_json, {});
-    const positions = parseJsonSafe(nr2.positions_json, []);
-    const tags = parseJsonSafe(nr2.tags_json, []);
-    return {
-      total_count: Number(nr2.total_count) || 0,
-      years: Array.isArray(years) ? years : [],
-      by_year: byYear && typeof byYear === "object" ? byYear : {},
-      by_section: bySection && typeof bySection === "object" ? bySection : {},
-      positions: Array.isArray(positions) ? positions : [],
-      importance: nr2.importance != null ? Number(nr2.importance) || 0 : 0,
-      tags: Array.isArray(tags) ? tags : []
-    };
-  }
-  function parseExamSentenceRows(rows) {
-    if (!Array.isArray(rows) || rows.length === 0)
-      return [];
-    return rows.map((row) => {
-      const nr2 = normalizeRow(row);
-      return {
-        year: nr2.year || "",
-        section: nr2.section || "",
-        exam_type: nr2.exam_type || "",
-        sentence: nr2.sentence || ""
-      };
-    }).filter((item) => (item.sentence || "").trim());
-  }
-  async function getWordFullDetail(word) {
-    if (!word || typeof word !== "string")
-      return null;
-    const english = word.trim().toLowerCase();
-    if (!english)
-      return null;
-    if (!isApp())
-      return null;
-    if (wordDetailCache.has(english))
-      return wordDetailCache.get(english);
-    formatAppLog("log", "at src/utils/masterDb.js:516", "[masterDb] 收到查询请求:", english);
-    try {
-      await initMasterDb();
-      const isOpen = plus.sqlite.isOpenDatabase && plus.sqlite.isOpenDatabase({ name: MASTER_DB_NAME, path: MASTER_DB_PATH });
-      if (!isOpen) {
-        formatAppLog("error", "at src/utils/masterDb.js:521", "[masterDb] 主库未打开");
-        return null;
-      }
-      const safe = sqlLiteralStr(english);
-      const [coreRows, statsRows, sentenceRows] = await Promise.all([
-        selectSqlRows(`SELECT english, chinese, data_json FROM vocab_master WHERE english = ${safe} LIMIT 1`),
-        selectSqlRows(`SELECT * FROM word_exam_stats WHERE english = ${safe} LIMIT 1`),
-        selectSqlRows(`SELECT year, section, exam_type, sentence FROM word_exam_sentences WHERE english = ${safe} ORDER BY year, id`)
-      ]);
-      formatAppLog("log", "at src/utils/masterDb.js:530", "[masterDb] 查询结果返回！core=", coreRows.length, "stats=", statsRows.length, "sentences=", sentenceRows.length);
-      if ((!coreRows || coreRows.length === 0) && (!statsRows || statsRows.length === 0) && (!sentenceRows || sentenceRows.length === 0)) {
-        return null;
-      }
-      const core = coreRows && coreRows.length ? parseCoreRow(coreRows[0]) : parseCoreRow({ english, chinese: "", data_json: "{}" });
-      const result = {
-        chinese: core.chinese,
-        examples: core.examples,
-        synonyms: core.synonyms,
-        antonyms: core.antonyms,
-        examStats: statsRows && statsRows.length ? parseExamStatsRow(statsRows[0]) : null,
-        examSentences: parseExamSentenceRows(sentenceRows),
-        defs: core.defs,
-        exam_tip: core.exam_tip,
-        sentiment: core.sentiment,
-        data_json: core.data_json
-      };
-      setDetailCache(english, result);
-      return result;
-    } catch (err) {
-      formatAppLog("error", "at src/utils/masterDb.js:550", "[masterDb] 流程中断:", err);
-      return null;
-    }
-  }
-  async function getWordExamData(word) {
-    if (!word || typeof word !== "string")
-      return { examStats: null, examSentences: [] };
-    const english = word.trim().toLowerCase();
-    if (!english || !isApp())
-      return { examStats: null, examSentences: [] };
-    try {
-      await initMasterDb();
-      const isOpen = plus.sqlite.isOpenDatabase && plus.sqlite.isOpenDatabase({ name: MASTER_DB_NAME, path: MASTER_DB_PATH });
-      if (!isOpen)
-        return { examStats: null, examSentences: [] };
-      const safe = sqlLiteralStr(english);
-      const [statsRows, sentenceRows] = await Promise.all([
-        selectSqlRows(`SELECT * FROM word_exam_stats WHERE english = ${safe} LIMIT 1`),
-        selectSqlRows(`SELECT year, section, exam_type, sentence FROM word_exam_sentences WHERE english = ${safe} ORDER BY year, id`)
-      ]);
-      return {
-        examStats: statsRows && statsRows.length ? parseExamStatsRow(statsRows[0]) : null,
-        examSentences: parseExamSentenceRows(sentenceRows)
-      };
-    } catch (err) {
-      formatAppLog("error", "at src/utils/masterDb.js:573", "[masterDb] getWordExamData 失败", err);
-      return { examStats: null, examSentences: [] };
-    }
-  }
-  async function getWordExamStatsBatch(englishList) {
-    if (!Array.isArray(englishList) || englishList.length === 0 || !isApp())
-      return {};
-    const keys = [...new Set(englishList.map((w2) => (typeof w2 === "string" ? w2 : w2 && w2.english || "").trim().toLowerCase()).filter(Boolean))];
-    if (keys.length === 0)
-      return {};
-    try {
-      const ok = await ensureMasterOpen();
-      if (!ok)
-        return {};
-      const safeKeys = keys.slice(0, 500).map((k) => sqlLiteralStr(k));
-      const rows = await selectSqlRows(
-        `SELECT english, total_count, importance, tags_json FROM word_exam_stats WHERE english IN (${safeKeys.join(",")})`
-      );
-      const out = {};
-      for (const row of rows) {
-        const nr2 = normalizeRow(row);
-        const english = (nr2.english || "").trim().toLowerCase();
-        if (!english)
-          continue;
-        const tags = parseJsonSafe(nr2.tags_json, []);
-        out[english] = {
-          examCount: Number(nr2.total_count) || 0,
-          importance: nr2.importance != null ? Number(nr2.importance) || 0 : 0,
-          tags: Array.isArray(tags) ? tags.join(",") : ""
-        };
-      }
-      return out;
-    } catch (err) {
-      formatAppLog("error", "at src/utils/masterDb.js:603", "[masterDb] getWordExamStatsBatch 失败", err);
-      return {};
-    }
-  }
-  function getWordBriefBatch(englishList) {
-    if (!Array.isArray(englishList) || englishList.length === 0)
-      return Promise.resolve({});
-    const keys = [...new Set(englishList.map((w2) => (typeof w2 === "string" ? w2 : w2 && w2.english || "").trim().toLowerCase()).filter(Boolean))];
-    if (keys.length === 0)
-      return Promise.resolve({});
-    if (!isApp())
-      return Promise.resolve({});
-    return ensureMasterOpen().then((ok) => {
-      if (!ok)
-        return {};
-      return new Promise((resolve) => {
-        try {
-          const safeKeys = keys.slice(0, 500).map((k) => sqlLiteralStr(k));
-          const sql = `
-          SELECT
-            v.english,
-            v.chinese,
-            v.data_json,
-            s.total_count,
-            s.importance,
-            s.tags_json
-          FROM vocab_master v
-          LEFT JOIN word_exam_stats s ON v.english = s.english
-          WHERE v.english IN (${safeKeys.join(",")})
-        `;
-          plus.sqlite.selectSql({
-            name: MASTER_DB_NAME,
-            sql,
-            success: (rows) => {
-              const out = {};
-              if (rows && rows.length) {
-                for (const r2 of rows) {
-                  const nr2 = normalizeRow(r2);
-                  const en2 = (nr2.english || "").trim().toLowerCase();
-                  if (!en2)
-                    continue;
-                  const core = parseCoreRow(nr2);
-                  const tags = parseJsonSafe(nr2.tags_json, []);
-                  out[en2] = {
-                    chinese: core.chinese,
-                    examCount: Number(nr2.total_count) || 0,
-                    tags: Array.isArray(tags) ? tags.join(",") : "",
-                    importance: nr2.importance != null ? Number(nr2.importance) || 0 : 0
-                  };
-                }
-              }
-              formatAppLog("log", "at src/utils/masterDb.js:654", "[masterDb] getWordBriefBatch 成功, 条数=", rows ? rows.length : 0);
-              resolve(out);
-            },
-            fail: (e2) => {
-              formatAppLog("error", "at src/utils/masterDb.js:658", "[masterDb] getWordBriefBatch selectSql 失败", e2);
-              resolve({});
-            }
-          });
-        } catch (e2) {
-          resolve({});
-        }
-      });
-    });
-  }
-  let reviewWordListCache = null;
-  const wordDetailCache = /* @__PURE__ */ new Map();
-  const DETAIL_CACHE_MAX = 200;
-  function setDetailCache(key, value) {
-    if (wordDetailCache.size >= DETAIL_CACHE_MAX) {
-      const keys = wordDetailCache.keys();
-      for (let i2 = 0; i2 < 20; i2++) {
-        const k = keys.next().value;
-        if (k !== void 0)
-          wordDetailCache.delete(k);
-      }
-    }
-    wordDetailCache.set(key, value);
-  }
-  function getWordListForReview() {
-    if (reviewWordListCache && reviewWordListCache.length > 0)
-      return Promise.resolve(reviewWordListCache);
-    if (!isApp())
-      return Promise.resolve([]);
-    return ensureMasterOpen().then((ok) => {
-      if (!ok)
-        return [];
-      return new Promise((resolve) => {
-        plus.sqlite.selectSql({
-          name: MASTER_DB_NAME,
-          sql: "SELECT english, chinese FROM vocab_master LIMIT 5000",
-          success: (rows) => {
-            const list = [];
-            if (rows && rows.length) {
-              for (const r2 of rows) {
-                const w2 = (r2.english || "").trim();
-                if (w2)
-                  list.push({ word: w2, chinese: (r2.chinese || "").trim() });
-              }
-            }
-            reviewWordListCache = list;
-            resolve(list);
-          },
-          fail: () => resolve([])
-        });
-      });
-    });
-  }
-  const masterDb = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
-    __proto__: null,
-    ensureMasterOpen,
-    getWordBriefBatch,
-    getWordExamData,
-    getWordExamStatsBatch,
-    getWordFullDetail,
-    getWordListForReview
-  }, Symbol.toStringTag, { value: "Module" }));
-  const STORAGE_KEY = "currentWordbook";
-  const CLOUD_LIST_KEY = "cloudWordbooks";
-  const SELF_ID = "self";
-  const GUEST_DEFAULT_BOOK = "红宝书";
-  const LOGIN_DEFAULT_BOOK = SELF_ID;
-  const LOCAL_KEYS = ["红宝书", "红宝书补全版", "真题高频词", "真题所有词"];
-  function getCloudWordbooks() {
-    try {
-      const raw = uni.getStorageSync(CLOUD_LIST_KEY);
-      const list = raw ? JSON.parse(raw) : [];
-      if (!Array.isArray(list))
-        return [{ id: SELF_ID, name: "自用单词" }];
-      const hasSelf = list.some((o2) => o2.id === SELF_ID);
-      if (!hasSelf)
-        return [{ id: SELF_ID, name: "自用单词" }, ...list];
-      return list;
-    } catch (_2) {
-      return [{ id: SELF_ID, name: "自用单词" }];
-    }
-  }
-  function setCloudWordbooks(list) {
-    uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(list));
-  }
-  function addCloudWordbook(name) {
-    const id = "wb_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
-    const list = getCloudWordbooks().filter((o2) => o2.id !== SELF_ID);
-    list.push({ id, name: (name || "").trim() || "未命名" });
-    setCloudWordbooks([{ id: SELF_ID, name: "自用单词" }, ...list]);
-    return id;
-  }
-  function removeCloudWordbook(id) {
-    if (id === SELF_ID)
-      return;
-    const list = getCloudWordbooks().filter((o2) => o2.id !== id);
-    setCloudWordbooks(list);
-    try {
-      uni.removeStorageSync("wordbook_words_" + id);
-    } catch (_2) {
-    }
-  }
-  function isLoggedIn() {
-    try {
-      return !!uni.getStorageSync("uid");
-    } catch (_2) {
-      return false;
-    }
-  }
-  function getDefaultWordbook() {
-    return isLoggedIn() ? LOGIN_DEFAULT_BOOK : GUEST_DEFAULT_BOOK;
-  }
-  function getCurrentWordbook() {
-    try {
-      let v2 = uni.getStorageSync(STORAGE_KEY);
-      if (v2 === "自用单词")
-        v2 = SELF_ID;
-      if (LOCAL_KEYS.includes(v2))
-        return v2;
-      if (v2 === SELF_ID)
-        return isLoggedIn() ? SELF_ID : GUEST_DEFAULT_BOOK;
-      const list = getCloudWordbooks();
-      if (list.some((o2) => o2.id === v2))
-        return isLoggedIn() ? v2 : GUEST_DEFAULT_BOOK;
-      return getDefaultWordbook();
-    } catch (_2) {
-      return getDefaultWordbook();
-    }
-  }
-  function setCurrentWordbook(idOrKey) {
-    uni.setStorageSync(STORAGE_KEY, idOrKey);
-  }
-  function isSelfWordbook() {
-    return getCurrentWordbook() === SELF_ID;
-  }
-  function isLocalWordbookKey(key) {
-    return LOCAL_KEYS.includes(key);
-  }
-  function getWordbookListForUI() {
-    const cloud = getCloudWordbooks();
-    const local = LOCAL_KEYS.map((key) => ({ id: key, name: key, isLocal: true, canDelete: false }));
-    return [
-      ...cloud.map((o2) => ({ ...o2, isLocal: false, canDelete: o2.id !== SELF_ID })),
-      ...local
-    ];
-  }
-  const WORDS_PREFIX = "wordbook_words_";
-  function getWordbookWords(id) {
-    if (!id || id === SELF_ID)
-      return [];
-    try {
-      const raw = uni.getStorageSync(WORDS_PREFIX + id);
-      return raw ? JSON.parse(raw) : [];
-    } catch (_2) {
-      return [];
-    }
-  }
-  function setWordbookWords(id, words) {
-    if (!id || id === SELF_ID)
-      return;
-    uni.setStorageSync(WORDS_PREFIX + id, JSON.stringify(words || []));
-  }
-  function parseCsvToWordList(text) {
-    if (!text || typeof text !== "string")
-      return [];
-    const lines = text.trim().split(/\r?\n/);
-    const out = [];
-    for (let i2 = 1; i2 < lines.length; i2++) {
-      const line = lines[i2];
-      const parts = line.split(",");
-      if (parts.length >= 1 && parts[0].trim()) {
-        out.push({
-          english: parts[0].trim(),
-          exam_count: parseInt(parts[1], 10) || 0,
-          importance: parseInt(parts[2], 10) || 0
-        });
-      }
-    }
-    return out;
-  }
-  function loadCsvByPlusIo(fileName) {
-    return new Promise((resolve) => {
-      if (typeof plus === "undefined" || !plus.io) {
-        resolve(null);
-        return;
-      }
-      const paths = ["_www/static/wordbooks/" + fileName, "static/wordbooks/" + fileName];
-      let tried = 0;
-      const tryNext = () => {
-        if (tried >= paths.length) {
-          resolve(null);
-          return;
-        }
-        const path = paths[tried++];
-        plus.io.resolveLocalFileSystemURL(path, (entry) => {
-          entry.file((file) => {
-            const reader = new plus.io.FileReader();
-            reader.onloadend = (e2) => {
-              var _a;
-              return resolve(((_a = e2.target) == null ? void 0 : _a.result) ?? null);
-            };
-            reader.onerror = () => resolve(null);
-            reader.readAsText(file, "utf-8");
-          }, () => tryNext());
-        }, () => tryNext());
-      };
-      tryNext();
-    });
-  }
-  function loadLocalWordbook(key) {
-    const fileName = key + ".csv";
-    return new Promise((resolve) => {
-      const onText = (text) => {
-        if (text != null && typeof text !== "string")
-          text = String(text);
-        const list = parseCsvToWordList(text);
-        if (list.length === 0 && text != null) {
-          formatAppLog("warn", "at src/utils/wordbookSource.js:174", "[wordbookSource] CSV 解析后为空，key=", key, "textLen=", (text || "").length);
-        }
-        resolve(list);
-      };
-      if (typeof plus !== "undefined" && plus.io) {
-        loadCsvByPlusIo(fileName).then((text) => {
-          if (text != null)
-            return onText(text);
-          try {
-            const fileUrl = plus.io.convertLocalFileSystemURL("_www/static/wordbooks/" + fileName);
-            if (fileUrl) {
-              uni.request({
-                url: fileUrl,
-                method: "GET",
-                dataType: "text",
-                success: (res) => {
-                  if (res.statusCode === 200)
-                    onText(res.data);
-                  else
-                    onText(null);
-                },
-                fail: () => onText(null)
-              });
-              return;
-            }
-          } catch (_2) {
-          }
-          onText(null);
-        });
-        return;
-      }
-      uni.request({
-        url: "/static/wordbooks/" + encodeURIComponent(fileName),
-        method: "GET",
-        dataType: "text",
-        success: (res) => {
-          if (res.statusCode === 200)
-            onText(res.data);
-          else
-            onText(null);
-        },
-        fail: () => onText(null)
-      });
-    });
-  }
-  const PROFILE_KEY = "learning_center_profiles_v1";
-  const MISTAKE_KEY = "learning_center_mistakes_v1";
-  const HISTORY_KEY = "learning_center_history_v1";
-  const EXTRA_KEY = "learning_center_extra_v1";
-  const safeRead = (key, fallback) => {
-    try {
-      const raw = uni.getStorageSync(key);
-      if (!raw)
-        return fallback;
-      if (typeof raw === "string") {
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === "object" ? parsed : fallback;
-      }
-      return raw && typeof raw === "object" ? raw : fallback;
-    } catch (_2) {
-      return fallback;
-    }
-  };
-  const safeWrite = (key, value) => {
-    try {
-      uni.setStorageSync(key, JSON.stringify(value));
-    } catch (_2) {
-    }
-  };
-  const normalizeWordKey = (word) => {
-    if (!word)
-      return "";
-    if (typeof word === "string")
-      return word.trim().toLowerCase();
-    return String(word.english || "").trim().toLowerCase();
-  };
-  const normalizeProfile = (profile = {}) => {
-    const key = normalizeWordKey(profile.english || profile.key || "");
-    const bookIds = Array.isArray(profile.bookIds) ? [...new Set(profile.bookIds.filter(Boolean))] : [];
-    const normalized = {
-      key,
-      english: String(profile.english || key || "").trim(),
-      chinese: String(profile.chinese || "").trim(),
-      importance: Number(profile.importance || 0) || 0,
-      mastery: Number(profile.mastery || 0) || 0,
-      seen_count: Math.max(0, Number(profile.seen_count || 0)),
-      correct_count: Math.max(0, Number(profile.correct_count || 0)),
-      wrong_count: Math.max(0, Number(profile.wrong_count || 0)),
-      consecutive_correct: Math.max(0, Number(profile.consecutive_correct || 0)),
-      first_learned_at: profile.first_learned_at || "",
-      first_day_stage: Math.max(0, Number(profile.first_day_stage || 0)),
-      first_day_due_at: profile.first_day_due_at || "",
-      bookIds,
-      last_book_id: profile.last_book_id || "",
-      source: profile.source || "",
-      created_at: profile.created_at || "",
-      updated_at: profile.updated_at || "",
-      ...normalizeReviewFields(profile)
-    };
-    normalized.mastery = normalized.mastery || calculateMastery(normalized);
-    return normalized;
-  };
-  let _profilesCache = null;
-  let _mistakesCache = null;
-  const getProfilesMap = () => {
-    if (_profilesCache)
-      return _profilesCache;
-    _profilesCache = safeRead(PROFILE_KEY, {});
-    return _profilesCache;
-  };
-  const setProfilesMap = (map) => {
-    _profilesCache = map || {};
-    safeWrite(PROFILE_KEY, _profilesCache);
-  };
-  const getMistakesMap = () => {
-    if (_mistakesCache)
-      return _mistakesCache;
-    _mistakesCache = safeRead(MISTAKE_KEY, {});
-    return _mistakesCache;
-  };
-  const setMistakesMap = (map) => {
-    _mistakesCache = map || {};
-    safeWrite(MISTAKE_KEY, _mistakesCache);
-  };
-  const getHistoryList = () => {
-    const list = safeRead(HISTORY_KEY, []);
-    return Array.isArray(list) ? list : [];
-  };
-  const setHistoryList = (list) => safeWrite(HISTORY_KEY, Array.isArray(list) ? list.slice(-400) : []);
-  const getExtraMap = () => safeRead(EXTRA_KEY, {});
-  const setExtraMap = (map) => safeWrite(EXTRA_KEY, map || {});
-  const getFirstDayNextDue = (profile, isCorrect, now = /* @__PURE__ */ new Date()) => {
-    const stage = Math.max(0, Number(profile.first_day_stage || 0));
-    if (!profile.first_learned_at) {
-      return {
-        first_day_stage: 1,
-        first_day_due_at: new Date(now.getTime() + 10 * 60 * 1e3).toISOString(),
-        first_learned_at: now.toISOString()
-      };
-    }
-    if (!isCorrect) {
-      return {
-        first_day_stage: stage || 1,
-        first_day_due_at: new Date(now.getTime() + 20 * 60 * 1e3).toISOString(),
-        first_learned_at: profile.first_learned_at
-      };
-    }
-    if (stage <= 1) {
-      return {
-        first_day_stage: 2,
-        first_day_due_at: new Date(now.getTime() + 6 * 60 * 60 * 1e3).toISOString(),
-        first_learned_at: profile.first_learned_at
-      };
-    }
-    if (stage === 2) {
-      return {
-        first_day_stage: 3,
-        first_day_due_at: new Date(now.getTime() + 24 * 60 * 60 * 1e3).toISOString(),
-        first_learned_at: profile.first_learned_at
-      };
-    }
-    return {
-      first_day_stage: 4,
-      first_day_due_at: "",
-      first_learned_at: profile.first_learned_at
-    };
-  };
-  const getWordProfile$1 = (word) => {
-    const key = normalizeWordKey(word);
-    if (!key)
-      return null;
-    const map = getProfilesMap();
-    return map[key] ? normalizeProfile(map[key]) : null;
-  };
-  const saveWordProfile = (word, patch = {}) => {
-    const key = normalizeWordKey(word);
-    if (!key)
-      return null;
-    const profiles = getProfilesMap();
-    const prev = normalizeProfile(profiles[key] || { key, english: typeof word === "string" ? word : word.english });
-    const next = normalizeProfile({
-      ...prev,
-      ...typeof word === "object" ? word : {},
-      ...patch,
-      key,
-      english: typeof word === "string" ? word : word.english || prev.english,
-      updated_at: (/* @__PURE__ */ new Date()).toISOString(),
-      created_at: prev.created_at || (/* @__PURE__ */ new Date()).toISOString()
-    });
-    profiles[key] = next;
-    setProfilesMap(profiles);
-    return next;
-  };
-  const recordReviewOutcome = (word, isCorrect, options = {}) => {
-    const key = normalizeWordKey(word);
-    if (!key)
-      return null;
-    const now = /* @__PURE__ */ new Date();
-    const bookId = options.bookId || getCurrentWordbook() || "self";
-    const prev = getWordProfile$1(word) || normalizeProfile({
-      ...typeof word === "object" ? word : {},
-      english: typeof word === "string" ? word : word.english,
-      chinese: typeof word === "object" ? word.chinese : "",
-      importance: typeof word === "object" ? word.importance : 0,
-      created_at: now.toISOString()
-    });
-    const reviewState = scheduleReviewState({ ...prev, ...typeof word === "object" ? word : {} }, isCorrect, now);
-    const firstDayState = getFirstDayNextDue(prev, isCorrect, now);
-    const next = saveWordProfile(word, {
-      ...reviewState,
-      mastery: calculateMastery({ ...prev, ...reviewState }),
-      seen_count: prev.seen_count + 1,
-      correct_count: prev.correct_count + (isCorrect ? 1 : 0),
-      wrong_count: prev.wrong_count + (isCorrect ? 0 : 1),
-      consecutive_correct: isCorrect ? prev.consecutive_correct + 1 : 0,
-      chinese: typeof word === "object" && word.chinese ? word.chinese : prev.chinese,
-      importance: typeof word === "object" && word.importance != null ? Number(word.importance) || 0 : prev.importance,
-      bookIds: [.../* @__PURE__ */ new Set([...prev.bookIds || [], bookId])],
-      last_book_id: bookId,
-      source: options.source || "review",
-      first_learned_at: firstDayState.first_learned_at,
-      first_day_stage: firstDayState.first_day_stage,
-      first_day_due_at: firstDayState.first_day_due_at
-    });
-    const mistakes = getMistakesMap();
-    const oldMistake = mistakes[key] || {
-      key,
-      english: next.english,
-      chinese: next.chinese,
-      error_count: 0,
-      recover_count: 0,
-      active: false,
-      bookIds: [],
-      last_wrong_at: ""
-    };
-    if (isCorrect) {
-      oldMistake.recover_count = Math.min(2, Number(oldMistake.recover_count || 0) + 1);
-      if (oldMistake.recover_count >= 2)
-        oldMistake.active = false;
-    } else {
-      oldMistake.error_count = Number(oldMistake.error_count || 0) + 1;
-      oldMistake.recover_count = 0;
-      oldMistake.active = true;
-      oldMistake.last_wrong_at = now.toISOString();
-      oldMistake.chinese = next.chinese || oldMistake.chinese;
-    }
-    oldMistake.english = next.english;
-    oldMistake.bookIds = [.../* @__PURE__ */ new Set([...oldMistake.bookIds || [], bookId])];
-    oldMistake.updated_at = now.toISOString();
-    mistakes[key] = oldMistake;
-    setMistakesMap(mistakes);
-    return next;
-  };
-  const noteNewWordLearned = (word, options = {}) => {
-    const now = /* @__PURE__ */ new Date();
-    return saveWordProfile(word, {
-      bookIds: [options.bookId || getCurrentWordbook() || "self"],
-      source: options.source || "quick-add",
-      first_learned_at: now.toISOString(),
-      first_day_stage: 1,
-      first_day_due_at: new Date(now.getTime() + 10 * 60 * 1e3).toISOString(),
-      mastery: 8
-    });
-  };
-  const clearMistake = (word) => {
-    const key = normalizeWordKey(word);
-    if (!key)
-      return;
-    const mistakes = getMistakesMap();
-    if (!mistakes[key])
-      return;
-    mistakes[key] = {
-      ...mistakes[key],
-      active: false,
-      recover_count: 2,
-      updated_at: (/* @__PURE__ */ new Date()).toISOString()
-    };
-    setMistakesMap(mistakes);
-  };
-  const getMistakeWords = (bookId = "", onlyActive = true) => {
-    const mistakes = Object.values(getMistakesMap() || {});
-    return mistakes.filter((item) => item && item.english).filter((item) => !onlyActive || !!item.active).filter((item) => !bookId || Array.isArray(item.bookIds) && item.bookIds.includes(bookId)).sort((a2, b2) => {
-      const diff = Number(b2.error_count || 0) - Number(a2.error_count || 0);
-      if (diff !== 0)
-        return diff;
-      return new Date(b2.last_wrong_at || 0) - new Date(a2.last_wrong_at || 0);
-    });
-  };
-  const getDueProfilesForWords = (words = [], bookId = "", now = /* @__PURE__ */ new Date()) => {
-    const nowMs = now.getTime();
-    return (Array.isArray(words) ? words : []).map((item) => {
-      const profile = getWordProfile$1(item);
-      if (!profile)
-        return null;
-      if (bookId && Array.isArray(profile.bookIds) && profile.bookIds.length && !profile.bookIds.includes(bookId))
-        return null;
-      const reviewDueMs = profile.next_review_time ? new Date(profile.next_review_time).getTime() : Infinity;
-      const firstDayDueMs = profile.first_day_due_at ? new Date(profile.first_day_due_at).getTime() : Infinity;
-      const dueMs = Math.min(reviewDueMs, firstDayDueMs);
-      if (!Number.isFinite(dueMs) || dueMs > nowMs)
-        return null;
-      return {
-        ...profile,
-        dueMs,
-        overdueMs: Math.max(0, nowMs - dueMs)
-      };
-    }).filter(Boolean).sort((a2, b2) => b2.overdueMs - a2.overdueMs);
-  };
-  const getLearningDashboard = (words = [], bookId = "", options = {}) => {
-    const now = options.now ? new Date(options.now) : /* @__PURE__ */ new Date();
-    const dueProfiles = getDueProfilesForWords(words, bookId, now);
-    const mistakes = getMistakeWords(bookId, true);
-    const profiles = (Array.isArray(words) ? words : []).map((item) => getWordProfile$1(item)).filter(Boolean);
-    const masteryBuckets = {
-      strong: 0,
-      normal: 0,
-      weak: 0,
-      danger: 0
-    };
-    profiles.forEach((item) => {
-      const mastery = Number(item.mastery || 0);
-      if (mastery >= 80)
-        masteryBuckets.strong++;
-      else if (mastery >= 60)
-        masteryBuckets.normal++;
-      else if (mastery >= 35)
-        masteryBuckets.weak++;
-      else
-        masteryBuckets.danger++;
-    });
-    const firstDayDue = dueProfiles.filter((item) => item.first_day_due_at && item.first_day_due_at === item.first_day_due_at && Number(item.first_day_stage || 0) > 0 && Number(item.first_day_stage || 0) < 4).length;
-    const overdueCount = dueProfiles.filter((item) => item.dueMs < now.getTime()).length;
-    return {
-      dueCount: dueProfiles.length,
-      overdueCount,
-      mistakeCount: mistakes.length,
-      firstDayDue,
-      masteryBuckets,
-      reviewedCount: profiles.length,
-      latestMistakes: mistakes.slice(0, 5)
-    };
-  };
-  const logStudySession = (session = {}) => {
-    const list = getHistoryList();
-    list.push({
-      id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-      created_at: (/* @__PURE__ */ new Date()).toISOString(),
-      bookId: session.bookId || getCurrentWordbook() || "self",
-      mode: session.mode || "",
-      preset: session.preset || "default",
-      reviewedCount: Number(session.reviewedCount || 0),
-      correctCount: Number(session.correctCount || 0),
-      wrongCount: Number(session.wrongCount || 0),
-      masteryBefore: Number(session.masteryBefore || 0),
-      masteryAfter: Number(session.masteryAfter || 0),
-      newCount: Number(session.newCount || 0),
-      oldCount: Number(session.oldCount || 0),
-      mistakeCount: Number(session.mistakeCount || 0)
-    });
-    setHistoryList(list);
-  };
-  const getDayKey = (dateLike) => {
-    const date = new Date(dateLike);
-    const y2 = date.getFullYear();
-    const m2 = `${date.getMonth() + 1}`.padStart(2, "0");
-    const d2 = `${date.getDate()}`.padStart(2, "0");
-    return `${y2}-${m2}-${d2}`;
-  };
-  const getStudyStats = (words = [], bookId = "") => {
-    const history = getHistoryList().filter((item) => !bookId || item.bookId === bookId);
-    const dashboard = getLearningDashboard(words, bookId);
-    const recentMap = {};
-    history.forEach((item) => {
-      const key = getDayKey(item.created_at);
-      if (!recentMap[key]) {
-        recentMap[key] = { day: key, reviewedCount: 0, correctCount: 0, wrongCount: 0 };
-      }
-      recentMap[key].reviewedCount += Number(item.reviewedCount || 0);
-      recentMap[key].correctCount += Number(item.correctCount || 0);
-      recentMap[key].wrongCount += Number(item.wrongCount || 0);
-    });
-    const trend = Object.values(recentMap).sort((a2, b2) => a2.day.localeCompare(b2.day)).slice(-7);
-    let streak = 0;
-    let cursor = /* @__PURE__ */ new Date();
-    while (true) {
-      const key = getDayKey(cursor);
-      if (!recentMap[key])
-        break;
-      streak += 1;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-    return {
-      ...dashboard,
-      totalSessions: history.length,
-      totalReviewed: history.reduce((sum, item) => sum + Number(item.reviewedCount || 0), 0),
-      totalCorrect: history.reduce((sum, item) => sum + Number(item.correctCount || 0), 0),
-      totalWrong: history.reduce((sum, item) => sum + Number(item.wrongCount || 0), 0),
-      streak,
-      trend
-    };
-  };
-  const getLatestSession = (bookId = "") => {
-    const history = getHistoryList().filter((item) => !bookId || item.bookId === bookId).sort((a2, b2) => new Date(b2.created_at) - new Date(a2.created_at));
-    return history[0] || null;
-  };
-  const getWordExtra = (word) => {
-    const key = normalizeWordKey(word);
-    if (!key)
-      return {};
-    const extras = getExtraMap();
-    return extras[key] || {};
-  };
-  const saveWordExtra = (word, patch = {}) => {
-    const key = normalizeWordKey(word);
-    if (!key)
-      return {};
-    const extras = getExtraMap();
-    const prev = extras[key] || {};
-    const next = {
-      ...prev,
-      ...patch,
-      updated_at: (/* @__PURE__ */ new Date()).toISOString()
-    };
-    extras[key] = next;
-    setExtraMap(extras);
-    return next;
-  };
-  const LogLevel = {
-    DEBUG: 0,
-    INFO: 1,
-    WARN: 2,
-    ERROR: 3
-  };
-  class Logger {
-    constructor(minLevel = LogLevel.INFO, maxLogs = 500) {
-      this.minLevel = minLevel;
-      this.maxLogs = maxLogs;
-      this.logs = [];
-      this.listeners = [];
-    }
-    /**
-     * 添加日志监听器
-     */
-    addListener(callback) {
-      if (!this.listeners.includes(callback)) {
-        this.listeners.push(callback);
-      }
-      if (this.listeners.length > 100) {
-        formatAppLog("warn", "at src/utils/errorHandler.js:37", "[Logger] 监听器数量过多（>100），可能存在内存泄漏");
-      }
-    }
-    /**
-     * 移除日志监听器
-     */
-    removeListener(callback) {
-      this.listeners = this.listeners.filter((l2) => l2 !== callback);
-    }
-    /**
-     * 记录日志
-     */
-    log(level, tag, message, data = null) {
-      if (level < this.minLevel)
-        return;
-      const timestamp = (/* @__PURE__ */ new Date()).toISOString();
-      const logEntry = {
-        timestamp,
-        level,
-        tag,
-        message,
-        data
-      };
-      this.logs.push(logEntry);
-      if (this.logs.length > this.maxLogs) {
-        this.logs.shift();
-      }
-      this.listeners.forEach((listener) => {
-        try {
-          listener(logEntry);
-        } catch (e2) {
-          formatAppLog("error", "at src/utils/errorHandler.js:75", "[Logger] 监听器执行失败:", e2);
-        }
-      });
-      this.printToConsole(level, tag, message, data);
-    }
-    /**
-     * 输出到控制台
-     */
-    printToConsole(level, tag, message, data) {
-      const levelName = Object.keys(LogLevel).find((k) => LogLevel[k] === level) || "UNKNOWN";
-      const prefix = `[${levelName}] [${tag}]`;
-      if (data !== null && data !== void 0) {
-        formatAppLog("log", "at src/utils/errorHandler.js:91", `${prefix} ${message}`, data);
-      } else {
-        formatAppLog("log", "at src/utils/errorHandler.js:93", `${prefix} ${message}`);
-      }
-    }
-    /**
-     * 调试日志
-     */
-    debug(tag, message, data) {
-      this.log(LogLevel.DEBUG, tag, message, data);
-    }
-    /**
-     * 信息日志
-     */
-    info(tag, message, data) {
-      this.log(LogLevel.INFO, tag, message, data);
-    }
-    /**
-     * 警告日志
-     */
-    warn(tag, message, data) {
-      this.log(LogLevel.WARN, tag, message, data);
-    }
-    /**
-     * 错误日志
-     */
-    error(tag, message, data) {
-      this.log(LogLevel.ERROR, tag, message, data);
-    }
-    /**
-     * 获取所有日志
-     */
-    getLogs(level = null) {
-      if (level === null)
-        return [...this.logs];
-      return this.logs.filter((log) => log.level >= level);
-    }
-    /**
-     * 清空日志
-     */
-    clear() {
-      this.logs = [];
-    }
-    /**
-     * 导出日志为 JSON
-     */
-    exportAsJson() {
-      return JSON.stringify(this.logs, null, 2);
-    }
-    /**
-     * 导出日志为 CSV
-     */
-    exportAsCsv() {
-      const headers = ["Timestamp", "Level", "Tag", "Message", "Data"];
-      const rows = this.logs.map((log) => [
-        log.timestamp,
-        Object.keys(LogLevel).find((k) => LogLevel[k] === log.level),
-        log.tag,
-        log.message,
-        typeof log.data === "object" ? JSON.stringify(log.data) : log.data
-      ]);
-      const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
-      return csv;
-    }
-  }
-  class ErrorHandler {
-    constructor(logger2) {
-      this.logger = logger2;
-      this.errorHandlers = [];
-    }
-    /**
-     * 添加错误处理器
-     */
-    addHandler(handler) {
-      this.errorHandlers.push(handler);
-    }
-    /**
-     * 处理错误
-     */
-    handle(error, context = {}) {
-      const errorInfo = {
-        message: error.message || String(error),
-        stack: error.stack || "",
-        type: error.constructor.name,
-        context,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString()
-      };
-      this.logger.error("ErrorHandler", `${errorInfo.type}: ${errorInfo.message}`, errorInfo);
-      this.errorHandlers.forEach((handler) => {
-        try {
-          handler(errorInfo);
-        } catch (e2) {
-          this.logger.error("ErrorHandler", "错误处理器执行失败", e2);
-        }
-      });
-      return errorInfo;
-    }
-    /**
-     * 处理 Promise 拒绝
-     */
-    handleRejection(reason, context = {}) {
-      const error = reason instanceof Error ? reason : new Error(String(reason));
-      return this.handle(error, { ...context, type: "UnhandledRejection" });
-    }
-    /**
-     * 处理异常
-     */
-    handleException(error, context = {}) {
-      return this.handle(error, { ...context, type: "UncaughtException" });
-    }
-  }
-  class GlobalErrorManager {
-    constructor() {
-      this.logger = new Logger(LogLevel.DEBUG);
-      this.errorHandler = new ErrorHandler(this.logger);
-      this.setupGlobalHandlers();
-    }
-    /**
-     * 设置全局错误处理
-     */
-    setupGlobalHandlers() {
-      if (typeof window !== "undefined") {
-        window.addEventListener("unhandledrejection", (event) => {
-          this.errorHandler.handleRejection(event.reason, { source: "unhandledrejection" });
-        });
-        window.addEventListener("error", (event) => {
-          this.errorHandler.handleException(event.error, { source: "error" });
-        });
-      }
-      if (typeof uni !== "undefined" && uni.onError) {
-        uni.onError((error) => {
-          this.errorHandler.handleException(error, { source: "uni.onError" });
-        });
-      }
-    }
-    /**
-     * 获取日志器
-     */
-    getLogger() {
-      return this.logger;
-    }
-    /**
-     * 获取错误处理器
-     */
-    getErrorHandler() {
-      return this.errorHandler;
-    }
-    /**
-     * 记录性能指标
-     */
-    logPerformance(tag, duration, metadata = {}) {
-      this.logger.info(tag, `性能指标: ${duration}ms`, { duration, ...metadata });
-    }
-    /**
-     * 记录用户操作
-     */
-    logUserAction(action, data = {}) {
-      this.logger.info("UserAction", action, data);
-    }
-    /**
-     * 记录数据库操作
-     */
-    logDatabaseOperation(operation, duration, success = true, error = null) {
-      if (success) {
-        this.logger.info("Database", `${operation} 成功 (${duration}ms)`);
-      } else {
-        this.logger.error("Database", `${operation} 失败 (${duration}ms)`, error);
-      }
-    }
-    /**
-     * 获取诊断信息
-     */
-    getDiagnostics() {
-      return {
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        logs: this.logger.getLogs(),
-        logCount: this.logger.logs.length,
-        memoryUsage: this.getMemoryUsage()
-      };
-    }
-    /**
-     * 获取内存使用情况
-     */
-    getMemoryUsage() {
-      if (typeof performance !== "undefined" && performance.memory) {
-        return {
-          usedJSHeapSize: performance.memory.usedJSHeapSize,
-          totalJSHeapSize: performance.memory.totalJSHeapSize,
-          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
-        };
-      }
-      return null;
-    }
-    /**
-     * 导出诊断信息
-     */
-    exportDiagnostics(format = "json") {
-      const diagnostics = this.getDiagnostics();
-      if (format === "json") {
-        return JSON.stringify(diagnostics, null, 2);
-      } else if (format === "csv") {
-        return this.logger.exportAsCsv();
-      }
-      return diagnostics;
-    }
-  }
-  const globalErrorManager = new GlobalErrorManager();
-  const logger = globalErrorManager.getLogger();
-  const errorHandler = globalErrorManager.getErrorHandler();
-  class LRUCache {
-    constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
-      this.maxSize = maxSize;
-      this.ttlMs = ttlMs;
-      this.cache = /* @__PURE__ */ new Map();
-      this.timestamps = /* @__PURE__ */ new Map();
-    }
-    /**
-     * 获取缓存值
-     * @param {string} key
-     * @returns {*}
-     */
-    get(key) {
-      if (!this.cache.has(key))
-        return void 0;
-      const timestamp = this.timestamps.get(key);
-      if (timestamp && Date.now() - timestamp > this.ttlMs) {
-        this.cache.delete(key);
-        this.timestamps.delete(key);
-        return void 0;
-      }
-      const value = this.cache.get(key);
-      this.cache.delete(key);
-      this.cache.set(key, value);
-      return value;
-    }
-    /**
-     * 设置缓存值
-     * @param {string} key
-     * @param {*} value
-     */
-    set(key, value) {
-      if (this.cache.has(key)) {
-        this.cache.delete(key);
-      }
-      if (this.cache.size >= this.maxSize) {
-        const firstKey = this.cache.keys().next().value;
-        this.cache.delete(firstKey);
-        this.timestamps.delete(firstKey);
-      }
-      this.cache.set(key, value);
-      this.timestamps.set(key, Date.now());
-    }
-    /**
-     * 检查是否存在
-     * @param {string} key
-     * @returns {boolean}
-     */
-    has(key) {
-      return this.get(key) !== void 0;
-    }
-    /**
-     * 删除缓存
-     * @param {string} key
-     */
-    delete(key) {
-      this.cache.delete(key);
-      this.timestamps.delete(key);
-    }
-    /**
-     * 清空所有缓存
-     */
-    clear() {
-      this.cache.clear();
-      this.timestamps.clear();
-    }
-    /**
-     * 获取缓存大小
-     * @returns {number}
-     */
-    size() {
-      return this.cache.size;
-    }
-    /**
-     * 清理过期项
-     */
-    cleanup() {
-      const now = Date.now();
-      for (const [key, timestamp] of this.timestamps.entries()) {
-        if (now - timestamp > this.ttlMs) {
-          this.cache.delete(key);
-          this.timestamps.delete(key);
-        }
-      }
-    }
-  }
-  class MemoryCache {
-    constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
-      this.lru = new LRUCache(maxSize, ttlMs);
-    }
-    get(key, fallback = null) {
-      const value = this.lru.get(key);
-      return value !== void 0 ? value : fallback;
-    }
-    set(key, value) {
-      this.lru.set(key, value);
-    }
-    has(key) {
-      return this.lru.has(key);
-    }
-    delete(key) {
-      this.lru.delete(key);
-    }
-    clear() {
-      this.lru.clear();
-    }
-    size() {
-      return this.lru.size();
-    }
-    cleanup() {
-      this.lru.cleanup();
-    }
-  }
-  const CACHE_TTL_MS = 5 * 60 * 1e3;
-  const profilesMemCache = new MemoryCache(500, CACHE_TTL_MS);
-  const mistakesMemCache = new MemoryCache(200, CACHE_TTL_MS);
-  const cleanupExpiredCaches = () => {
-    profilesMemCache.cleanup();
-    mistakesMemCache.cleanup();
-  };
-  const ENRICH_CHUNK = 200;
-  const FIRST_SCREEN_COUNT = 120;
-  const HOT_TOP_COUNT = 20;
-  const PAGE_SIZE = 50;
-  const SHOW_CHINESE_KEY = "index_show_chinese_v1";
-  const _sfc_main$b = {
-    __name: "index",
-    setup(__props, { expose: __expose }) {
-      __expose();
-      let loadWordsInProgress = false;
-      let allExternalWords = [];
-      let plusReadyHandler = null;
-      const mapSortByToDb = (sortBy2) => {
-        const map = { create_time: "create_time", alphabetical: "english", importance: "importance", repeat_count: "repeat_count", view_count: "view_count", exam_count: "create_time" };
-        return map[sortBy2] || "create_time";
-      };
-      const getFilters = () => ({
-        search: searchText.value || void 0,
-        tag: filterType.value === "tag" ? filterValue.value : void 0,
-        year: filterType.value === "year" ? filterValue.value : void 0,
-        page: filterType.value === "page" ? filterValue.value : void 0
-      });
-      function normalizeListWord(w2) {
-        return {
-          ...w2,
-          id: w2.id || null,
-          english: (w2.english || "").trim(),
-          chinese: (w2.chinese || "").trim(),
-          repeat_count: w2.repeat_count ?? 1,
-          tags: (w2.tags || "").trim() ? String(w2.tags) : "",
-          source_page: w2.source_page || "",
-          year: w2.year || "",
-          importance: Number(w2.importance) || 0,
-          view_count: Number(w2.view_count) || 0,
-          exam_count: w2.exam_count != null ? Number(w2.exam_count) || 0 : void 0,
-          create_time: w2.create_time || ""
-        };
-      }
-      function getExamCountForSort(word) {
-        if (!word)
-          return 0;
-        if (word.exam_count != null)
-          return Number(word.exam_count) || 0;
-        return 0;
-      }
-      function sortExternalWords(list) {
-        const arr = [...list];
-        const order = sortOrder.value === "asc" ? 1 : -1;
-        const type = sortBy.value;
-        arr.sort((a2, b2) => {
-          if (type === "alphabetical")
-            return (a2.english || "").localeCompare(b2.english || "") * order;
-          if (type === "importance")
-            return ((Number(a2.importance) || 0) - (Number(b2.importance) || 0)) * order;
-          if (type === "repeat_count")
-            return ((Number(a2.repeat_count) || 0) - (Number(b2.repeat_count) || 0)) * order;
-          if (type === "view_count")
-            return ((Number(a2.view_count) || 0) - (Number(b2.view_count) || 0)) * order;
-          if (type === "exam_count")
-            return (getExamCountForSort(a2) - getExamCountForSort(b2)) * order;
-          return (new Date(a2.create_time || 0) - new Date(b2.create_time || 0)) * order;
-        });
-        return arr;
-      }
-      function filterExternalWords(list) {
-        let out = [...list];
-        const q2 = (searchText.value || "").trim().toLowerCase();
-        if (q2) {
-          out = out.filter(
-            (w2) => (w2.english || "").toLowerCase().includes(q2) || (w2.chinese || "").toLowerCase().includes(q2)
-          );
-        }
-        if (filterType.value === "tag" && (filterValue.value || "").trim()) {
-          const tag = String(filterValue.value).trim();
-          out = out.filter((w2) => (w2.tags || "").split(/[,，\s]+/).map((t2) => t2.trim()).includes(tag));
-        }
-        if (filterType.value === "year" && filterValue.value !== "" && filterValue.value !== void 0) {
-          out = out.filter((w2) => String(w2.year || "") === String(filterValue.value));
-        }
-        if (filterType.value === "page" && filterValue.value !== "" && filterValue.value !== void 0) {
-          out = out.filter((w2) => String(w2.source_page || "") === String(filterValue.value));
-        }
-        return out;
-      }
-      function prepareExternalWords(raw) {
-        const normalized = (raw || []).map(normalizeListWord);
-        return sortExternalWords(filterExternalWords(normalized));
-      }
-      function enrichOneWord(w2, cache, dictLookup) {
-        const key = (w2.english || "").trim().toLowerCase();
-        if (!key)
-          return;
-        const info = dictLookup && dictLookup[key];
-        const isObj = info && typeof info === "object" && !Array.isArray(info);
-        if (!(w2.chinese || "").trim()) {
-          if (isObj && (info.chinese || "").trim())
-            w2.chinese = info.chinese.trim();
-          else if (cache && cache[key] && cache[key].chinese)
-            w2.chinese = cache[key].chinese;
-          else if (info && typeof info === "string")
-            w2.chinese = info;
-        }
-        if (info && isObj && typeof info.examCount === "number")
-          w2.exam_count = info.examCount;
-        if (isObj && (info.tags || "").trim())
-          w2.tags = String(info.tags).trim();
-        if (isObj && typeof info.importance === "number")
-          w2.importance = info.importance;
-      }
-      const searchText = vue.ref("");
-      const displayLimit = vue.ref(200);
-      const showFilter = vue.ref(false);
-      const showLearningCenter = vue.ref(false);
-      const words = vue.ref([]);
-      const refreshing = vue.ref(false);
-      const sortBy = vue.ref("create_time");
-      const filterType = vue.ref("none");
-      const filterValue = vue.ref("");
-      const showChinese = vue.ref(true);
-      const learningSnapshot = vue.ref({ dueCount: 0, mistakeCount: 0, firstDayDue: 0, overdueCount: 0 });
-      const latestSession = vue.ref(null);
-      const sortOptions = ["create_time", "alphabetical", "importance", "repeat_count", "view_count", "exam_count"];
-      const sortLabels = ["按录入时间", "按首字母", "按重要程度", "按学习次数", "按查看次数", "按真题频次"];
-      const sortOrderOptions = ["asc", "desc"];
-      const sortOrderLabels = ["顺序", "倒序"];
-      const sortOrder = vue.ref("desc");
-      const showChineseLabels = ["显示释义", "隐藏释义"];
-      const hasMoreSelfWords = vue.ref(true);
-      const allExternalWordsLength = vue.ref(0);
-      const filterOptions = ["none", "tag", "year", "page"];
-      const filterLabels = ["无筛选", "按标签", "按真题年份", "按纸质页码"];
-      const PRESET_TAGS = ["高频", "阅读词汇", "完形词汇", "翻译词汇", "新题型词汇", "写作词汇", "作文词", "口语词", "学术词"];
-      const tagOptions = vue.computed(() => {
-        const fromWords = /* @__PURE__ */ new Set();
-        (words.value || []).forEach((w2) => {
-          const t2 = (w2.tags || "").split(/[,，\s]+/).filter(Boolean);
-          t2.forEach((x2) => fromWords.add(x2));
-        });
-        return [...PRESET_TAGS, ...Array.from(fromWords).filter((t2) => !PRESET_TAGS.includes(t2))];
-      });
-      const currentSortLabel = vue.computed(() => {
-        const index = sortOptions.indexOf(sortBy.value);
-        return index >= 0 ? sortLabels[index] : "按录入时间";
-      });
-      const currentFilterLabel = vue.computed(() => {
-        const index = filterOptions.indexOf(filterType.value);
-        return index >= 0 ? filterLabels[index] : "无筛选";
-      });
-      const currentBookLabel = vue.computed(() => getCurrentWordbook() || "当前词书");
-      const latestAccuracyText = vue.computed(() => {
-        const value = latestSession.value && latestSession.value.reviewedCount ? `${Math.round(Number(latestSession.value.correctCount || 0) / Math.max(1, Number(latestSession.value.reviewedCount || 0)) * 100)}%` : "--";
-        return value;
-      });
-      const loadLearningSnapshot = async () => {
-        try {
-          const book = getCurrentWordbook();
-          let pool = [];
-          if (book === "self") {
-            pool = await db.getAllWords();
-          } else if (isLocalWordbookKey(book)) {
-            pool = await loadLocalWordbook(book);
-          } else {
-            pool = getWordbookWords(book) || [];
-          }
-          learningSnapshot.value = getLearningDashboard(pool, book);
-          latestSession.value = getLatestSession(book);
-        } catch (_2) {
-          learningSnapshot.value = { dueCount: 0, mistakeCount: 0, firstDayDue: 0, overdueCount: 0 };
-          latestSession.value = null;
-        }
-      };
-      const onListRefresh = async () => {
-        refreshing.value = true;
-        await loadWords();
-        if (isSelfWordbook())
-          await syncIncompleteWordsWithStats();
-        await loadLearningSnapshot();
-        refreshing.value = false;
-      };
-      function applyEnrichedToRef(list, wordsRef) {
-        if (!list || list.length === 0 || !wordsRef || !Array.isArray(wordsRef.value))
-          return;
-        const dict = {};
-        for (const item of list) {
-          const key = (item && item.english || "").trim().toLowerCase();
-          if (key)
-            dict[key] = item;
-        }
-        wordsRef.value = wordsRef.value.map((w2) => {
-          const key = (w2 && w2.english || "").trim().toLowerCase();
-          const hit = key ? dict[key] : null;
-          if (!hit)
-            return w2;
-          return {
-            ...w2,
-            chinese: hit.chinese !== void 0 && hit.chinese !== null ? hit.chinese : w2.chinese,
-            tags: hit.tags !== void 0 && hit.tags !== null ? hit.tags : w2.tags,
-            exam_count: hit.exam_count !== void 0 && hit.exam_count !== null ? hit.exam_count : w2.exam_count,
-            importance: hit.importance !== void 0 && hit.importance !== null ? hit.importance : w2.importance
-          };
-        });
-      }
-      function buildChineseFromDefs2(defs) {
-        if (!Array.isArray(defs) || defs.length === 0)
-          return "";
-        const parts = [];
-        for (const d2 of defs) {
-          if (!d2 || typeof d2 !== "object")
-            continue;
-          const pos = String(d2.pos || "").trim();
-          const trans = String(d2.trans || "").trim();
-          if (!trans)
-            continue;
-          parts.push(pos ? `${pos} ${trans}` : trans);
-          if (parts.length >= 4)
-            break;
-        }
-        return parts.join("；");
-      }
-      async function fallbackEnrichByFullDetail(list, bookAtLoad, wordsRef) {
-        if (!Array.isArray(list) || list.length === 0 || !wordsRef || !Array.isArray(wordsRef.value))
-          return;
-        const missing = list.filter((w2) => {
-          const noChinese = !(w2.chinese || "").trim();
-          const noTags = !(w2.tags || "").trim();
-          return (w2.english || "").trim() && (noChinese || noTags);
-        }).slice(0, 60);
-        if (missing.length === 0)
-          return;
-        const updates = {};
-        await Promise.all(missing.map(async (w2) => {
-          try {
-            const detail = await getWordFullDetail(w2.english);
-            const key = (w2.english || "").trim().toLowerCase();
-            if (!key)
-              return;
-            let chinese = "";
-            let tags = "";
-            let examCount = void 0;
-            if (detail) {
-              chinese = (detail.chinese || "").trim();
-              if (!chinese)
-                chinese = buildChineseFromDefs2(detail.defs);
-              tags = detail.examStats && Array.isArray(detail.examStats.tags) ? detail.examStats.tags.join(",") : "";
-              examCount = detail.examStats && typeof detail.examStats.total_count === "number" ? detail.examStats.total_count : void 0;
-            }
-            if (!chinese) {
-              try {
-                const pre = await getPregenWord(w2.english);
-                if (pre && (pre.chinese || "").trim())
-                  chinese = pre.chinese.trim();
-              } catch (_2) {
-              }
-            }
-            updates[key] = {
-              chinese,
-              tags: tags || "",
-              exam_count: examCount
-            };
-          } catch (_2) {
-          }
-        }));
-        if (getCurrentWordbook() !== bookAtLoad)
-          return;
-        if (Object.keys(updates).length === 0)
-          return;
-        wordsRef.value = wordsRef.value.map((w2) => {
-          const key = (w2.english || "").trim().toLowerCase();
-          const u2 = key ? updates[key] : null;
-          if (!u2)
-            return w2;
-          return {
-            ...w2,
-            chinese: (u2.chinese || "").trim() || w2.chinese,
-            tags: (u2.tags || "").trim() || w2.tags,
-            exam_count: u2.exam_count != null ? u2.exam_count : w2.exam_count
-          };
-        });
-      }
-      function countMissingChineseForList(list, wordsRef) {
-        if (!Array.isArray(list) || !Array.isArray(wordsRef == null ? void 0 : wordsRef.value))
-          return 0;
-        const set = new Set(list.map((w2) => ((w2 == null ? void 0 : w2.english) || "").trim().toLowerCase()).filter(Boolean));
-        let n2 = 0;
-        for (const w2 of wordsRef.value) {
-          const key = ((w2 == null ? void 0 : w2.english) || "").trim().toLowerCase();
-          if (!key || !set.has(key))
-            continue;
-          if (!(w2.chinese || "").trim())
-            n2++;
-        }
-        return n2;
-      }
-      async function retryEnrichUntilReady(list, bookAtLoad, wordsRef) {
-        const MAX_RETRY = 8;
-        const INTERVAL_MS = 800;
-        await new Promise((r2) => setTimeout(r2, 600));
-        for (let i2 = 0; i2 < MAX_RETRY; i2++) {
-          if (getCurrentWordbook() !== bookAtLoad)
-            return;
-          const missing = countMissingChineseForList(list, wordsRef);
-          if (missing <= 0)
-            return;
-          await new Promise((r2) => setTimeout(r2, INTERVAL_MS));
-          try {
-            const englishList = list.map((w2) => (w2.english || "").trim().toLowerCase()).filter(Boolean);
-            const dictLookup = await getWordBriefBatch(englishList).catch(() => ({}));
-            for (const item of list)
-              enrichOneWord(item, {}, dictLookup || {});
-            applyEnrichedToRef(list, wordsRef);
-          } catch (_2) {
-          }
-          await fallbackEnrichByFullDetail(list, bookAtLoad, wordsRef);
-        }
-      }
-      const enrichWordbookListInBackground = async (list, bookAtLoad, wordsRef) => {
-        if (!list || list.length === 0 || !wordsRef)
-          return;
-        try {
-          const englishList = list.map((w2) => (w2.english || "").trim().toLowerCase()).filter(Boolean);
-          if (getCurrentWordbook() !== bookAtLoad)
-            return;
-          const hotList = list.slice(0, Math.min(HOT_TOP_COUNT, list.length));
-          const hotKeys = hotList.map((w2) => (w2.english || "").trim().toLowerCase()).filter(Boolean);
-          let hotLookup = {};
-          try {
-            hotLookup = await getWordBriefBatch(hotKeys);
-            if ((!hotLookup || Object.keys(hotLookup).length === 0) && getCurrentWordbook() === bookAtLoad) {
-              await new Promise((r2) => setTimeout(r2, 120));
-              hotLookup = await getWordBriefBatch(hotKeys);
-            }
-          } catch (_2) {
-          }
-          if (getCurrentWordbook() !== bookAtLoad)
-            return;
-          for (let i2 = 0; i2 < hotList.length; i2++)
-            enrichOneWord(hotList[i2], null, hotLookup || {});
-          applyEnrichedToRef(list, wordsRef);
-          const restList = list.slice(hotList.length);
-          const restKeys = restList.map((w2) => (w2.english || "").trim().toLowerCase()).filter(Boolean);
-          let restLookup = {};
-          if (restKeys.length) {
-            try {
-              restLookup = await getWordBriefBatch(restKeys);
-            } catch (_2) {
-            }
-          }
-          if (getCurrentWordbook() !== bookAtLoad)
-            return;
-          for (let i2 = 0; i2 < restList.length; i2++) {
-            enrichOneWord(restList[i2], null, restLookup || {});
-            if ((i2 + 1) % ENRICH_CHUNK === 0) {
-              applyEnrichedToRef(list, wordsRef);
-              await new Promise((r2) => setTimeout(r2, 0));
-            }
-          }
-          applyEnrichedToRef(list, wordsRef);
-          await fallbackEnrichByFullDetail(list, bookAtLoad, wordsRef);
-          retryEnrichUntilReady(list, bookAtLoad, wordsRef);
-        } catch (_2) {
-        }
-      };
-      const reEnrichCurrentWordbook = async () => {
-        const book = getCurrentWordbook();
-        if (!words.value || words.value.length === 0)
-          return;
-        await enrichWordbookListInBackground(words.value, book, words);
-      };
-      const syncIncompleteWordsWithStats = async () => {
-        try {
-          const list = words.value || [];
-          const englishList = list.map((w2) => (w2.english || "").trim()).filter(Boolean);
-          const statsMap = await getWordExamStatsBatch(englishList).catch(() => ({}));
-          for (const w2 of list) {
-            const info = statsMap[(w2.english || "").trim().toLowerCase()];
-            if (!info)
-              continue;
-            const updates = {};
-            if (typeof info.importance === "number" && info.importance !== (Number(w2.importance) || 0))
-              updates.importance = info.importance;
-            if ((info.tags || "").trim() && !(w2.tags || "").trim())
-              updates.tags = info.tags;
-            if (Object.keys(updates).length)
-              await db.updateWord(w2.id, updates);
-          }
-        } catch (_2) {
-        }
-      };
-      const loadWords = async () => {
-        if (loadWordsInProgress)
-          return;
-        loadWordsInProgress = true;
-        try {
-          const book = getCurrentWordbook();
-          if (book === "self") {
-            const list = await db.getWordsForList(PAGE_SIZE, 0, mapSortByToDb(sortBy.value), sortOrder.value, getFilters());
-            words.value = list.map(normalizeListWord);
-            hasMoreSelfWords.value = list.length >= PAGE_SIZE;
-            allExternalWords = [];
-            allExternalWordsLength.value = 0;
-            enrichWordbookListInBackground(words.value, book, words);
-            formatAppLog("log", "at pages/index/index.vue:560", "极速加载：自用分页成功，数量:", words.value.length);
-            await loadLearningSnapshot();
-            return;
-          }
-          let raw = [];
-          if (isLocalWordbookKey(book)) {
-            raw = await loadLocalWordbook(book);
-          } else {
-            raw = getWordbookWords(book) || [];
-          }
-          allExternalWords = prepareExternalWords(raw);
-          allExternalWordsLength.value = allExternalWords.length;
-          words.value = allExternalWords.slice(0, PAGE_SIZE);
-          displayLimit.value = PAGE_SIZE;
-          formatAppLog("log", "at pages/index/index.vue:577", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
-          enrichWordbookListInBackground(words.value, book, words);
-          await loadLearningSnapshot();
-        } catch (error) {
-          formatAppLog("error", "at pages/index/index.vue:582", "加载失败:", error);
-          words.value = [];
-        } finally {
-          loadWordsInProgress = false;
-        }
-      };
-      onLoad(() => {
-        formatAppLog("log", "at pages/index/index.vue:590", "首页 onLoad - 开始加载");
-        try {
-          const v2 = uni.getStorageSync(SHOW_CHINESE_KEY);
-          if (v2 === false || v2 === "false" || v2 === 0 || v2 === "0")
-            showChinese.value = false;
-        } catch (_2) {
-        }
-        loadWords().catch((error) => {
-          formatAppLog("error", "at pages/index/index.vue:598", "首页加载单词失败:", error);
-          uni.showToast({
-            title: "加载失败，请重试",
-            icon: "error"
-          });
-        });
-        try {
-          if (typeof plus !== "undefined" && typeof document !== "undefined") {
-            plusReadyHandler = () => {
-              reEnrichCurrentWordbook();
-            };
-            document.addEventListener("plusready", plusReadyHandler, false);
-          }
-        } catch (_2) {
-        }
-        uni.$on("refreshWordList", () => loadWords());
-        uni.$on("wordEnriched", () => loadWords());
-        uni.$on("wordbookChanged", () => {
-          words.value = [];
-          loadWords();
-        });
-      });
-      onShow(() => {
-        if (words.value.length === 0)
-          loadWords();
-        else {
-          setTimeout(() => reEnrichCurrentWordbook(), 350);
-        }
-        loadLearningSnapshot();
-      });
-      onUnload(() => {
-        uni.$off("refreshWordList");
-        uni.$off("wordEnriched");
-        uni.$off("wordbookChanged");
-        try {
-          if (plusReadyHandler && typeof document !== "undefined") {
-            document.removeEventListener("plusready", plusReadyHandler, false);
-          }
-        } catch (_2) {
-        }
-        plusReadyHandler = null;
-        try {
-          cleanupExpiredCaches();
-        } catch (error) {
-          logger.warn("Index", "清理缓存失败", error);
-        }
-      });
-      let searchDebounceTimer = null;
-      let filterDebounceTimer = null;
-      vue.watch(searchText, () => {
-        if (searchDebounceTimer)
-          clearTimeout(searchDebounceTimer);
-        searchDebounceTimer = setTimeout(() => {
-          loadWords();
-        }, 300);
-      });
-      vue.watch(filterValue, () => {
-        if (filterDebounceTimer)
-          clearTimeout(filterDebounceTimer);
-        filterDebounceTimer = setTimeout(() => {
-          if (filterType.value === "none")
-            return;
-          loadWords();
-        }, 220);
-      });
-      const filteredWords = vue.computed(() => {
-        if (isSelfWordbook())
-          return [...words.value];
-        return [...words.value];
-      });
-      const visibleWords = vue.computed(() => {
-        if (isSelfWordbook())
-          return words.value;
-        return words.value;
-      });
-      const hasMoreWords = vue.computed(() => {
-        if (isSelfWordbook())
-          return hasMoreSelfWords.value;
-        return words.value.length < allExternalWordsLength.value;
-      });
-      const loadMoreSelfWords = async () => {
-        if (!hasMoreSelfWords.value || !isSelfWordbook())
-          return;
-        const next = await db.getWordsForList(PAGE_SIZE, words.value.length, mapSortByToDb(sortBy.value), sortOrder.value, getFilters());
-        const normalizedNext = next.map(normalizeListWord);
-        words.value = [...words.value, ...normalizedNext];
-        enrichWordbookListInBackground(normalizedNext, getCurrentWordbook(), words);
-        hasMoreSelfWords.value = next.length >= PAGE_SIZE;
-      };
-      const onScrollToLower = () => {
-        if (!hasMoreWords.value)
-          return;
-        if (isSelfWordbook()) {
-          loadMoreSelfWords();
-          return;
-        }
-        const currentLen = words.value.length;
-        if (currentLen < allExternalWords.length) {
-          const nextBatch = allExternalWords.slice(currentLen, currentLen + PAGE_SIZE);
-          words.value = [...words.value, ...nextBatch];
-          enrichWordbookListInBackground(nextBatch, getCurrentWordbook(), words);
-        }
-      };
-      const onSortChange = (e2) => {
-        const index = e2.detail.value;
-        sortBy.value = sortOptions[index];
-        loadWords();
-      };
-      const onSortOrderChange = (e2) => {
-        const index = e2.detail.value;
-        sortOrder.value = sortOrderOptions[index] || "desc";
-        loadWords();
-      };
-      const onFilterChange = (e2) => {
-        const index = e2.detail.value;
-        filterType.value = filterOptions[index];
-        loadWords();
-      };
-      const onShowChineseChange = (e2) => {
-        var _a;
-        const idx = Number(((_a = e2 == null ? void 0 : e2.detail) == null ? void 0 : _a.value) ?? 0);
-        showChinese.value = idx === 0;
-        try {
-          uni.setStorageSync(SHOW_CHINESE_KEY, showChinese.value);
-        } catch (_2) {
-        }
-      };
-      const onTagChange = (e2) => {
-        const idx = e2.detail.value;
-        const list = tagOptions.value;
-        filterValue.value = list[idx] || "";
-        loadWords();
-      };
-      const clearFilter = () => {
-        filterType.value = "none";
-        filterValue.value = "";
-        loadWords();
-      };
-      const goToDetail = (word) => {
-        if (word.id) {
-          uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${word.id}` });
-        } else {
-          uni.navigateTo({ url: `/pages/word-detail/word-detail?english=${encodeURIComponent(word.english)}&fromWordbook=1` });
-        }
-      };
-      const goToReview = () => {
-        uni.navigateTo({
-          url: `/pages/review/review`
-        });
-      };
-      const goToReviewPreset = (preset) => {
-        uni.navigateTo({
-          url: `/pages/review/review?preset=${encodeURIComponent(preset || "default")}`
-        });
-      };
-      const goToQuickAdd = () => {
-        uni.navigateTo({
-          url: `/pages/quick-add/quick-add`
-        });
-      };
-      const goToMy = () => {
-        uni.navigateTo({
-          url: `/pages/my/my`
-        });
-      };
-      const goToStats = () => {
-        uni.navigateTo({ url: "/pages/stats/stats" });
-      };
-      const goToMistakes = () => {
-        uni.navigateTo({ url: "/pages/mistakes/mistakes" });
-      };
-      const getExamCount = (word) => {
-        if (!word || !word.english)
-          return 0;
-        if (word.exam_count != null)
-          return Number(word.exam_count) || 0;
-        return 0;
-      };
-      const onSearchInput = (e2) => {
-        searchText.value = e2.detail.value || "";
-      };
-      const onSearchConfirm = () => {
-        loadWords();
-      };
-      const __returned__ = { ENRICH_CHUNK, FIRST_SCREEN_COUNT, HOT_TOP_COUNT, PAGE_SIZE, get loadWordsInProgress() {
-        return loadWordsInProgress;
-      }, set loadWordsInProgress(v2) {
-        loadWordsInProgress = v2;
-      }, get allExternalWords() {
-        return allExternalWords;
-      }, set allExternalWords(v2) {
-        allExternalWords = v2;
-      }, get plusReadyHandler() {
-        return plusReadyHandler;
-      }, set plusReadyHandler(v2) {
-        plusReadyHandler = v2;
-      }, mapSortByToDb, getFilters, normalizeListWord, getExamCountForSort, sortExternalWords, filterExternalWords, prepareExternalWords, enrichOneWord, searchText, displayLimit, showFilter, showLearningCenter, words, refreshing, sortBy, filterType, filterValue, SHOW_CHINESE_KEY, showChinese, learningSnapshot, latestSession, sortOptions, sortLabels, sortOrderOptions, sortOrderLabels, sortOrder, showChineseLabels, hasMoreSelfWords, allExternalWordsLength, filterOptions, filterLabels, PRESET_TAGS, tagOptions, currentSortLabel, currentFilterLabel, currentBookLabel, latestAccuracyText, loadLearningSnapshot, onListRefresh, applyEnrichedToRef, buildChineseFromDefs: buildChineseFromDefs2, fallbackEnrichByFullDetail, countMissingChineseForList, retryEnrichUntilReady, enrichWordbookListInBackground, reEnrichCurrentWordbook, syncIncompleteWordsWithStats, loadWords, get searchDebounceTimer() {
-        return searchDebounceTimer;
-      }, set searchDebounceTimer(v2) {
-        searchDebounceTimer = v2;
-      }, get filterDebounceTimer() {
-        return filterDebounceTimer;
-      }, set filterDebounceTimer(v2) {
-        filterDebounceTimer = v2;
-      }, filteredWords, visibleWords, hasMoreWords, loadMoreSelfWords, onScrollToLower, onSortChange, onSortOrderChange, onFilterChange, onShowChineseChange, onTagChange, clearFilter, goToDetail, goToReview, goToReviewPreset, goToQuickAdd, goToMy, goToStats, goToMistakes, getExamCount, onSearchInput, onSearchConfirm, ref: vue.ref, computed: vue.computed, watch: vue.watch, VocalColorBlockSelector, get onLoad() {
-        return onLoad;
-      }, get onUnload() {
-        return onUnload;
-      }, get onShow() {
-        return onShow;
-      }, get onReady() {
-        return onReady;
-      }, get db() {
-        return db;
-      }, get pregenVocab() {
-        return pregenVocab;
-      }, get masterDb() {
-        return masterDb;
-      }, get getCurrentWordbook() {
-        return getCurrentWordbook;
-      }, get isSelfWordbook() {
-        return isSelfWordbook;
-      }, get isLocalWordbookKey() {
-        return isLocalWordbookKey;
-      }, get loadLocalWordbook() {
-        return loadLocalWordbook;
-      }, get getWordbookWords() {
-        return getWordbookWords;
-      }, get getLearningDashboard() {
-        return getLearningDashboard;
-      }, get getLatestSession() {
-        return getLatestSession;
-      }, get logger() {
-        return logger;
-      }, get errorHandler() {
-        return errorHandler;
-      }, get cleanupExpiredCaches() {
-        return cleanupExpiredCaches;
-      } };
-      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
-      return __returned__;
-    }
-  };
-  function _sfc_render$b(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
-      vue.createElementVNode("view", { class: "status-bar" }),
-      vue.createElementVNode("view", { class: "toolbar-row" }, [
-        vue.createElementVNode(
-          "view",
-          {
-            class: "toolbar-btn",
-            onClick: _cache[0] || (_cache[0] = ($event) => $setup.showFilter = !$setup.showFilter)
-          },
-          " 筛选排序 " + vue.toDisplayString($setup.showFilter ? "▲" : "▼"),
-          1
-          /* TEXT */
-        ),
-        vue.createElementVNode(
-          "view",
-          {
-            class: "toolbar-btn",
-            onClick: _cache[1] || (_cache[1] = ($event) => $setup.showLearningCenter = !$setup.showLearningCenter)
-          },
-          " 学习中心 " + vue.toDisplayString($setup.showLearningCenter ? "▲" : "▼"),
-          1
-          /* TEXT */
-        )
-      ]),
-      vue.createElementVNode("view", { class: "search-bar" }, [
-        vue.createElementVNode("view", { class: "search-input-wrapper" }, [
-          vue.withDirectives(vue.createElementVNode(
-            "input",
-            {
-              type: "text",
-              placeholder: "搜索单词",
-              "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.searchText = $event),
-              class: "search-input",
-              onInput: $setup.onSearchInput,
-              onConfirm: $setup.onSearchConfirm
-            },
-            null,
-            544
-            /* NEED_HYDRATION, NEED_PATCH */
-          ), [
-            [vue.vModelText, $setup.searchText]
-          ])
-        ])
-      ]),
-      $setup.showFilter ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 0,
-        class: "card filter-card"
-      }, [
-        vue.createElementVNode("view", { class: "filter-header" }, [
-          vue.createElementVNode("view", { class: "card-title" }, "筛选与排序"),
-          vue.createElementVNode("view", {
-            class: "filter-close",
-            onClick: _cache[3] || (_cache[3] = ($event) => $setup.showFilter = false)
-          }, "✕")
-        ]),
-        vue.createElementVNode("view", { class: "filter-row" }, [
-          vue.createVNode($setup["VocalColorBlockSelector"], {
-            range: $setup.sortLabels,
-            value: $setup.sortOptions.indexOf($setup.sortBy.value),
-            onChange: $setup.onSortChange
-          }, {
-            default: vue.withCtx(() => [
-              vue.createElementVNode(
-                "view",
-                { class: "picker-btn" },
-                vue.toDisplayString($setup.currentSortLabel) + " ▼",
-                1
-                /* TEXT */
-              )
-            ]),
-            _: 1
-            /* STABLE */
-          }, 8, ["value"]),
-          vue.createVNode($setup["VocalColorBlockSelector"], {
-            range: $setup.sortOrderLabels,
-            value: $setup.sortOrderOptions.indexOf($setup.sortOrder),
-            onChange: $setup.onSortOrderChange
-          }, {
-            default: vue.withCtx(() => [
-              vue.createElementVNode(
-                "view",
-                { class: "picker-btn" },
-                vue.toDisplayString($setup.sortOrder === "asc" ? "顺序" : "倒序") + " ▼",
-                1
-                /* TEXT */
-              )
-            ]),
-            _: 1
-            /* STABLE */
-          }, 8, ["value"]),
-          vue.createVNode($setup["VocalColorBlockSelector"], {
-            range: $setup.filterLabels,
-            value: $setup.filterOptions.indexOf($setup.filterType.value),
-            onChange: $setup.onFilterChange
-          }, {
-            default: vue.withCtx(() => [
-              vue.createElementVNode(
-                "view",
-                { class: "picker-btn" },
-                vue.toDisplayString($setup.currentFilterLabel) + " ▼",
-                1
-                /* TEXT */
-              )
-            ]),
-            _: 1
-            /* STABLE */
-          }, 8, ["value"]),
-          vue.createVNode($setup["VocalColorBlockSelector"], {
-            range: $setup.showChineseLabels,
-            value: $setup.showChinese ? 0 : 1,
-            onChange: $setup.onShowChineseChange
-          }, {
-            default: vue.withCtx(() => [
-              vue.createElementVNode(
-                "view",
-                { class: "picker-btn" },
-                vue.toDisplayString($setup.showChinese ? "显示释义" : "隐藏释义") + " ▼",
-                1
-                /* TEXT */
-              )
-            ]),
-            _: 1
-            /* STABLE */
-          }, 8, ["value"])
-        ]),
-        $setup.filterType.value === "tag" ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
-          class: "filter-row"
-        }, [
-          vue.createVNode($setup["VocalColorBlockSelector"], {
-            range: $setup.tagOptions,
-            value: $setup.tagOptions.indexOf($setup.filterValue),
-            onChange: $setup.onTagChange
-          }, {
-            default: vue.withCtx(() => [
-              vue.createElementVNode(
-                "view",
-                { class: "picker-btn" },
-                vue.toDisplayString($setup.filterValue || "选择标签") + " ▼",
-                1
-                /* TEXT */
-              )
-            ]),
-            _: 1
-            /* STABLE */
-          }, 8, ["range", "value"]),
-          vue.createElementVNode("button", {
-            class: "clear-btn",
-            onClick: $setup.clearFilter
-          }, "清除")
-        ])) : $setup.filterType.value !== "none" ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 1,
-          class: "filter-row"
-        }, [
-          vue.withDirectives(vue.createElementVNode(
-            "input",
-            {
-              class: "filter-input",
-              type: "number",
-              "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => $setup.filterValue = $event),
-              placeholder: "输入筛选值"
-            },
-            null,
-            512
-            /* NEED_PATCH */
-          ), [
-            [
-              vue.vModelText,
-              $setup.filterValue,
-              void 0,
-              { number: true }
-            ]
-          ]),
-          vue.createElementVNode("button", {
-            class: "clear-btn",
-            onClick: $setup.clearFilter
-          }, "清除")
-        ])) : vue.createCommentVNode("v-if", true)
-      ])) : vue.createCommentVNode("v-if", true),
-      $setup.showLearningCenter ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 1,
-        class: "card lc-panel"
-      }, [
-        vue.createElementVNode("view", { class: "learning-summary-grid" }, [
-          vue.createElementVNode("view", {
-            class: "learning-summary-item",
-            onClick: _cache[5] || (_cache[5] = ($event) => $setup.goToReviewPreset("due"))
-          }, [
-            vue.createElementVNode(
-              "text",
-              { class: "learning-summary-value" },
-              vue.toDisplayString($setup.learningSnapshot.dueCount),
-              1
-              /* TEXT */
-            ),
-            vue.createElementVNode("text", { class: "learning-summary-label" }, "今日到期")
-          ]),
-          vue.createElementVNode("view", {
-            class: "learning-summary-item",
-            onClick: _cache[6] || (_cache[6] = ($event) => $setup.goToReviewPreset("wrong"))
-          }, [
-            vue.createElementVNode(
-              "text",
-              { class: "learning-summary-value" },
-              vue.toDisplayString($setup.learningSnapshot.mistakeCount),
-              1
-              /* TEXT */
-            ),
-            vue.createElementVNode("text", { class: "learning-summary-label" }, "错词待练")
-          ]),
-          vue.createElementVNode("view", {
-            class: "learning-summary-item",
-            onClick: _cache[7] || (_cache[7] = ($event) => $setup.goToReviewPreset("firstday"))
-          }, [
-            vue.createElementVNode(
-              "text",
-              { class: "learning-summary-value" },
-              vue.toDisplayString($setup.learningSnapshot.firstDayDue),
-              1
-              /* TEXT */
-            ),
-            vue.createElementVNode("text", { class: "learning-summary-label" }, "首日巩固")
-          ]),
-          vue.createElementVNode("view", {
-            class: "learning-summary-item",
-            onClick: $setup.goToStats
-          }, [
-            vue.createElementVNode(
-              "text",
-              { class: "learning-summary-value" },
-              vue.toDisplayString($setup.latestAccuracyText),
-              1
-              /* TEXT */
-            ),
-            vue.createElementVNode("text", { class: "learning-summary-label" }, "最近正确率")
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "learning-actions" }, [
-          vue.createElementVNode("button", {
-            class: "learning-action-btn",
-            onClick: _cache[8] || (_cache[8] = ($event) => $setup.goToReviewPreset("due"))
-          }, "到期复习"),
-          vue.createElementVNode("button", {
-            class: "learning-action-btn secondary",
-            onClick: $setup.goToMistakes
-          }, "错词本"),
-          vue.createElementVNode("button", {
-            class: "learning-action-btn secondary",
-            onClick: $setup.goToStats
-          }, "学习统计")
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      vue.createElementVNode("scroll-view", {
-        class: "word-list",
-        "scroll-y": "",
-        "refresher-enabled": true,
-        "refresher-triggered": $setup.refreshing,
-        "refresher-background": "#FFF0F3",
-        "refresher-default-style": "none",
-        onRefresherrefresh: $setup.onListRefresh,
-        onScrolltolower: $setup.onScrollToLower,
-        style: { "background-color": "#FFF0F3" }
-      }, [
-        $setup.refreshing ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
-          class: "custom-refresher"
-        }, [
-          vue.createElementVNode("view", { class: "refresher-spinner" })
-        ])) : vue.createCommentVNode("v-if", true),
-        $setup.filteredWords.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 1,
-          class: "empty-state"
-        }, [
-          vue.createElementVNode(
-            "view",
-            { class: "empty-text" },
-            vue.toDisplayString($setup.searchText || $setup.filterType !== "none" && ($setup.filterValue !== "" && $setup.filterValue !== void 0) ? "未找到匹配的单词" : "还没有单词，开始添加吧"),
-            1
-            /* TEXT */
-          ),
-          !$setup.searchText && ($setup.filterType === "none" || ($setup.filterValue === "" || $setup.filterValue === void 0)) ? (vue.openBlock(), vue.createElementBlock("button", {
-            key: 0,
-            class: "empty-btn",
-            onClick: $setup.goToQuickAdd
-          }, "添加单词")) : vue.createCommentVNode("v-if", true)
-        ])) : vue.createCommentVNode("v-if", true),
-        (vue.openBlock(true), vue.createElementBlock(
-          vue.Fragment,
-          null,
-          vue.renderList($setup.visibleWords, (word) => {
-            return vue.openBlock(), vue.createElementBlock("view", {
-              class: "word-item",
-              key: word.id || "wb-" + word.english
-            }, [
-              vue.createElementVNode("view", {
-                class: "word-content",
-                onClick: ($event) => $setup.goToDetail(word)
-              }, [
-                vue.createElementVNode("view", { class: "word-english" }, [
-                  vue.createTextVNode(
-                    vue.toDisplayString(word.english) + " ",
-                    1
-                    /* TEXT */
-                  ),
-                  vue.createElementVNode(
-                    "span",
-                    { class: "repeat-count" },
-                    "学习" + vue.toDisplayString(word.repeat_count || 0) + "次",
-                    1
-                    /* TEXT */
-                  )
-                ]),
-                $setup.showChinese ? (vue.openBlock(), vue.createElementBlock(
-                  "view",
-                  {
-                    key: 0,
-                    class: "word-chinese"
-                  },
-                  vue.toDisplayString(word.chinese || "—"),
-                  1
-                  /* TEXT */
-                )) : vue.createCommentVNode("v-if", true),
-                word.source_page || word.year || $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock("view", {
-                  key: 1,
-                  class: "word-source"
-                }, [
-                  word.source_page || word.year ? (vue.openBlock(), vue.createElementBlock(
-                    vue.Fragment,
-                    { key: 0 },
-                    [
-                      vue.createTextVNode(
-                        "页码 " + vue.toDisplayString(word.source_page || "-") + " · 年份 " + vue.toDisplayString(word.year || "-"),
-                        1
-                        /* TEXT */
-                      )
-                    ],
-                    64
-                    /* STABLE_FRAGMENT */
-                  )) : vue.createCommentVNode("v-if", true),
-                  $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock(
-                    "text",
-                    {
-                      key: 1,
-                      class: "word-exam-count"
-                    },
-                    "真题 " + vue.toDisplayString($setup.getExamCount(word)) + "次",
-                    1
-                    /* TEXT */
-                  )) : vue.createCommentVNode("v-if", true)
-                ])) : vue.createCommentVNode("v-if", true),
-                word.tags ? (vue.openBlock(), vue.createElementBlock("view", {
-                  key: 2,
-                  class: "word-tags"
-                }, [
-                  (vue.openBlock(true), vue.createElementBlock(
-                    vue.Fragment,
-                    null,
-                    vue.renderList((word.tags || "").split(/[,，\s]+/).filter(Boolean), (t2, i2) => {
-                      return vue.openBlock(), vue.createElementBlock(
-                        "text",
-                        {
-                          key: i2,
-                          class: "tag-chip"
-                        },
-                        vue.toDisplayString(t2),
-                        1
-                        /* TEXT */
-                      );
-                    }),
-                    128
-                    /* KEYED_FRAGMENT */
-                  ))
-                ])) : vue.createCommentVNode("v-if", true),
-                vue.createElementVNode("view", { class: "word-importance" }, [
-                  (vue.openBlock(), vue.createElementBlock(
-                    vue.Fragment,
-                    null,
-                    vue.renderList(5, (star) => {
-                      return vue.createElementVNode(
-                        "span",
-                        {
-                          key: star,
-                          class: vue.normalizeClass(["star", { active: (word.importance || 0) >= star }])
-                        },
-                        "★",
-                        2
-                        /* CLASS */
-                      );
-                    }),
-                    64
-                    /* STABLE_FRAGMENT */
-                  ))
-                ])
-              ], 8, ["onClick"])
-            ]);
-          }),
-          128
-          /* KEYED_FRAGMENT */
-        )),
-        $setup.hasMoreWords ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 2,
-          class: "load-more",
-          onClick: $setup.onScrollToLower
-        }, "加载更多")) : vue.createCommentVNode("v-if", true)
-      ], 40, ["refresher-triggered"]),
-      vue.createElementVNode("view", { class: "footer" }, [
-        vue.createElementVNode("button", { onClick: $setup.goToQuickAdd }, "添加"),
-        vue.createElementVNode("button", { onClick: $setup.goToReview }, "复习"),
-        vue.createElementVNode("button", { onClick: $setup.goToMy }, "我的")
-      ])
-    ]);
-  }
-  const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["render", _sfc_render$b], ["__scopeId", "data-v-1cf27b2a"], ["__file", "E:/vocal/wordbook_new/pages/index/index.vue"]]);
-  const config = {
-    // DeepSeek API Key，修改此处即可全局生效
-    deepseekApiKey: "sk-c8ae8c792aa04c15960a0f5c7a38442c",
-    // 请替换为你的新 API Key
-    // 设为 false 时关闭所有 AI 请求（仅用于测试，避免误触发 API）
-    aiServiceEnabled: true
-  };
-  class AIService {
-    constructor() {
-      this.apiKey = config.deepseekApiKey;
-      this.apiUrl = "https://api.deepseek.com/v1/chat/completions";
-    }
-    async callAPI(prompt, model = "deepseek-chat") {
-      formatAppLog("log", "at src/utils/aiService.js:14", "开始调用 API:", {
-        model,
-        prompt: prompt.substring(0, 50) + "...",
-        url: this.apiUrl
-      });
-      return new Promise((resolve, reject) => {
-        uni.request({
-          url: this.apiUrl,
-          method: "POST",
-          header: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${this.apiKey}`
-          },
-          data: {
-            model,
-            messages: [
-              {
-                role: "system",
-                content: "你是一个英语学习助手，帮助用户学习英语单词。"
-              },
-              {
-                role: "user",
-                content: prompt
-              }
-            ],
-            temperature: 0.6,
-            // R1 建议设为 0.6 以获得更稳定的推理
-            stream: false
-          },
-          success: (response) => {
-            var _a;
-            formatAppLog("log", "at src/utils/aiService.js:44", "API 响应状态:", response.statusCode);
-            formatAppLog("log", "at src/utils/aiService.js:45", "API 响应数据:", response.data);
-            if (response.statusCode === 200) {
-              const data = response.data;
-              if (data && data.choices && data.choices[0] && data.choices[0].message) {
-                formatAppLog("log", "at src/utils/aiService.js:50", "API 调用成功，返回内容:", data.choices[0].message.content.substring(0, 100) + "...");
-                resolve(data.choices[0].message.content);
-              } else {
-                formatAppLog("error", "at src/utils/aiService.js:53", "API 响应格式错误:", data);
-                resolve("错误: API 响应格式错误");
-              }
-            } else {
-              formatAppLog("error", "at src/utils/aiService.js:57", "API 报错:", response.data);
-              resolve(`错误: ${((_a = response.data.error) == null ? void 0 : _a.message) || "未知错误"} (状态码: ${response.statusCode})`);
-            }
-          },
-          fail: (error) => {
-            formatAppLog("error", "at src/utils/aiService.js:62", "网络请求失败:", error);
-            resolve("网络请求失败，请检查网络连接或API密钥");
-          }
-        });
-      });
-    }
-    async analyzeWord(word) {
-      const prompt = `请分析以下英语单词的语义，并推荐合适的标签（如"高频"、"作文词"、"口语词"、"学术词"等）：
-
-单词：${word}
-
-分析要求：
-1. 简要解释单词的基本含义
-2. 分析单词的使用场景和适用范围
-3. 推荐2-3个合适的标签
-4. 输出格式清晰，便于程序解析`;
-      return await this.callAPI(prompt);
-    }
-    async generateExample(word, existingWords = []) {
-      const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
-      const prompt = `请为以下英语单词生成一个例句，要求：
-
-单词：${word}
-${existingWordsStr}
-
-例句要求：
-1. 高级例句，包含高级单词
-2. 句子不能过于冗长，结构清晰
-3. 句子中包含2-3个考研词库中较难的单词
-4. 例句要像考研的作文题和翻译题，贴近考研考纲
-5. 尽量包含单词本中已有的其他单词，形成反复记忆的效果
-6. 上下文合理，能够展示单词的正确用法
-7. 提供中文翻译`;
-      return await this.callAPI(prompt);
-    }
-    async generateMultipleExamples(word, existingWords = [], count = 3, examStatsText = "") {
-      const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
-      const examBlock = examStatsText ? `
-
-【该词在考研真题中的统计，供生成例句时参考】
-${examStatsText}
-` : "";
-      const prompt = `请为以下英语单词生成${count}个不同的例句，要求：
-
-单词：${word}
-${existingWordsStr}${examBlock}
-
-例句要求：
-1. 高级例句，包含高级单词
-2. 句子不能过于冗长，结构清晰
-3. 每个句子中包含2-3个考研词库中较难的单词
-4. 例句要像考研的作文题和翻译题，贴近考研考纲
-5. 尽量包含单词本中已有的其他单词，形成反复记忆的效果
-6. 上下文合理，能够展示单词的正确用法
-7. 每个例句都要提供中文翻译
-8. 确保每个例句的场景和结构都不同
-9. 重要单词标记规则：
-   - 目标单词必须用 ** 标记
-   - 每个例句中至少标记2-3个其他考研核心词汇
-   - 标记格式：**单词**，如 "**important**"
-10. 例句要生动形象，贴近现实生活场景，内容有趣，容易记忆
-11. 可以加入具体的场景描述，让例句更有画面感
-12. 输出格式：每个例句一组，英文例句和中文翻译各占一行，不要使用任何分隔符
-
-示例输出：
-英文：在一个阳光明媚的周末，**significant** number of families gathered in the park, enjoying the **vibrant** flowers and **tranquil** atmosphere.
-中文：在一个阳光明媚的周末，**大量**家庭聚集在公园里，欣赏着**鲜艳**的花朵和**宁静**的氛围。`;
-      const result = await this.callAPI(prompt);
-      const examples = [];
-      const lines = result.split("\n").filter((line) => line.trim() !== "");
-      for (let i2 = 0; i2 < lines.length; i2 += 2) {
-        let english = lines[i2].trim();
-        let chinese = lines[i2 + 1] ? lines[i2 + 1].trim() : "";
-        english = english.replace(/^英文：?/, "").trim();
-        english = english.replace(/^English：?/, "").trim();
-        english = english.replace(/^:/, "").trim();
-        chinese = chinese.replace(/^中文：?/, "").trim();
-        chinese = chinese.replace(/^Chinese：?/, "").trim();
-        chinese = chinese.replace(/^:/, "").trim();
-        if (english) {
-          examples.push({
-            english,
-            chinese
-          });
-        }
-        if (examples.length >= count) {
-          break;
-        }
-      }
-      if (examples.length === 0) {
-        for (let line of lines) {
-          let parts = line.split("｜");
-          if (parts.length !== 2) {
-            parts = line.split("|");
-          }
-          if (parts.length === 2) {
-            let english = parts[0].trim();
-            let chinese = parts[1].trim();
-            english = english.replace(/^英文：?/, "").trim();
-            english = english.replace(/^English：?/, "").trim();
-            english = english.replace(/^:/, "").trim();
-            chinese = chinese.replace(/^中文：?/, "").trim();
-            chinese = chinese.replace(/^Chinese：?/, "").trim();
-            chinese = chinese.replace(/^:/, "").trim();
-            examples.push({
-              english,
-              chinese
-            });
-          }
-          if (examples.length >= count) {
-            break;
-          }
-        }
-      }
-      if (examples.length === 0) {
-        for (let i2 = 0; i2 < count; i2++) {
-          examples.push({
-            english: `Example ${i2 + 1}: This is a sentence with ${word}.`,
-            chinese: `例句 ${i2 + 1}：这是一个包含 ${word} 的句子。`
-          });
-        }
-      }
-      return examples;
-    }
-    async generateReviewSuggestion(words) {
-      if (words.length === 0) {
-        return "单词本中暂无单词，建议开始添加单词进行学习。";
-      }
-      const wordStats = words.map((word) => {
-        return {
-          word: word.english,
-          errorRate: word.error_rate || 0,
-          reviewFreq: word.review_frequency || 0,
-          viewCount: word.view_count || 0,
-          importance: word.importance || 3
-        };
-      });
-      const prompt = `请根据以下单词的学习数据，生成一段个性化的学习报告和建议：
-
-单词学习数据：
-${wordStats.map((w2) => `${w2.word} - 错误率: ${w2.errorRate}%, 复习频率: ${w2.reviewFreq}, 查看次数: ${w2.viewCount}, 重要性: ${w2.importance}星`).join("\n")}
-
-报告要求：
-1. 分析用户的学习情况
-2. 指出需要重点关注的单词
-3. 提供具体的学习建议
-4. 给出合理的复习计划
-5. 语言亲切自然，有针对性`;
-      return await this.callAPI(prompt);
-    }
-    async generateAntonyms(word, count = 3) {
-      var _a, _b, _c, _d;
-      const prompt = `请为以下英语单词生成${count}个反义词，并为每个反义词生成一个例句。
-
-单词：${word}
-
-要求：
-1. 选择${count}个最常见、最实用的反义词
-2. 每个反义词需要包含：英文、中文释义、一个英文例句（带中文翻译）
-3. 例句要像考研英语风格，包含高级词汇
-4. 每个例句中用 ** 标记目标反义词和2-3个其他考研核心词汇
-5. 输出格式：每组反义词包含4行：反义词、中文、英文例句、中文翻译
-
-示例输出：
-反义词：minor
-中文：次要的，不重要的
-例句：The **minor** issue was **overlooked** in the **initial** report.
-中文翻译：这一**次要**问题在**最初**的报告中**被忽视**了。`;
-      const result = await this.callAPI(prompt);
-      const antonyms = [];
-      const lines = (result || "").split(/\r?\n/).filter((line) => line.trim());
-      for (let i2 = 0; i2 < lines.length; i2 += 4) {
-        let antonym = ((_a = lines[i2]) == null ? void 0 : _a.replace(/^反义词：?/, "").trim()) || "";
-        let chinese = ((_b = lines[i2 + 1]) == null ? void 0 : _b.replace(/^中文：?/, "").trim()) || "";
-        let example = ((_c = lines[i2 + 2]) == null ? void 0 : _c.replace(/^例句：?/, "").trim()) || "";
-        let exampleChinese = ((_d = lines[i2 + 3]) == null ? void 0 : _d.replace(/^中文翻译：?/, "").trim()) || "";
-        if (antonym && chinese) {
-          antonyms.push({
-            antonym,
-            chinese,
-            example: example || "",
-            exampleChinese: exampleChinese || ""
-          });
-        }
-        if (antonyms.length >= count)
-          break;
-      }
-      if (antonyms.length === 0) {
-        for (let i2 = 0; i2 < count; i2++) {
-          antonyms.push({
-            antonym: `antonym${i2 + 1}`,
-            chinese: "反义词",
-            example: "",
-            exampleChinese: ""
-          });
-        }
-      }
-      return antonyms;
-    }
-    async generateSynonyms(word, existingWords = [], count = 3) {
-      var _a, _b, _c, _d;
-      const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
-      const prompt = `请为以下英语单词生成${count}个近义词或同义词，并为每个近义词生成一个例句。
-
-单词：${word}
-${existingWordsStr}
-
-要求：
-1. 选择3个最常见、最实用的近义词或同义词
-2. 每个近义词需要包含：英文、中文释义、一个英文例句（带中文翻译）
-3. 例句要像考研英语风格，包含高级词汇
-4. 每个例句中用 **标记目标近义词和2-3个其他考研核心词汇
-5. 输出格式：每组近义词包含4行：近义词、中文、英文例句、中文翻译
-
-示例输出：
-近义词：significant
-中文：重要的，重大的
-例句：The **significant** discovery changed the **entire** scientific community's understanding of **ancient** civilizations.
-中文翻译：这一**重大**发现改变了**整个**科学界对**古代**文明的理解。`;
-      const result = await this.callAPI(prompt);
-      const synonyms = [];
-      const lines = result.split("\n").filter((line) => line.trim() !== "");
-      for (let i2 = 0; i2 < lines.length; i2 += 4) {
-        let synonym = ((_a = lines[i2]) == null ? void 0 : _a.replace(/^近义词：?/, "").trim()) || "";
-        let chinese = ((_b = lines[i2 + 1]) == null ? void 0 : _b.replace(/^中文：?/, "").trim()) || "";
-        let example = ((_c = lines[i2 + 2]) == null ? void 0 : _c.replace(/^例句：?/, "").trim()) || "";
-        let exampleChinese = ((_d = lines[i2 + 3]) == null ? void 0 : _d.replace(/^中文翻译：?/, "").trim()) || "";
-        if (synonym && chinese) {
-          synonyms.push({
-            synonym,
-            chinese,
-            example: example || "",
-            exampleChinese: exampleChinese || ""
-          });
-        }
-        if (synonyms.length >= count) {
-          break;
-        }
-      }
-      if (synonyms.length === 0) {
-        for (let i2 = 0; i2 < count; i2++) {
-          synonyms.push({
-            synonym: `synonym${i2 + 1}`,
-            chinese: `近义词${i2 + 1}`,
-            example: `Example with ${word}.`,
-            exampleChinese: `例句翻译${i2 + 1}`
-          });
-        }
-      }
-      return synonyms;
-    }
-    async generateExamplesAndSynonyms(word, existingWords = [], examStatsText = "") {
-      const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
-      const examBlock = examStatsText ? `
-
-【该词在考研真题中的统计，供生成例句时参考】
-${examStatsText}
-` : "";
-      const prompt = `请为以下英语单词生成3个不同的例句，同时提供3个常用近义词，每个近义词需包含例句。
-
-单词：${word}
-${existingWordsStr}${examBlock}
-
-=== 第一部分：例句要求 ===
-1. 高级例句，包含高级单词
-2. 句子不能过于冗长，结构清晰
-3. 每个句子中包含2-3个考研词库中较难的单词
-4. 例句要像考研的作文题和翻译题，贴近考研考纲
-5. 尽量包含单词本中已有的其他单词，形成反复记忆的效果
-6. 上下文合理，能够展示单词的正确用法
-7. 每个例句都要提供中文翻译
-8. 确保每个例句的场景和结构都不同
-9. 重要单词标记规则：
-   - 目标单词必须用 ** 标记
-   - 每个例句中至少标记2-3个其他考研核心词汇
-   - 标记格式：**单词**，如 "**important**"
-10. 例句要生动形象，贴近现实生活场景，内容有趣，容易记忆
-11. 可以加入具体的场景描述，让例句更有画面感
-
-=== 第二部分：近义词要求 ===
-请另外提供 3 个该单词的常用近义词。
-每个近义词需包含：
-- synonym: 近义词英文
-- chinese: 中文翻译
-- example: 该近义词的一个独立英文例句
-- exampleChinese: 该例句的中文翻译
-
-=== 数据返回格式 ===
-为了方便程序解析，请【严格】返回 JSON 格式，不要包含 Markdown 代码块。格式如下：
-{ 
-  "examples": [ 
-    {"english": "例句1英文", "chinese": "例句1中文"}, 
-    {"english": "例句2英文", "chinese": "例句2中文"}, 
-    {"english": "例句3英文", "chinese": "例句3中文"} 
-  ], 
-  "synonyms": [ 
-    {"synonym": "近义词1", "chinese": "翻译1", "example": "近义词1的例句", "exampleChinese": "近义词1例句的中文"}, 
-    {"synonym": "近义词2", "chinese": "翻译2", "example": "近义词2的例句", "exampleChinese": "近义词2例句的中文"}, 
-    {"synonym": "近义词3", "chinese": "翻译3", "example": "近义词3的例句", "exampleChinese": "近义词3例句的中文"} 
-  ] 
-}`;
-      const result = await this.callAPI(prompt);
-      formatAppLog("log", "at src/utils/aiService.js:301", "AI返回的原始内容:", result);
-      try {
-        let jsonStr = result;
-        const jsonMatch = result.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          jsonStr = jsonMatch[0];
-        }
-        let parsed;
-        try {
-          parsed = JSON.parse(jsonStr);
-        } catch (e1) {
-          jsonStr = jsonStr.replace(/"word":/g, '"synonym":').replace(/"translation":/g, '"chinese":');
-          try {
-            parsed = JSON.parse(jsonStr);
-          } catch (e2) {
-            formatAppLog("error", "at src/utils/aiService.js:321", "替换字段名后仍解析失败:", e2);
-            return { examples: [], synonyms: [] };
-          }
-        }
-        formatAppLog("log", "at src/utils/aiService.js:326", "解析后的JSON:", parsed);
-        const normalizedSynonyms = (parsed.synonyms || []).map((item) => ({
-          synonym: item.synonym || item.word || "",
-          chinese: item.chinese || item.translation || "",
-          example: item.example || "",
-          exampleChinese: item.exampleChinese || ""
-        }));
-        return {
-          examples: parsed.examples || [],
-          synonyms: normalizedSynonyms
-        };
-      } catch (e2) {
-        formatAppLog("error", "at src/utils/aiService.js:341", "解析JSON失败:", e2);
-      }
-      return {
-        examples: [],
-        synonyms: []
-      };
-    }
-    async generateSynonymContrast(word, synonyms = []) {
-      const synonymText = Array.isArray(synonyms) && synonyms.length ? synonyms.map((item) => `${item.synonym || ""}(${item.chinese || ""})`).filter(Boolean).join("、") : "暂无近义词";
-      const prompt = `请为英语单词 ${word} 生成一段简洁的近义词辨析说明。
-已知近义词：${synonymText}
-要求：
-1. 重点说明语气、正式度、常见搭配或适用语境差异
-2. 控制在 2-4 句
-3. 用中文输出，适合考研背单词场景`;
-      const result = await this.callAPI(prompt);
-      return String(result || "").trim();
-    }
-    async generateWordFamily(word) {
-      const prompt = `请为英语单词 ${word} 生成词族与搭配学习卡。严格返回 JSON，不要 Markdown。
-格式：{"derivatives":[{"word":"派生词","chinese":"中文","hint":"简短提示"}],"collocations":[{"phrase":"搭配","chinese":"中文"}],"memory_tip":"一句话记忆提示"}
-要求：
-1. derivatives 返回 3-5 个高价值派生词或同词根词
-2. collocations 返回 3-5 个常见搭配
-3. 内容偏考研英语高频场景`;
-      const result = await this.callAPI(prompt);
-      try {
-        const jsonMatch = String(result || "").match(/\{[\s\S]*\}/);
-        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : result);
-        return {
-          derivatives: Array.isArray(parsed.derivatives) ? parsed.derivatives : [],
-          collocations: Array.isArray(parsed.collocations) ? parsed.collocations : [],
-          memory_tip: parsed.memory_tip || ""
-        };
-      } catch (_2) {
-        return { derivatives: [], collocations: [], memory_tip: "" };
-      }
-    }
-  }
-  const aiService = new AIService();
-  const SECTION_ORDER = ["完形", "阅读", "新题型", "翻译", "写作", "完整试卷"];
-  function formatWordStatsForPrompt(stats) {
-    if (!stats || typeof stats !== "object")
-      return "";
-    const total = stats.total_count || 0;
-    const by = stats.by_section || {};
-    const parts = SECTION_ORDER.filter((s2) => by[s2] > 0).map((s2) => `${s2}${by[s2]}次`);
-    const years = stats.years && stats.years.length ? stats.years : [];
-    const yearStr = years.length > 0 ? `，出现年份：${years.slice(0, 5).join("、")}${years.length > 5 ? "等" + years.length + "年" : ""}` : "";
-    return `该词在考研真题中的统计：总出现${total}次；按题型：${parts.join("、") || "无"}${yearStr}。生成例句时可参考其真题考查频率与题型分布。`;
-  }
-  const _sfc_main$a = {
-    __name: "word-detail",
-    setup(__props, { expose: __expose }) {
-      __expose();
-      const word = vue.ref({
-        english: "",
-        chinese: "",
-        tags: "",
-        source_page: "",
-        year: "",
-        importance: 3,
-        // 默认三星
-        error_rate: 0,
-        review_frequency: 0,
-        repeat_count: 1,
-        examples: [],
-        synonyms: [],
-        antonyms: [],
-        defs: [],
-        exam_tip: "",
-        sentiment: "neu"
-      });
-      const POS_BREAK_REGEX = new RegExp("(?<!\\n)(vi[.\\．。]|vt[.\\．。]|adj[.\\．。]|adv[.\\．。]|prep[.\\．。]|conj[.\\．。]|pron[.\\．。]|num[.\\．。]|int[.\\．。]|aux[.\\．。]|art[.\\．。]|[nva][.\\．。])", "gi");
-      function addNewlineBeforePos(chineseText) {
-        if (!chineseText || typeof chineseText !== "string")
-          return chineseText;
-        const s2 = chineseText.replace(POS_BREAK_REGEX, "\n$1");
-        return s2.replace(/^\n/, "");
-      }
-      vue.watch(() => word.value.chinese, (newValue) => {
-        if (newValue) {
-          let processedValue = addNewlineBeforePos(newValue);
-          if (processedValue !== newValue) {
-            word.value.chinese = processedValue;
-          }
-        }
-      });
-      const example = vue.ref("");
-      const synonymLoading = vue.ref(false);
-      const synonymContrastLoading = vue.ref(false);
-      const antonymLoading = vue.ref(false);
-      const synonymContrastText = vue.ref("");
-      const wordFamilyLoading = vue.ref(false);
-      const wordFamily = vue.ref({ derivatives: [], collocations: [], memory_tip: "" });
-      const sameTagWords = vue.ref([]);
-      const wordId = vue.ref("");
-      const fromWordbookMode = vue.ref(false);
-      const examStats = vue.ref(null);
-      const examStatsTags = vue.ref([]);
-      const examStatsLoading = vue.ref(false);
-      const examSentences = vue.ref([]);
-      const examSentencesLoading = vue.ref(false);
-      const showAllExamSentences = vue.ref(false);
-      const detailHeavyLoading = vue.ref(false);
-      let examFallbackTimer = null;
-      function clearExamFallbackTimer() {
-        if (examFallbackTimer) {
-          clearTimeout(examFallbackTimer);
-          examFallbackTimer = null;
-        }
-      }
-      function scheduleExamDataFallback(english, currentWordId, delay = 180) {
-        clearExamFallbackTimer();
-        examFallbackTimer = setTimeout(() => {
-          examFallbackTimer = null;
-          loadExamDataLazy(english, currentWordId);
-        }, delay);
-      }
-      const SECTION_ORDER2 = ["完形", "阅读", "新题型", "翻译", "写作", "完整试卷", "未分类"];
-      const examStatsBySection = vue.computed(() => {
-        if (!examStats.value || !examStats.value.by_section)
-          return "-";
-        const by = examStats.value.by_section;
-        return SECTION_ORDER2.filter((s2) => (by[s2] || 0) > 0).map((s2) => `${s2}${by[s2]}次`).join("；") || "-";
-      });
-      const examStatsYears = vue.computed(() => {
-        if (!examStats.value || !Array.isArray(examStats.value.years) || !examStats.value.years.length)
-          return "";
-        return examStats.value.years.join("、");
-      });
-      const displayExamSentences = vue.computed(() => {
-        const list = examSentences.value || [];
-        if (showAllExamSentences.value)
-          return list;
-        return list.slice(0, 3);
-      });
-      const displayWordTags = vue.computed(() => {
-        const tags = (word.value.tags || "").split(/[,，\s]+/).map((item) => item.trim()).filter(Boolean);
-        return [...new Set(tags)];
-      });
-      const sentimentLabel = vue.computed(() => {
-        const map = { pos: "褒义色彩", neg: "贬义色彩", neu: "" };
-        return map[word.value.sentiment] || "";
-      });
-      const examQuizSelected = vue.ref(null);
-      const examQuizSentence = vue.computed(() => {
-        const sentence = displayExamSentences.value[0] && displayExamSentences.value[0].sentence || "";
-        if (!sentence || !word.value.english)
-          return sentence;
-        return sentence.replace(new RegExp(`\\b${escapeRegExp(word.value.english)}\\b`, "gi"), "____");
-      });
-      const examQuizAnswerIndex = vue.computed(() => {
-        const defs = Array.isArray(word.value.defs) ? word.value.defs : [];
-        const freqIndex = defs.findIndex((item) => getDefType(item) === "freq");
-        if (freqIndex >= 0)
-          return freqIndex;
-        const rareIndex = defs.findIndex((item) => getDefType(item) === "rare");
-        if (rareIndex >= 0)
-          return rareIndex;
-        return defs.length ? 0 : -1;
-      });
-      const examQuizAnswerText = vue.computed(() => {
-        const defs = Array.isArray(word.value.defs) ? word.value.defs : [];
-        const answer = defs[examQuizAnswerIndex.value];
-        if (!answer)
-          return "暂无可推荐义项";
-        return `${getDefTypeLabel(answer) || "推荐义项"} · ${answer.pos || ""} ${answer.trans || ""}`;
-      });
-      const loadExtraPanels = () => {
-        var _a, _b, _c;
-        const extra = getWordExtra(word.value.english);
-        synonymContrastText.value = extra.synonymContrastText || "";
-        wordFamily.value = {
-          derivatives: Array.isArray((_a = extra.wordFamily) == null ? void 0 : _a.derivatives) ? extra.wordFamily.derivatives : [],
-          collocations: Array.isArray((_b = extra.wordFamily) == null ? void 0 : _b.collocations) ? extra.wordFamily.collocations : [],
-          memory_tip: ((_c = extra.wordFamily) == null ? void 0 : _c.memory_tip) || ""
-        };
-      };
-      const loadWordFromMasterDb = async (english) => {
-        if (!english)
-          return;
-        word.value = {
-          english,
-          chinese: "加载中…",
-          tags: "",
-          source_page: "",
-          year: "",
-          importance: 0,
-          error_rate: 0,
-          review_frequency: 0,
-          repeat_count: 0,
-          examples: [],
-          synonyms: [],
-          antonyms: [],
-          defs: [],
-          exam_tip: "",
-          sentiment: "neu"
-        };
-        detailHeavyLoading.value = true;
-        examStatsLoading.value = true;
-        examSentencesLoading.value = true;
-        try {
-          const detail = await getWordFullDetail(english);
-          if (!detail || word.value.english !== english)
-            return;
-          const wordDefs = Array.isArray(detail.defs) ? detail.defs : [];
-          const examples = Array.isArray(detail.examples) ? detail.examples : [];
-          const synonyms = Array.isArray(detail.synonyms) ? detail.synonyms : [];
-          const antonyms = Array.isArray(detail.antonyms) ? detail.antonyms : [];
-          const examTip = detail.exam_tip || "";
-          const wordSentiment = detail.sentiment || "neu";
-          word.value = {
-            ...word.value,
-            chinese: detail.chinese || "",
-            examples,
-            synonyms,
-            antonyms,
-            importance: detail.examStats && detail.examStats.importance != null ? detail.examStats.importance : 0,
-            defs: wordDefs,
-            exam_tip: examTip,
-            sentiment: wordSentiment
-          };
-          if (detail.examStats) {
-            examStats.value = detail.examStats;
-            examStatsTags.value = Array.isArray(detail.examStats.tags) ? detail.examStats.tags : [];
-            if (examStatsTags.value.length > 0)
-              word.value = { ...word.value, tags: examStatsTags.value.join(",") };
-          }
-          examSentences.value = Array.isArray(detail.examSentences) ? detail.examSentences : [];
-        } catch (e2) {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:528", "[详情页-masterdb] 加载失败:", e2);
-          word.value.chinese = "";
-        } finally {
-          detailHeavyLoading.value = false;
-          examStatsLoading.value = false;
-          examSentencesLoading.value = false;
-        }
-      };
-      const normalizeDefType2 = (rawType) => {
-        const value = String(rawType || "").trim().toLowerCase();
-        if (!value)
-          return "normal";
-        if ([
-          "freq",
-          "important",
-          "important_meaning",
-          "importantmeaning",
-          "重点",
-          "重点义",
-          "重要",
-          "重要义",
-          "重要意思",
-          "常考",
-          "高频"
-        ].includes(value)) {
-          return "freq";
-        }
-        if ([
-          "rare",
-          "rare_meaning",
-          "raremeaning",
-          "僻义",
-          "熟词僻义",
-          "熟词生义",
-          "生义"
-        ].includes(value)) {
-          return "rare";
-        }
-        return "normal";
-      };
-      const getDefType = (item) => normalizeDefType2(item == null ? void 0 : item.type);
-      const getDefTypeLabel = (item) => {
-        const type = getDefType(item);
-        if (type === "freq")
-          return "重要义";
-        if (type === "rare")
-          return "熟词僻义";
-        return "";
-      };
-      const getLastWordInfo = async () => {
-        const lastWord = await db.getLastWord();
-        if (lastWord) {
-          word.value.source_page = lastWord.source_page || "";
-          word.value.year = lastWord.year || "";
-        }
-      };
-      function loadExamDataLazy(english, currentWordId) {
-        const isSelf = currentWordId != null;
-        const guard = () => {
-          var _a, _b;
-          return isSelf ? ((_a = word.value) == null ? void 0 : _a.id) !== currentWordId : ((_b = word.value) == null ? void 0 : _b.english) !== english;
-        };
-        examStatsLoading.value = true;
-        examSentencesLoading.value = true;
-        showAllExamSentences.value = false;
-        getWordExamData(english).then((data) => {
-          if (guard())
-            return;
-          const stats = (data == null ? void 0 : data.examStats) || null;
-          const list = (data == null ? void 0 : data.examSentences) || [];
-          if (guard())
-            return;
-          if (stats) {
-            examStats.value = stats;
-            examStatsTags.value = Array.isArray(stats.tags) ? stats.tags : [];
-            word.value = { ...word.value, importance: typeof stats.importance === "number" ? stats.importance : 0 };
-            if (examStatsTags.value.length > 0)
-              word.value = { ...word.value, tags: examStatsTags.value.join(",") };
-          } else {
-            examStats.value = null;
-            examStatsTags.value = [];
-            if (isSelf)
-              word.value = { ...word.value, importance: 0 };
-          }
-          examSentences.value = Array.isArray(list) ? list : [];
-        }).catch(() => {
-          examStats.value = null;
-          examSentences.value = [];
-        }).finally(() => {
-          examStatsLoading.value = false;
-          examSentencesLoading.value = false;
-        });
-      }
-      const loadWordFromWordbook = (english) => {
-        fromWordbookMode.value = true;
-        detailHeavyLoading.value = true;
-        showAllExamSentences.value = false;
-        examStatsLoading.value = true;
-        examSentencesLoading.value = true;
-        word.value = {
-          ...word.value,
-          english,
-          chinese: "加载中…",
-          importance: 0,
-          examples: [],
-          synonyms: [],
-          antonyms: [],
-          defs: [],
-          exam_tip: "",
-          sentiment: "neu"
-        };
-        loadExtraPanels();
-        getWordFullDetail(english).then((detail) => {
-          formatAppLog("log", "at pages/word-detail/word-detail.vue:643", "[详情页] getWordFullDetail 回调执行, detail=", detail ? "有数据" : "null");
-          detailHeavyLoading.value = false;
-          examStatsLoading.value = false;
-          examSentencesLoading.value = false;
-          if (word.value.english !== english)
-            return;
-          if (detail) {
-            let examples = Array.isArray(detail.examples) ? detail.examples : [];
-            let synonyms = Array.isArray(detail.synonyms) ? detail.synonyms : [];
-            let antonyms = Array.isArray(detail.antonyms) ? detail.antonyms : [];
-            let wordDefs = Array.isArray(detail.defs) && detail.defs.length ? detail.defs : [];
-            let examTip = typeof detail.exam_tip === "string" ? detail.exam_tip : "";
-            let wordSentiment = detail.sentiment === "pos" || detail.sentiment === "neg" || detail.sentiment === "neu" ? detail.sentiment : "neu";
-            if (!wordDefs.length && detail.data_json != null) {
-              try {
-                const rawData = typeof detail.data_json === "string" ? JSON.parse(detail.data_json || "{}") : detail.data_json || {};
-                if (Array.isArray(rawData.defs) && rawData.defs.length)
-                  wordDefs = rawData.defs;
-                if (!examTip && typeof rawData.exam_tip === "string")
-                  examTip = rawData.exam_tip;
-                if (wordSentiment === "neu" && (rawData.sentiment === "pos" || rawData.sentiment === "neg"))
-                  wordSentiment = rawData.sentiment;
-              } catch (_2) {
-              }
-            }
-            word.value = {
-              ...word.value,
-              chinese: detail.chinese || word.value.chinese,
-              examples,
-              synonyms,
-              antonyms,
-              importance: detail.examStats && detail.examStats.importance != null ? detail.examStats.importance : 0,
-              defs: wordDefs,
-              exam_tip: examTip,
-              sentiment: wordSentiment
-            };
-            if (word.value.chinese === "加载中…")
-              word.value = { ...word.value, chinese: detail.chinese || "" };
-            examStats.value = detail.examStats;
-            examSentences.value = Array.isArray(detail.examSentences) ? detail.examSentences : [];
-            examStatsTags.value = detail.examStats && Array.isArray(detail.examStats.tags) ? detail.examStats.tags : [];
-            if (examStatsTags.value.length > 0)
-              word.value = { ...word.value, tags: examStatsTags.value.join(",") };
-            formatAppLog("log", "at pages/word-detail/word-detail.vue:681", "[详情页] 已赋值 examples.length=", examples.length);
-            const needPregen = examples.length === 0 && synonyms.length === 0 && antonyms.length === 0;
-            if (needPregen) {
-              getPregenWord(english).then((pregen) => {
-                if (word.value.english !== english)
-                  return;
-                if (pregen && (Array.isArray(pregen.examples) && pregen.examples.length > 0 || Array.isArray(pregen.synonyms) && pregen.synonyms.length > 0 || Array.isArray(pregen.antonyms) && pregen.antonyms.length > 0)) {
-                  const ex = Array.isArray(pregen.examples) && pregen.examples.length > 0 ? pregen.examples : word.value.examples;
-                  const sy = Array.isArray(pregen.synonyms) && pregen.synonyms.length > 0 ? pregen.synonyms : word.value.synonyms;
-                  const an2 = Array.isArray(pregen.antonyms) && pregen.antonyms.length > 0 ? pregen.antonyms : word.value.antonyms;
-                  word.value = { ...word.value, examples: ex, synonyms: sy, antonyms: an2 };
-                  if (!word.value.chinese && pregen.chinese)
-                    word.value = { ...word.value, chinese: pregen.chinese };
-                  formatAppLog("log", "at pages/word-detail/word-detail.vue:693", "[详情页] 已从 pregen 补全 例句/近义/反义");
-                }
-              });
-            }
-          } else {
-            if (word.value.chinese === "加载中…")
-              word.value = { ...word.value, chinese: "" };
-            examStats.value = null;
-            examSentences.value = [];
-            getPregenWord(english).then((pregen) => {
-              if (word.value.english !== english || !pregen)
-                return;
-              const ex = Array.isArray(pregen.examples) ? pregen.examples : [];
-              const sy = Array.isArray(pregen.synonyms) ? pregen.synonyms : [];
-              const an2 = Array.isArray(pregen.antonyms) ? pregen.antonyms : [];
-              word.value = {
-                ...word.value,
-                chinese: (pregen.chinese || word.value.chinese || "").trim() || word.value.chinese,
-                examples: ex,
-                synonyms: sy,
-                antonyms: an2
-              };
-              if (ex.length || sy.length || an2.length)
-                formatAppLog("log", "at pages/word-detail/word-detail.vue:714", "[详情页] 已从 pregen 补全(主库无该词)");
-            });
-          }
-        }).catch((e2) => {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:718", "[详情页] getWordFullDetail catch", e2);
-          detailHeavyLoading.value = false;
-          examStatsLoading.value = false;
-          examSentencesLoading.value = false;
-          if (word.value.chinese === "加载中…")
-            word.value = { ...word.value, chinese: "" };
-        });
-      };
-      const loadWord = async () => {
-        const id = wordId.value;
-        const t0 = Date.now();
-        formatAppLog("log", "at pages/word-detail/word-detail.vue:729", "[详情-自用] 入口 id=", id, "t0=", t0);
-        clearExamFallbackTimer();
-        const tLight = Date.now();
-        const result = await db.getWordByIdLight(id);
-        formatAppLog("log", "at pages/word-detail/word-detail.vue:734", "[详情-自用] getWordByIdLight", Date.now() - tLight, "ms");
-        if (!result)
-          return;
-        if (result.chinese)
-          result.chinese = addNewlineBeforePos(result.chinese);
-        word.value = result;
-        loadExtraPanels();
-        db.incrementViewCount(id);
-        increaseRepeatCount();
-        const tSameTag = Date.now();
-        loadSameTagWords();
-        formatAppLog("log", "at pages/word-detail/word-detail.vue:745", "[详情-自用] loadSameTagWords 已触发(未await)", Date.now() - tSameTag, "ms");
-        const english = result.english;
-        showAllExamSentences.value = false;
-        examStatsLoading.value = true;
-        examSentencesLoading.value = true;
-        examStats.value = null;
-        examStatsTags.value = [];
-        examSentences.value = [];
-        const tHeavy = Date.now();
-        db.getWordByIdHeavy(id).then((heavy) => {
-          var _a;
-          formatAppLog("log", "at pages/word-detail/word-detail.vue:757", "[详情-自用] getWordByIdHeavy", Date.now() - tHeavy, "ms");
-          if (!heavy || ((_a = word.value) == null ? void 0 : _a.id) !== id)
-            return;
-          word.value = {
-            ...word.value,
-            examples: heavy.examples || [],
-            synonyms: heavy.synonyms || [],
-            antonyms: heavy.antonyms || []
-          };
-          formatAppLog("log", "at pages/word-detail/word-detail.vue:765", "[详情-自用] 重型字段补全完成", Date.now() - t0, "ms");
-        });
-        getWordFullDetail(english).then((detail) => {
-          var _a;
-          if (((_a = word.value) == null ? void 0 : _a.id) !== id)
-            return;
-          if (!detail) {
-            scheduleExamDataFallback(english, id);
-            return;
-          }
-          const needChinese = !(word.value.chinese || "").trim();
-          const needExamples = !Array.isArray(word.value.examples) || word.value.examples.length === 0;
-          const needSynonyms = !Array.isArray(word.value.synonyms) || word.value.synonyms.length === 0;
-          const needAntonyms = !Array.isArray(word.value.antonyms) || word.value.antonyms.length === 0;
-          const detailExamStats = detail.examStats && typeof detail.examStats === "object" ? detail.examStats : null;
-          const detailExamSentences = Array.isArray(detail.examSentences) ? detail.examSentences : [];
-          const detailDefs = Array.isArray(detail.defs) ? detail.defs : [];
-          const detailExamTip = typeof detail.exam_tip === "string" ? detail.exam_tip : "";
-          const detailSentiment = detail.sentiment === "pos" || detail.sentiment === "neg" || detail.sentiment === "neu" ? detail.sentiment : word.value.sentiment;
-          const hasExamStats = !!detailExamStats;
-          const hasExamSentences = detailExamSentences.length > 0;
-          if (!needChinese && !needExamples && !needSynonyms && !needAntonyms && hasExamStats && hasExamSentences) {
-            word.value = {
-              ...word.value,
-              chinese: (detail.chinese || "").trim() || word.value.chinese,
-              defs: detailDefs,
-              exam_tip: detailExamTip,
-              sentiment: detailSentiment
-            };
-            examStats.value = detailExamStats;
-            examSentences.value = detailExamSentences;
-            examStatsTags.value = Array.isArray(detailExamStats.tags) ? detailExamStats.tags : [];
-            examStatsLoading.value = false;
-            examSentencesLoading.value = false;
-            return;
-          }
-          word.value = {
-            ...word.value,
-            chinese: (detail.chinese || "").trim() || word.value.chinese,
-            examples: needExamples ? detail.examples || [] : word.value.examples,
-            synonyms: needSynonyms ? detail.synonyms || [] : word.value.synonyms,
-            antonyms: needAntonyms ? detail.antonyms || [] : word.value.antonyms,
-            defs: detailDefs.length ? detailDefs : word.value.defs,
-            exam_tip: detailExamTip || word.value.exam_tip,
-            sentiment: detailSentiment
-          };
-          if (hasExamStats) {
-            examStats.value = detailExamStats;
-            examStatsTags.value = Array.isArray(detailExamStats.tags) ? detailExamStats.tags : [];
-            word.value.importance = typeof detailExamStats.importance === "number" ? detailExamStats.importance : 0;
-            if (examStatsTags.value.length > 0)
-              word.value.tags = examStatsTags.value.join(",");
-          } else {
-            examStats.value = null;
-            examStatsTags.value = [];
-          }
-          if (hasExamSentences)
-            examSentences.value = detailExamSentences;
-          else
-            examSentences.value = [];
-          examStatsLoading.value = !hasExamStats;
-          examSentencesLoading.value = !hasExamSentences;
-          if (!hasExamStats || !hasExamSentences) {
-            scheduleExamDataFallback(english, id);
-          }
-        }).catch(() => {
-          scheduleExamDataFallback(english, id);
-        });
-        getPregenWord(english).then((pre) => {
-          var _a;
-          if (!pre || ((_a = word.value) == null ? void 0 : _a.id) !== id)
-            return;
-          const needChinese = !(word.value.chinese || "").trim();
-          const needExamples = !Array.isArray(word.value.examples) || word.value.examples.length === 0;
-          const needSynonyms = !Array.isArray(word.value.synonyms) || word.value.synonyms.length === 0;
-          const needAntonyms = !Array.isArray(word.value.antonyms) || word.value.antonyms.length === 0;
-          if (!needChinese && !needExamples && !needSynonyms && !needAntonyms)
-            return;
-          word.value = {
-            ...word.value,
-            chinese: needChinese ? (pre.chinese || "").trim() || word.value.chinese : word.value.chinese,
-            examples: needExamples ? pre.examples || [] : word.value.examples,
-            synonyms: needSynonyms ? pre.synonyms || [] : word.value.synonyms,
-            antonyms: needAntonyms ? pre.antonyms || [] : word.value.antonyms
-          };
-        }).catch(() => {
-        });
-      };
-      const retryLoadExamStats = async () => {
-        if (!word.value || !word.value.english)
-          return;
-        examStatsLoading.value = true;
-        examSentencesLoading.value = true;
-        try {
-          const data = await getWordExamData(word.value.english);
-          const stats = (data == null ? void 0 : data.examStats) || null;
-          if (stats) {
-            examStats.value = stats;
-            examStatsTags.value = Array.isArray(stats.tags) ? stats.tags : [];
-            word.value.importance = typeof stats.importance === "number" ? stats.importance : 0;
-            if (examStatsTags.value.length > 0) {
-              word.value.tags = examStatsTags.value.join(",");
-            }
-          } else {
-            examStats.value = null;
-            examStatsTags.value = [];
-            word.value.importance = 0;
-          }
-          examSentences.value = Array.isArray(data == null ? void 0 : data.examSentences) ? data.examSentences : [];
-        } catch (e2) {
-          examStats.value = null;
-          examStatsTags.value = [];
-          examSentences.value = [];
-        } finally {
-          examStatsLoading.value = false;
-          examSentencesLoading.value = false;
-        }
-      };
-      const loadSameTagWords = async () => {
-        const tags = (word.value.tags || "").split(/[,，\s]+/).map((t2) => t2.trim()).filter(Boolean);
-        if (tags.length === 0) {
-          sameTagWords.value = [];
-          return;
-        }
-        sameTagWords.value = await db.getWordsByTag(tags[0], wordId.value);
-      };
-      const goToWord = (id) => {
-        uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${id}` });
-      };
-      const selectExamQuiz = (idx) => {
-        examQuizSelected.value = idx;
-      };
-      const goBack = () => {
-        uni.navigateBack();
-      };
-      const applyTag = (tag) => {
-        const cur = (word.value.tags || "").trim();
-        const list = cur ? cur.split(/[,，\s]+/).map((t2) => t2.trim()).filter(Boolean) : [];
-        if (list.includes(tag))
-          return;
-        word.value.tags = list.concat(tag).join(",");
-      };
-      onLoad((options) => {
-        formatAppLog("log", "at pages/word-detail/word-detail.vue:908", "onLoad 获取到的参数:", options);
-        if (options && options.id) {
-          wordId.value = options.id;
-          loadWord();
-        } else if (options && options.english && options.source === "masterdb") {
-          wordId.value = "";
-          fromWordbookMode.value = true;
-          loadWordFromMasterDb(decodeURIComponent(options.english));
-        } else if (options && options.english && options.fromWordbook === "1") {
-          wordId.value = "";
-          loadWordFromWordbook(decodeURIComponent(options.english));
-        } else {
-          getLastWordInfo();
-        }
-      });
-      vue.onMounted(() => {
-        uni.$on("wordEnriched", onWordEnriched);
-      });
-      const onWordEnriched = (id) => {
-        if (id && wordId.value === id)
-          loadWord();
-      };
-      onUnload(() => {
-        uni.$off("wordEnriched", onWordEnriched);
-        clearExamFallbackTimer();
-        try {
-          cleanupExpiredCaches();
-        } catch (error) {
-          logger.warn("WordDetail", "清理缓存失败", error);
-        }
-      });
-      const save = async () => {
-        if (!word.value.english || !word.value.chinese) {
-          uni.showToast({
-            title: "请填写英文和中文",
-            duration: 2e3
-          });
-          return;
-        }
-        if (wordId.value) {
-          await db.updateWord(wordId.value, word.value);
-        } else {
-          await db.addWord(word.value);
-        }
-        uni.showToast({
-          title: wordId.value ? "更新成功" : "添加成功",
-          duration: 2e3
-        });
-        uni.navigateBack();
-      };
-      const cancel = () => {
-        uni.navigateBack();
-      };
-      const deleteWord = async () => {
-        uni.showModal({
-          title: "确认删除",
-          content: "确定要删除这个单词吗？",
-          success: async (res) => {
-            if (res.confirm) {
-              await db.deleteWord(wordId.value);
-              uni.showToast({
-                title: "删除成功",
-                duration: 2e3
-              });
-              uni.navigateBack();
-            }
-          }
-        });
-      };
-      const editWord = () => {
-        uni.showToast({
-          title: "编辑模式",
-          duration: 1e3
-        });
-      };
-      const generateExample = async () => {
-        if (!word.value.english) {
-          uni.showToast({
-            title: "请输入英文单词",
-            duration: 2e3
-          });
-          return;
-        }
-        try {
-          const pregen = await getPregenWord(word.value.english);
-          if (pregen && Array.isArray(pregen.examples) && pregen.examples.length > 0) {
-            word.value.examples = pregen.examples;
-            if (wordId.value) {
-              await db.updateWord(wordId.value, { examples: pregen.examples });
-            }
-            uni.showToast({ title: "已从本地词库加载例句", duration: 2e3 });
-            return;
-          }
-          const words = await db.getWordsForList(10, 0, "create_time", "desc", {});
-          const existingWords = words.filter((w2) => w2.english !== word.value.english).map((w2) => w2.english).slice(0, 10);
-          example.value = "生成中...";
-          let examText = "";
-          try {
-            const examData = await getWordExamData(word.value.english);
-            if (examData == null ? void 0 : examData.examStats)
-              examText = formatWordStatsForPrompt(examData.examStats);
-          } catch (_2) {
-          }
-          const examples = await aiService.generateMultipleExamples(word.value.english, existingWords, 3, examText);
-          word.value.examples = examples;
-          example.value = "";
-          if (wordId.value) {
-            await db.updateWord(wordId.value, { examples });
-            uni.showToast({
-              title: "例句已更新",
-              duration: 2e3
-            });
-          } else {
-            uni.showToast({
-              title: "例句已生成",
-              duration: 2e3
-            });
-          }
-        } catch (error) {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:1048", "生成例句失败:", error);
-          example.value = "生成例句失败，请重试";
-        }
-      };
-      const generateSynonyms = async () => {
-        if (!word.value.english) {
-          uni.showToast({
-            title: "请输入英文单词",
-            duration: 2e3
-          });
-          return;
-        }
-        try {
-          synonymLoading.value = true;
-          const pregen = await getPregenWord(word.value.english);
-          if (pregen && Array.isArray(pregen.synonyms) && pregen.synonyms.length > 0) {
-            word.value.synonyms = pregen.synonyms;
-            if (wordId.value) {
-              await db.updateWord(wordId.value, { synonyms: pregen.synonyms });
-            }
-            uni.showToast({ title: "已从本地词库加载近义词", duration: 2e3 });
-            return;
-          }
-          const words = await db.getWordsForList(10, 0, "create_time", "desc", {});
-          const existingWords = words.filter((w2) => w2.english !== word.value.english).map((w2) => w2.english).slice(0, 10);
-          const synonyms = await aiService.generateSynonyms(word.value.english, existingWords, 3);
-          word.value.synonyms = synonyms;
-          if (wordId.value) {
-            await db.updateWord(wordId.value, { synonyms });
-            uni.showToast({
-              title: "近义词已更新",
-              duration: 2e3
-            });
-          } else {
-            uni.showToast({
-              title: "近义词已生成",
-              duration: 2e3
-            });
-          }
-        } catch (error) {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:1097", "生成近义词失败:", error);
-          uni.showToast({
-            title: "生成近义词失败，请重试",
-            duration: 2e3
-          });
-        } finally {
-          synonymLoading.value = false;
-        }
-      };
-      const generateSynonymContrast = async () => {
-        if (!word.value.english)
-          return;
-        try {
-          synonymContrastLoading.value = true;
-          const text = await aiService.generateSynonymContrast(word.value.english, word.value.synonyms || []);
-          synonymContrastText.value = text || "";
-          saveWordExtra(word.value.english, { synonymContrastText: synonymContrastText.value });
-          if (synonymContrastText.value) {
-            uni.showToast({ title: "辨析已生成", icon: "none" });
-          }
-        } catch (_2) {
-          uni.showToast({ title: "生成辨析失败", icon: "none" });
-        } finally {
-          synonymContrastLoading.value = false;
-        }
-      };
-      const generateAntonyms = async () => {
-        if (!word.value.english) {
-          uni.showToast({ title: "请输入英文单词", duration: 2e3 });
-          return;
-        }
-        try {
-          antonymLoading.value = true;
-          const pregen = await getPregenWord(word.value.english);
-          if (pregen && Array.isArray(pregen.antonyms) && pregen.antonyms.length > 0) {
-            word.value.antonyms = pregen.antonyms;
-            if (wordId.value) {
-              await db.updateWord(wordId.value, { antonyms: pregen.antonyms });
-            }
-            uni.showToast({ title: "已从本地词库加载反义词", duration: 2e3 });
-            return;
-          }
-          const antonyms = await aiService.generateAntonyms(word.value.english, 3);
-          word.value.antonyms = antonyms;
-          if (wordId.value) {
-            await db.updateWord(wordId.value, { antonyms });
-            uni.showToast({ title: "反义词已更新", duration: 2e3 });
-          } else {
-            uni.showToast({ title: "反义词已生成", duration: 2e3 });
-          }
-        } catch (error) {
-          formatAppLog("error", "at pages/word-detail/word-detail.vue:1149", "生成反义词失败:", error);
-          uni.showToast({ title: "生成反义词失败", duration: 2e3 });
-        } finally {
-          antonymLoading.value = false;
-        }
-      };
-      const generateWordFamilyInfo = async () => {
-        if (!word.value.english)
-          return;
-        try {
-          wordFamilyLoading.value = true;
-          const result = await aiService.generateWordFamily(word.value.english);
-          wordFamily.value = {
-            derivatives: Array.isArray(result.derivatives) ? result.derivatives : [],
-            collocations: Array.isArray(result.collocations) ? result.collocations : [],
-            memory_tip: result.memory_tip || ""
-          };
-          saveWordExtra(word.value.english, { wordFamily: wordFamily.value });
-          uni.showToast({ title: "词族已生成", icon: "none" });
-        } catch (_2) {
-          uni.showToast({ title: "生成词族失败", icon: "none" });
-        } finally {
-          wordFamilyLoading.value = false;
-        }
-      };
-      const increaseRepeatCount = async () => {
-        word.value.repeat_count = (word.value.repeat_count || 0) + 1;
-        word.value.update_time = (/* @__PURE__ */ new Date()).toISOString();
-        if (wordId.value) {
-          await db.updateWord(wordId.value, {
-            repeat_count: word.value.repeat_count,
-            update_time: word.value.update_time
-          });
-        }
-      };
-      const decreaseRepeatCount = async () => {
-      };
-      const updateRepeatCount = async () => {
-      };
-      const markAsMastered = async () => {
-        if (!wordId.value) {
-          uni.showToast({ title: "请先保存单词", icon: "none" });
-          return;
-        }
-        word.value.is_mastered = 1;
-        word.value.mastered_at = (/* @__PURE__ */ new Date()).toISOString();
-        await db.updateWord(wordId.value, {
-          is_mastered: 1,
-          mastered_at: word.value.mastered_at
-        });
-        uni.showToast({ title: "已斩掉！该单词将在复习中隐藏", icon: "success" });
-      };
-      const unmarkAsMastered = async () => {
-        if (!wordId.value)
-          return;
-        word.value.is_mastered = 0;
-        word.value.mastered_at = null;
-        await db.updateWord(wordId.value, {
-          is_mastered: 0,
-          mastered_at: null
-        });
-        uni.showToast({ title: "已取消斩掉", icon: "none" });
-      };
-      const formatMasteredTime = (time) => {
-        if (!time)
-          return "";
-        const date = new Date(time);
-        const now = /* @__PURE__ */ new Date();
-        const diff = now - date;
-        const days = Math.floor(diff / (1e3 * 60 * 60 * 24));
-        if (days === 0)
-          return "今天";
-        if (days === 1)
-          return "昨天";
-        if (days < 7)
-          return `${days}天前`;
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        return `${month}月${day}日`;
-      };
-      const escapeRegExp = (s2) => String(s2 || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const formatHighlight = (text) => {
-        if (!text)
-          return "";
-        let formattedText = text.replace(/\*\*(.*?)\*\*/g, function(match, word2) {
-          return `<span style="color: #FF85A1; font-weight: bold;">${word2}</span>`;
-        });
-        if (word.value.english) {
-          const targetWord = word.value.english;
-          const targetRegex = new RegExp(`\\b(${escapeRegExp(targetWord)})\\b`, "gi");
-          formattedText = formattedText.replace(targetRegex, `<span style="color: #FF85A1; font-weight: bold;">$1</span>`);
-        }
-        return formattedText;
-      };
-      const __returned__ = { word, POS_BREAK_REGEX, addNewlineBeforePos, example, synonymLoading, synonymContrastLoading, antonymLoading, synonymContrastText, wordFamilyLoading, wordFamily, sameTagWords, wordId, fromWordbookMode, examStats, examStatsTags, examStatsLoading, examSentences, examSentencesLoading, showAllExamSentences, detailHeavyLoading, get examFallbackTimer() {
-        return examFallbackTimer;
-      }, set examFallbackTimer(v2) {
-        examFallbackTimer = v2;
-      }, clearExamFallbackTimer, scheduleExamDataFallback, SECTION_ORDER: SECTION_ORDER2, examStatsBySection, examStatsYears, displayExamSentences, displayWordTags, sentimentLabel, examQuizSelected, examQuizSentence, examQuizAnswerIndex, examQuizAnswerText, loadExtraPanels, loadWordFromMasterDb, normalizeDefType: normalizeDefType2, getDefType, getDefTypeLabel, getLastWordInfo, loadExamDataLazy, loadWordFromWordbook, loadWord, retryLoadExamStats, loadSameTagWords, goToWord, selectExamQuiz, goBack, applyTag, onWordEnriched, save, cancel, deleteWord, editWord, generateExample, generateSynonyms, generateSynonymContrast, generateAntonyms, generateWordFamilyInfo, increaseRepeatCount, decreaseRepeatCount, updateRepeatCount, markAsMastered, unmarkAsMastered, formatMasteredTime, escapeRegExp, formatHighlight, ref: vue.ref, onMounted: vue.onMounted, watch: vue.watch, computed: vue.computed, get onLoad() {
-        return onLoad;
-      }, get onUnload() {
-        return onUnload;
-      }, get db() {
-        return db;
-      }, get aiService() {
-        return aiService;
-      }, get formatWordStatsForPrompt() {
-        return formatWordStatsForPrompt;
-      }, get pregenVocab() {
-        return pregenVocab;
-      }, get masterDb() {
-        return masterDb;
-      }, get getWordExtra() {
-        return getWordExtra;
-      }, get saveWordExtra() {
-        return saveWordExtra;
-      }, get logger() {
-        return logger;
-      }, get errorHandler() {
-        return errorHandler;
-      }, get cleanupExpiredCaches() {
-        return cleanupExpiredCaches;
-      } };
-      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
-      return __returned__;
-    }
-  };
-  function _sfc_render$a(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
-      vue.createElementVNode("view", { class: "custom-nav-bar" }, [
-        vue.createElementVNode("view", {
-          class: "nav-back-btn",
-          onClick: $setup.goBack
-        }, "‹")
-      ]),
-      $setup.wordId || $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 0,
-        class: "word-profile-card detail-card-shell"
-      }, [
-        vue.createElementVNode("view", { class: "word-input-wrap word-title-row" }, [
-          !$setup.fromWordbookMode ? vue.withDirectives((vue.openBlock(), vue.createElementBlock(
-            "input",
-            {
-              key: 0,
-              type: "text",
-              "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.word.english = $event),
-              placeholder: "请输入英文单词",
-              class: "word-input"
-            },
-            null,
-            512
-            /* NEED_PATCH */
-          )), [
-            [vue.vModelText, $setup.word.english]
-          ]) : (vue.openBlock(), vue.createElementBlock(
-            "text",
-            {
-              key: 1,
-              class: "word-input word-readonly"
-            },
-            vue.toDisplayString($setup.word.english),
-            1
-            /* TEXT */
-          ))
-        ]),
-        $setup.word.defs && $setup.word.defs.length ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
-          class: "word-chinese-inline"
-        }, [
-          vue.createElementVNode("view", { class: "defs-list" }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.word.defs, (item, idx) => {
-                return vue.openBlock(), vue.createElementBlock(
-                  "view",
-                  {
-                    key: idx,
-                    class: vue.normalizeClass(["def-item", {
-                      "def-freq": $setup.getDefType(item) === "freq",
-                      "def-rare": $setup.getDefType(item) === "rare",
-                      "def-normal": $setup.getDefType(item) === "normal"
-                    }])
-                  },
-                  [
-                    vue.createElementVNode(
-                      "view",
-                      { class: "def-pos" },
-                      vue.toDisplayString(item.pos || ""),
-                      1
-                      /* TEXT */
-                    ),
-                    vue.createElementVNode(
-                      "view",
-                      { class: "def-trans" },
-                      vue.toDisplayString(item.trans || ""),
-                      1
-                      /* TEXT */
-                    )
-                  ],
-                  2
-                  /* CLASS */
-                );
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])
-        ])) : (vue.openBlock(), vue.createElementBlock("view", {
-          key: 1,
-          class: "word-chinese-inline"
-        }, [
-          !$setup.fromWordbookMode ? vue.withDirectives((vue.openBlock(), vue.createElementBlock(
-            "textarea",
-            {
-              key: 0,
-              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.word.chinese = $event),
-              placeholder: "请输入中文释义（包含词性）",
-              rows: "3",
-              class: "word-chinese-textarea"
-            },
-            null,
-            512
-            /* NEED_PATCH */
-          )), [
-            [vue.vModelText, $setup.word.chinese]
-          ]) : (vue.openBlock(), vue.createElementBlock(
-            "text",
-            {
-              key: 1,
-              class: "word-chinese-textarea word-readonly"
-            },
-            vue.toDisplayString($setup.word.chinese || "—"),
-            1
-            /* TEXT */
-          ))
-        ])),
-        $setup.word.exam_tip ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 2,
-          class: "exam-tip-box"
-        }, [
-          vue.createElementVNode(
-            "view",
-            { class: "exam-tip-text" },
-            vue.toDisplayString($setup.word.exam_tip),
-            1
-            /* TEXT */
-          )
-        ])) : vue.createCommentVNode("v-if", true),
-        $setup.displayWordTags.length || $setup.sentimentLabel ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 3,
-          class: "word-tag-row"
-        }, [
-          (vue.openBlock(true), vue.createElementBlock(
-            vue.Fragment,
-            null,
-            vue.renderList($setup.displayWordTags, (tag, idx) => {
-              return vue.openBlock(), vue.createElementBlock(
-                "text",
-                {
-                  key: `tag-${idx}`,
-                  class: "tag-chip-soft"
-                },
-                vue.toDisplayString(tag),
-                1
-                /* TEXT */
-              );
-            }),
-            128
-            /* KEYED_FRAGMENT */
-          )),
-          $setup.sentimentLabel ? (vue.openBlock(), vue.createElementBlock(
-            "text",
-            {
-              key: 0,
-              class: "tag-chip-soft sentiment-chip"
-            },
-            vue.toDisplayString($setup.sentimentLabel),
-            1
-            /* TEXT */
-          )) : vue.createCommentVNode("v-if", true)
-        ])) : vue.createCommentVNode("v-if", true),
-        vue.createElementVNode("view", { class: "metadata-row" }, [
-          vue.createElementVNode("div", { class: "repeat-section" }, [
-            vue.createElementVNode("label", { class: "small-label" }, "学习次数"),
-            vue.createElementVNode("div", { class: "repeat-controls" }, [
-              vue.createElementVNode(
-                "span",
-                { class: "repeat-value" },
-                vue.toDisplayString($setup.word.repeat_count || 0),
-                1
-                /* TEXT */
-              )
-            ])
-          ]),
-          vue.createElementVNode("div", { class: "importance-section" }, [
-            vue.createElementVNode("label", { class: "small-label" }, "重要程度"),
-            vue.createElementVNode(
-              "view",
-              {
-                class: vue.normalizeClass(["star-rating", { readonly: $setup.fromWordbookMode }])
-              },
-              [
-                (vue.openBlock(), vue.createElementBlock(
-                  vue.Fragment,
-                  null,
-                  vue.renderList(5, (star) => {
-                    return vue.createElementVNode("span", {
-                      key: star,
-                      class: vue.normalizeClass(["importance-dot", { active: ($setup.word.importance || 0) >= star }]),
-                      onClick: ($event) => !$setup.fromWordbookMode && ($setup.word.importance = star)
-                    }, "★", 10, ["onClick"]);
-                  }),
-                  64
-                  /* STABLE_FRAGMENT */
-                ))
-              ],
-              2
-              /* CLASS */
-            )
-          ])
-        ]),
-        !$setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 4,
-          class: "master-action-row"
-        }, [
-          !$setup.word.is_mastered ? (vue.openBlock(), vue.createElementBlock("button", {
-            key: 0,
-            class: "btn-master",
-            onClick: $setup.markAsMastered
-          }, " ⚔️ 斩掉（已熟练） ")) : (vue.openBlock(), vue.createElementBlock("button", {
-            key: 1,
-            class: "btn-unmaster",
-            onClick: $setup.unmarkAsMastered
-          }, " ↩️ 取消斩掉 ")),
-          $setup.word.is_mastered && $setup.word.mastered_at ? (vue.openBlock(), vue.createElementBlock(
-            "text",
-            {
-              key: 2,
-              class: "mastered-time"
-            },
-            " 已于 " + vue.toDisplayString($setup.formatMasteredTime($setup.word.mastered_at)) + " 斩掉 ",
-            1
-            /* TEXT */
-          )) : vue.createCommentVNode("v-if", true)
-        ])) : vue.createCommentVNode("v-if", true)
-      ])) : (vue.openBlock(), vue.createElementBlock("view", {
-        key: 1,
-        class: "basic-info detail-card-shell"
-      }, [
-        vue.createElementVNode("view", { class: "form-item" }, [
-          vue.createElementVNode("label", null, "英文"),
-          vue.withDirectives(vue.createElementVNode(
-            "input",
-            {
-              type: "text",
-              "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.word.english = $event),
-              placeholder: "请输入英文单词"
-            },
-            null,
-            512
-            /* NEED_PATCH */
-          ), [
-            [vue.vModelText, $setup.word.english]
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "metadata-row" }, [
-          vue.createElementVNode("div", { class: "importance-section" }, [
-            vue.createElementVNode("label", { class: "small-label" }, "重要程度"),
-            vue.createElementVNode("view", { class: "star-rating" }, [
-              (vue.openBlock(), vue.createElementBlock(
-                vue.Fragment,
-                null,
-                vue.renderList(5, (star) => {
-                  return vue.createElementVNode("span", {
-                    key: star,
-                    class: vue.normalizeClass(["importance-dot", { active: $setup.word.importance >= star }]),
-                    onClick: ($event) => $setup.word.importance = star
-                  }, "★", 10, ["onClick"]);
-                }),
-                64
-                /* STABLE_FRAGMENT */
-              ))
-            ])
-          ])
-        ])
-      ])),
-      !$setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 2,
-        class: "page-year-section one-line"
-      }, [
-        vue.createElementVNode("text", { class: "source-caption-inline" }, "来源"),
-        vue.createElementVNode("view", { class: "page-info" }, [
-          vue.createElementVNode("text", { class: "page-year-label" }, "页码"),
-          vue.createElementVNode("view", { class: "page-year-input-wrap" }, [
-            vue.withDirectives(vue.createElementVNode(
-              "input",
-              {
-                type: "text",
-                "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => $setup.word.source_page = $event),
-                placeholder: "P.",
-                class: "page-year-input"
-              },
-              null,
-              512
-              /* NEED_PATCH */
-            ), [
-              [vue.vModelText, $setup.word.source_page]
-            ])
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "year-info" }, [
-          vue.createElementVNode("text", { class: "page-year-label" }, "年份"),
-          vue.createElementVNode("view", { class: "page-year-input-wrap" }, [
-            vue.withDirectives(vue.createElementVNode(
-              "input",
-              {
-                type: "text",
-                "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => $setup.word.year = $event),
-                placeholder: "如 2024",
-                class: "page-year-input"
-              },
-              null,
-              512
-              /* NEED_PATCH */
-            ), [
-              [vue.vModelText, $setup.word.year]
-            ])
-          ])
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      vue.createElementVNode("view", { class: "form-item exam-stats-block" }, [
-        vue.createElementVNode("view", { class: "soft-card-title" }, "真题统计"),
-        vue.createElementVNode("view", { class: "exam-stats-content" }, [
-          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "detail-placeholder-block"
-          }, "加载中…")) : $setup.examStatsLoading ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "exam-stats-row exam-stats-muted"
-          }, "加载中…")) : $setup.examStats ? (vue.openBlock(), vue.createElementBlock(
-            vue.Fragment,
-            { key: 2 },
-            [
-              vue.createElementVNode("view", { class: "exam-stats-row exam-stats-row-primary" }, [
-                vue.createElementVNode(
-                  "text",
-                  { class: "exam-stats-num" },
-                  vue.toDisplayString($setup.examStats.total_count),
-                  1
-                  /* TEXT */
-                ),
-                vue.createElementVNode("text", { class: "exam-stats-unit" }, "次")
-              ]),
-              $setup.examStatsYears ? (vue.openBlock(), vue.createElementBlock("view", {
-                key: 0,
-                class: "exam-stats-row exam-stats-years-row"
-              }, [
-                vue.createElementVNode(
-                  "text",
-                  { class: "exam-stats-years" },
-                  vue.toDisplayString($setup.examStatsYears),
-                  1
-                  /* TEXT */
-                )
-              ])) : vue.createCommentVNode("v-if", true),
-              vue.createElementVNode("view", { class: "exam-stats-row" }, [
-                vue.createElementVNode(
-                  "text",
-                  { class: "exam-stats-detail" },
-                  vue.toDisplayString($setup.examStatsBySection),
-                  1
-                  /* TEXT */
-                )
-              ])
-            ],
-            64
-            /* STABLE_FRAGMENT */
-          )) : (vue.openBlock(), vue.createElementBlock("view", {
-            key: 3,
-            class: "exam-stats-row exam-stats-muted"
-          }, [
-            vue.createTextVNode(" 该词暂无真题数据 "),
-            vue.createElementVNode("text", {
-              class: "exam-stats-retry",
-              onClick: $setup.retryLoadExamStats
-            }, "重试加载")
-          ]))
-        ])
-      ]),
-      vue.createElementVNode("view", { class: "form-item detail-section-plain exam-sentences-plain" }, [
-        vue.createElementVNode("view", { class: "soft-card-title" }, "真题出处"),
-        vue.createElementVNode("view", { class: "example-container" }, [
-          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "detail-placeholder-block"
-          }, "加载中…")) : $setup.examSentencesLoading ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "no-examples"
-          }, "加载中…")) : $setup.displayExamSentences.length > 0 ? (vue.openBlock(), vue.createElementBlock(
-            vue.Fragment,
-            { key: 2 },
-            [
-              vue.createElementVNode("view", { class: "examples-list" }, [
-                (vue.openBlock(true), vue.createElementBlock(
-                  vue.Fragment,
-                  null,
-                  vue.renderList($setup.displayExamSentences, (item, idx) => {
-                    return vue.openBlock(), vue.createElementBlock("view", {
-                      key: idx,
-                      class: "example-item"
-                    }, [
-                      vue.createElementVNode(
-                        "view",
-                        { class: "exam-sentence-meta" },
-                        vue.toDisplayString(item.year) + "年 · " + vue.toDisplayString(item.exam_type) + " · " + vue.toDisplayString(item.section),
-                        1
-                        /* TEXT */
-                      ),
-                      vue.createElementVNode("p", { class: "example-english" }, [
-                        vue.createElementVNode("rich-text", {
-                          nodes: $setup.formatHighlight(item.sentence)
-                        }, null, 8, ["nodes"])
-                      ])
-                    ]);
-                  }),
-                  128
-                  /* KEYED_FRAGMENT */
-                ))
-              ]),
-              $setup.examSentences.length > 3 && !$setup.showAllExamSentences ? (vue.openBlock(), vue.createElementBlock("view", {
-                key: 0,
-                class: "center-action-row"
-              }, [
-                vue.createElementVNode(
-                  "button",
-                  {
-                    class: "btn-solid btn-inline-action btn-inline-standalone",
-                    onClick: _cache[5] || (_cache[5] = ($event) => $setup.showAllExamSentences = true)
-                  },
-                  " 查看全部 " + vue.toDisplayString($setup.examSentences.length) + " 条 ",
-                  1
-                  /* TEXT */
-                )
-              ])) : vue.createCommentVNode("v-if", true)
-            ],
-            64
-            /* STABLE_FRAGMENT */
-          )) : (vue.openBlock(), vue.createElementBlock("p", {
-            key: 3,
-            class: "no-examples"
-          }, "暂无真题句子"))
-        ])
-      ]),
-      $setup.displayExamSentences.length > 0 && $setup.word.defs && $setup.word.defs.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 3,
-        class: "form-item"
-      }, [
-        vue.createElementVNode("view", { class: "soft-card-title" }, "真题练一练"),
-        vue.createElementVNode("view", { class: "example-container" }, [
-          vue.createElementVNode("view", { class: "exam-train-card" }, [
-            vue.createElementVNode("p", { class: "example-english" }, [
-              vue.createElementVNode("rich-text", {
-                nodes: $setup.formatHighlight($setup.examQuizSentence)
-              }, null, 8, ["nodes"])
-            ]),
-            vue.createElementVNode("p", { class: "example-chinese exam-train-tip" }, "判断这句更接近哪个义项"),
-            vue.createElementVNode("view", { class: "exam-train-options" }, [
-              (vue.openBlock(true), vue.createElementBlock(
-                vue.Fragment,
-                null,
-                vue.renderList($setup.word.defs.slice(0, 4), (item, idx) => {
-                  return vue.openBlock(), vue.createElementBlock("view", {
-                    key: `quiz-${idx}`,
-                    class: vue.normalizeClass(["exam-train-option", { active: $setup.examQuizSelected === idx }]),
-                    onClick: ($event) => $setup.selectExamQuiz(idx)
-                  }, [
-                    vue.createElementVNode(
-                      "text",
-                      { class: "exam-train-option-label" },
-                      vue.toDisplayString($setup.getDefTypeLabel(item) || "常用义"),
-                      1
-                      /* TEXT */
-                    ),
-                    vue.createElementVNode(
-                      "text",
-                      { class: "exam-train-option-text" },
-                      vue.toDisplayString(item.pos || "") + " " + vue.toDisplayString(item.trans || ""),
-                      1
-                      /* TEXT */
-                    )
-                  ], 10, ["onClick"]);
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              ))
-            ]),
-            $setup.examQuizSelected !== null ? (vue.openBlock(), vue.createElementBlock(
-              "view",
-              {
-                key: 0,
-                class: "exam-train-result"
-              },
-              " 推荐义项：" + vue.toDisplayString($setup.examQuizAnswerText),
-              1
-              /* TEXT */
-            )) : vue.createCommentVNode("v-if", true)
-          ])
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      vue.createElementVNode("view", { class: "form-item" }, [
-        vue.createElementVNode("view", { class: "section-header" }, [
-          vue.createElementVNode("view", { class: "soft-card-title" }, "例句")
-        ]),
-        vue.createElementVNode("view", { class: "example-container" }, [
-          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "detail-placeholder-block"
-          }, "加载中…")) : $setup.word.examples && $setup.word.examples.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "examples-list"
-          }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.word.examples, (item, index) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: index,
-                  class: "example-item"
-                }, [
-                  vue.createElementVNode("p", { class: "example-english" }, [
-                    vue.createElementVNode("rich-text", {
-                      nodes: $setup.formatHighlight(item.english)
-                    }, null, 8, ["nodes"])
-                  ]),
-                  vue.createElementVNode("p", { class: "example-chinese" }, [
-                    vue.createElementVNode("rich-text", {
-                      nodes: $setup.formatHighlight(item.chinese)
-                    }, null, 8, ["nodes"])
-                  ])
-                ]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])) : !$setup.fromWordbookMode && $setup.example ? (vue.openBlock(), vue.createElementBlock(
-            "p",
-            {
-              key: 2,
-              class: "example"
-            },
-            vue.toDisplayString($setup.example),
-            1
-            /* TEXT */
-          )) : (vue.openBlock(), vue.createElementBlock("p", {
-            key: 3,
-            class: "no-examples"
-          }, "暂无例句"))
-        ]),
-        vue.createElementVNode("view", { class: "center-action-row" }, [
-          vue.createElementVNode("button", {
-            onClick: $setup.generateExample,
-            class: "btn-solid btn-inline-action"
-          }, "重新生成")
-        ])
-      ]),
-      vue.createElementVNode("view", { class: "form-item" }, [
-        vue.createElementVNode("view", { class: "section-header" }, [
-          vue.createElementVNode("view", { class: "soft-card-title" }, "近义词")
-        ]),
-        vue.createElementVNode("view", { class: "example-container" }, [
-          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "detail-placeholder-block"
-          }, "加载中…")) : $setup.word.synonyms && $setup.word.synonyms.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "examples-list"
-          }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.word.synonyms, (item, index) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: index,
-                  class: "example-item synonym-item"
-                }, [
-                  vue.createElementVNode("view", { class: "synonym-header" }, [
-                    vue.createElementVNode(
-                      "span",
-                      { class: "synonym-word" },
-                      vue.toDisplayString(item.synonym),
-                      1
-                      /* TEXT */
-                    ),
-                    vue.createElementVNode(
-                      "span",
-                      { class: "synonym-chinese" },
-                      vue.toDisplayString(item.chinese),
-                      1
-                      /* TEXT */
-                    )
-                  ]),
-                  item.example ? (vue.openBlock(), vue.createElementBlock("p", {
-                    key: 0,
-                    class: "example-english"
-                  }, [
-                    vue.createElementVNode("rich-text", {
-                      nodes: $setup.formatHighlight(item.example)
-                    }, null, 8, ["nodes"])
-                  ])) : vue.createCommentVNode("v-if", true),
-                  item.exampleChinese ? (vue.openBlock(), vue.createElementBlock("p", {
-                    key: 1,
-                    class: "example-chinese"
-                  }, [
-                    vue.createElementVNode("rich-text", {
-                      nodes: $setup.formatHighlight(item.exampleChinese)
-                    }, null, 8, ["nodes"])
-                  ])) : vue.createCommentVNode("v-if", true)
-                ]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])) : (vue.openBlock(), vue.createElementBlock("p", {
-            key: 2,
-            class: "no-examples"
-          }, "暂无近义词"))
-        ]),
-        vue.createElementVNode("view", { class: "center-action-row" }, [
-          vue.createElementVNode("button", {
-            onClick: $setup.generateSynonyms,
-            class: "btn-solid btn-inline-action",
-            disabled: $setup.synonymLoading
-          }, vue.toDisplayString($setup.synonymLoading ? "生成中..." : "重新生成"), 9, ["disabled"])
-        ]),
-        $setup.synonymContrastText ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
-          class: "synonym-contrast-box"
-        }, [
-          vue.createElementVNode("view", { class: "exam-tip-title" }, "近义词辨析"),
-          vue.createElementVNode("view", { class: "exam-tip-text" }, [
-            vue.createElementVNode("rich-text", {
-              nodes: $setup.formatHighlight($setup.synonymContrastText)
-            }, null, 8, ["nodes"])
-          ])
-        ])) : vue.createCommentVNode("v-if", true),
-        vue.createElementVNode("view", { class: "center-action-row" }, [
-          vue.createElementVNode("button", {
-            onClick: $setup.generateSynonymContrast,
-            class: "btn-solid btn-inline-action",
-            disabled: $setup.synonymContrastLoading
-          }, vue.toDisplayString($setup.synonymContrastLoading ? "生成中..." : "生成辨析"), 9, ["disabled"])
-        ])
-      ]),
-      vue.createElementVNode("view", { class: "form-item" }, [
-        vue.createElementVNode("view", { class: "section-header" }, [
-          vue.createElementVNode("view", { class: "soft-card-title" }, "反义词")
-        ]),
-        vue.createElementVNode("view", { class: "example-container" }, [
-          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "detail-placeholder-block"
-          }, "加载中…")) : $setup.word.antonyms && $setup.word.antonyms.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "examples-list"
-          }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.word.antonyms, (item, index) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: index,
-                  class: "example-item antonym-item"
-                }, [
-                  vue.createElementVNode("view", { class: "synonym-header" }, [
-                    vue.createElementVNode(
-                      "span",
-                      { class: "synonym-word" },
-                      vue.toDisplayString(item.antonym),
-                      1
-                      /* TEXT */
-                    ),
-                    vue.createElementVNode(
-                      "span",
-                      { class: "synonym-chinese" },
-                      vue.toDisplayString(item.chinese),
-                      1
-                      /* TEXT */
-                    )
-                  ]),
-                  item.example ? (vue.openBlock(), vue.createElementBlock("p", {
-                    key: 0,
-                    class: "example-english"
-                  }, [
-                    vue.createElementVNode("rich-text", {
-                      nodes: $setup.formatHighlight(item.example)
-                    }, null, 8, ["nodes"])
-                  ])) : vue.createCommentVNode("v-if", true),
-                  item.exampleChinese ? (vue.openBlock(), vue.createElementBlock("p", {
-                    key: 1,
-                    class: "example-chinese"
-                  }, [
-                    vue.createElementVNode("rich-text", {
-                      nodes: $setup.formatHighlight(item.exampleChinese)
-                    }, null, 8, ["nodes"])
-                  ])) : vue.createCommentVNode("v-if", true)
-                ]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])) : (vue.openBlock(), vue.createElementBlock("p", {
-            key: 2,
-            class: "no-examples"
-          }, "暂无反义词"))
-        ]),
-        vue.createElementVNode("view", { class: "center-action-row" }, [
-          vue.createElementVNode("button", {
-            onClick: $setup.generateAntonyms,
-            class: "btn-solid btn-inline-action",
-            disabled: $setup.antonymLoading
-          }, vue.toDisplayString($setup.antonymLoading ? "生成中..." : "重新生成"), 9, ["disabled"])
-        ])
-      ]),
-      vue.createElementVNode("view", { class: "form-item" }, [
-        vue.createElementVNode("view", { class: "soft-card-title" }, "词族与搭配"),
-        vue.createElementVNode("view", { class: "example-container" }, [
-          $setup.wordFamily.derivatives.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "examples-list"
-          }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.wordFamily.derivatives, (item, index) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: `der-${index}`,
-                  class: "example-item synonym-item"
-                }, [
-                  vue.createElementVNode("view", { class: "synonym-header" }, [
-                    vue.createElementVNode(
-                      "span",
-                      { class: "synonym-word" },
-                      vue.toDisplayString(item.word),
-                      1
-                      /* TEXT */
-                    ),
-                    vue.createElementVNode(
-                      "span",
-                      { class: "synonym-chinese" },
-                      vue.toDisplayString(item.chinese),
-                      1
-                      /* TEXT */
-                    )
-                  ]),
-                  item.hint ? (vue.openBlock(), vue.createElementBlock(
-                    "p",
-                    {
-                      key: 0,
-                      class: "example-chinese"
-                    },
-                    vue.toDisplayString(item.hint),
-                    1
-                    /* TEXT */
-                  )) : vue.createCommentVNode("v-if", true)
-                ]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])) : (vue.openBlock(), vue.createElementBlock("p", {
-            key: 1,
-            class: "no-examples"
-          }, "暂无词族数据")),
-          $setup.wordFamily.collocations.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 2,
-            class: "collocation-wrap"
-          }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.wordFamily.collocations, (item, idx) => {
-                return vue.openBlock(), vue.createElementBlock(
-                  "text",
-                  {
-                    key: `col-${idx}`,
-                    class: "collocation-chip"
-                  },
-                  vue.toDisplayString(item.phrase) + " · " + vue.toDisplayString(item.chinese),
-                  1
-                  /* TEXT */
-                );
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])) : vue.createCommentVNode("v-if", true),
-          $setup.wordFamily.memory_tip ? (vue.openBlock(), vue.createElementBlock(
-            "p",
-            {
-              key: 3,
-              class: "example-chinese"
-            },
-            vue.toDisplayString($setup.wordFamily.memory_tip),
-            1
-            /* TEXT */
-          )) : vue.createCommentVNode("v-if", true)
-        ]),
-        vue.createElementVNode("view", { class: "center-action-row" }, [
-          vue.createElementVNode("button", {
-            onClick: $setup.generateWordFamilyInfo,
-            class: "btn-solid btn-inline-action",
-            disabled: $setup.wordFamilyLoading
-          }, vue.toDisplayString($setup.wordFamilyLoading ? "生成中..." : "生成词族/搭配"), 9, ["disabled"])
-        ])
-      ]),
-      $setup.wordId && $setup.sameTagWords.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 4,
-        class: "form-item same-tag-section"
-      }, [
-        vue.createElementVNode("label", null, "相关词"),
-        vue.createElementVNode("view", { class: "same-tag-list" }, [
-          (vue.openBlock(true), vue.createElementBlock(
-            vue.Fragment,
-            null,
-            vue.renderList($setup.sameTagWords, (w2) => {
-              return vue.openBlock(), vue.createElementBlock("view", {
-                key: w2.id,
-                class: "same-tag-item",
-                onClick: ($event) => $setup.goToWord(w2.id)
-              }, [
-                vue.createElementVNode(
-                  "text",
-                  { class: "same-tag-eng" },
-                  vue.toDisplayString(w2.english),
-                  1
-                  /* TEXT */
-                ),
-                vue.createElementVNode(
-                  "text",
-                  { class: "same-tag-chi" },
-                  vue.toDisplayString(w2.chinese),
-                  1
-                  /* TEXT */
-                )
-              ], 8, ["onClick"]);
-            }),
-            128
-            /* KEYED_FRAGMENT */
-          ))
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      vue.createElementVNode("view", { class: "footer" }, [
-        $setup.wordId && !$setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("button", {
-          key: 0,
-          onClick: $setup.deleteWord,
-          class: "delete-button"
-        }, "删除")) : vue.createCommentVNode("v-if", true),
-        vue.createElementVNode("button", {
-          onClick: $setup.cancel,
-          class: "cancel-button"
-        }, "取消"),
-        !$setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("button", {
-          key: 1,
-          onClick: $setup.save,
-          class: "save-button"
-        }, "保存")) : vue.createCommentVNode("v-if", true)
-      ])
-    ]);
-  }
-  const PagesWordDetailWordDetail = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$a], ["__scopeId", "data-v-008cde92"], ["__file", "E:/vocal/wordbook_new/pages/word-detail/word-detail.vue"]]);
-  const MASTERED_WORDBOOK_WORDS_KEY = "mastered_wordbook_words_v1";
-  const getMasteredWordbookWords = (wordbookId) => {
-    try {
-      const raw = uni.getStorageSync(MASTERED_WORDBOOK_WORDS_KEY);
-      const data = raw ? JSON.parse(raw) : {};
-      return new Set(data[wordbookId] || []);
-    } catch (e2) {
-      formatAppLog("error", "at src/utils/masteredWordbookWords.js:19", "getMasteredWordbookWords 失败:", e2);
-      return /* @__PURE__ */ new Set();
-    }
-  };
-  const addMasteredWordbookWord = (wordbookId, english) => {
-    try {
-      const raw = uni.getStorageSync(MASTERED_WORDBOOK_WORDS_KEY);
-      const data = raw ? JSON.parse(raw) : {};
-      if (!data[wordbookId])
-        data[wordbookId] = [];
-      if (!data[wordbookId].includes(english)) {
-        data[wordbookId].push(english);
-      }
-      uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(data));
-      formatAppLog("log", "at src/utils/masteredWordbookWords.js:38", "addMasteredWordbookWord: 成功标记", wordbookId, english);
-    } catch (e2) {
-      formatAppLog("error", "at src/utils/masteredWordbookWords.js:40", "addMasteredWordbookWord 失败:", e2);
-    }
-  };
-  const removeMasteredWordbookWord = (wordbookId, english) => {
-    try {
-      const raw = uni.getStorageSync(MASTERED_WORDBOOK_WORDS_KEY);
-      const data = raw ? JSON.parse(raw) : {};
-      if (data[wordbookId]) {
-        data[wordbookId] = data[wordbookId].filter((w2) => w2 !== english);
-      }
-      uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(data));
-      formatAppLog("log", "at src/utils/masteredWordbookWords.js:57", "removeMasteredWordbookWord: 成功取消", wordbookId, english);
-    } catch (e2) {
-      formatAppLog("error", "at src/utils/masteredWordbookWords.js:59", "removeMasteredWordbookWord 失败:", e2);
-    }
-  };
-  const getWordKey = (word) => {
-    if (!word)
-      return "";
-    const english = typeof word === "string" ? word : word.english;
-    return String(english || "").trim().toLowerCase();
-  };
-  const uniqueWordKeys = (list) => {
-    if (!Array.isArray(list))
-      return [];
-    return [...new Set(list.map((item) => getWordKey(item)).filter(Boolean))];
-  };
-  const getTodayKey = () => {
-    const d2 = /* @__PURE__ */ new Date();
-    const m2 = `${d2.getMonth() + 1}`.padStart(2, "0");
-    const day = `${d2.getDate()}`.padStart(2, "0");
-    return `${d2.getFullYear()}-${m2}-${day}`;
-  };
-  const normalizePlanEntry = (entry = {}) => ({
-    completed: Math.max(0, Number(entry.completed || 0)),
-    learnedKeys: uniqueWordKeys(entry.learnedKeys),
-    roundReviewedKeys: uniqueWordKeys(entry.roundReviewedKeys || entry.completedKeys),
-    todayKey: typeof entry.todayKey === "string" ? entry.todayKey : "",
-    todayKeys: uniqueWordKeys(entry.todayKeys),
-    updatedAt: Number(entry.updatedAt || Date.now())
-  });
-  const filterWordsByKeys = (list, keySet) => {
-    const set = keySet instanceof Set ? keySet : new Set(keySet || []);
-    return (list || []).filter((item) => set.has(getWordKey(item)));
-  };
-  const shuffleList = (list) => {
-    const arr = Array.isArray(list) ? [...list] : [];
-    for (let i2 = arr.length - 1; i2 > 0; i2--) {
-      const j2 = Math.floor(Math.random() * (i2 + 1));
-      [arr[i2], arr[j2]] = [arr[j2], arr[i2]];
-    }
-    return arr;
-  };
-  const getReviewProgressKey = () => {
-    const bookId = typeof uni !== "undefined" ? uni.getStorageSync("currentWordbook") || "self" : "self";
-    return `review_progress_${bookId}`;
-  };
-  const REVIEW_PLAN_KEY = "reviewPlanByBook_v2";
-  const loadPlanStore = () => {
-    try {
-      const raw = uni.getStorageSync(REVIEW_PLAN_KEY);
-      if (!raw)
-        return {};
-      if (typeof raw === "string") {
-        const parsed = JSON.parse(raw);
-        return parsed && typeof parsed === "object" ? parsed : {};
-      }
-      return raw && typeof raw === "object" ? raw : {};
-    } catch (_2) {
-      return {};
-    }
-  };
-  const savePlanStore = (obj) => {
-    try {
-      uni.setStorageSync(REVIEW_PLAN_KEY, JSON.stringify(obj || {}));
-    } catch (_2) {
-    }
-  };
-  const getPlanEntry = (bookId) => {
-    const store = loadPlanStore();
-    return normalizePlanEntry(store[bookId] || {});
-  };
-  const savePlanEntry = (bookId, entry) => {
-    const store = loadPlanStore();
-    const next = normalizePlanEntry(entry);
-    store[bookId] = next;
-    savePlanStore(store);
-    return next;
-  };
-  const interleaveOldWords = (freshWords, oldWords, count) => {
-    const fresh = shuffleList(freshWords).map((item) => ({ ...item, __isOldReview: false }));
-    const old = shuffleList(oldWords).map((item) => ({ ...item, __isOldReview: true }));
-    const result = [];
-    const step = Math.max(2, Math.round(fresh.length / Math.max(old.length, 1)));
-    let freshIndex = 0;
-    let oldIndex = 0;
-    while (result.length < count && (freshIndex < fresh.length || oldIndex < old.length)) {
-      let pushedFresh = 0;
-      while (freshIndex < fresh.length && pushedFresh < step && result.length < count) {
-        result.push(fresh[freshIndex++]);
-        pushedFresh++;
-      }
-      if (oldIndex < old.length && result.length < count) {
-        result.push(old[oldIndex++]);
-      }
-    }
-    return result.slice(0, count);
-  };
-  const getOldReviewQuota = (count, oldPoolSize, newPoolSize) => {
-    if (oldPoolSize <= 0)
-      return 0;
-    if (newPoolSize <= 0)
-      return Math.min(count, oldPoolSize);
-    return Math.min(oldPoolSize, Math.max(2, Math.min(count - 1, Math.round(count * 0.25))));
-  };
-  const _sfc_main$9 = {
-    __name: "review",
-    setup(__props, { expose: __expose }) {
-      __expose();
-      const showSettings = vue.ref(false);
-      const showModeSelector = vue.ref(false);
-      const showSortSelector = vue.ref(false);
-      const showCountSelector = vue.ref(false);
-      const showDifficultySelector = vue.ref(false);
-      const reviewStarted = vue.ref(false);
-      const reviewFinished = vue.ref(false);
-      const settings = vue.ref({
-        mode: "choice",
-        sortBy: "smart",
-        count: 20
-      });
-      const reviewWords = vue.ref([]);
-      const currentIndex = vue.ref(0);
-      const currentWord = vue.ref(null);
-      const currentOptions = vue.ref([]);
-      const fillOptions = vue.ref([]);
-      const currentFillSentenceChinese = vue.ref("");
-      const spellInput = vue.ref("");
-      const escapeRegExp = (s2) => String(s2 || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const formatHighlight = (text) => {
-        if (!text)
-          return "";
-        let formattedText = text.replace(/\*\*(.*?)\*\*/g, function(match, word) {
-          return `<span style="color: #FF85A1; font-weight: bold;">${word}</span>`;
-        });
-        if (currentWord.value && currentWord.value.english) {
-          const targetWord = currentWord.value.english;
-          const targetRegex = new RegExp(`\\b(${escapeRegExp(targetWord)})\\b`, "gi");
-          formattedText = formattedText.replace(targetRegex, `<span style="color: #FF85A1; font-weight: bold;">$1</span>`);
-        }
-        return formattedText;
-      };
-      const currentSentence = vue.ref("");
-      const fillAnswer = vue.ref("");
-      const aiSentence = vue.ref("");
-      const userTranslation = vue.ref("");
-      const aiResult = vue.ref(null);
-      const isGenerating = vue.ref(false);
-      const isSubmitting = vue.ref(false);
-      const formatAIPhighlight = (text) => {
-        if (!text)
-          return "";
-        let formattedText = text;
-        if (currentWord.value && currentWord.value.english) {
-          const targetWord = currentWord.value.english;
-          const targetRegex = new RegExp(`\\b(${escapeRegExp(targetWord)})\\b`, "gi");
-          formattedText = formattedText.replace(targetRegex, `<span style="color: #FF85A1; font-weight: bold; background-color: #FFF0F3; padding: 2px 4px; border-radius: 4px;">$1</span>`);
-        }
-        return formattedText;
-      };
-      const selectedOption = vue.ref("");
-      const showResult = vue.ref(false);
-      const showWrongFeedback = vue.ref(false);
-      const correctCount = vue.ref(0);
-      const wrongCount = vue.ref(0);
-      const wrongWords = vue.ref([]);
-      const lastReviewResult = vue.ref(null);
-      const showResumeModal = vue.ref(false);
-      const hasProgress = vue.ref(false);
-      const activeSettingCard = vue.ref("mode");
-      const dashboardDone = vue.ref(0);
-      const dashboardTotal = vue.ref(0);
-      const bookTotalWords = vue.ref(0);
-      const totalReviewedWords = vue.ref(0);
-      const todayReviewed = vue.ref(0);
-      const learnedUniqueWords = vue.ref(0);
-      const dashboardSnapshot = vue.ref({ dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 });
-      const showMasteredConfirm = vue.ref(false);
-      const reviewPreset = vue.ref("due");
-      const sessionNewCount = vue.ref(0);
-      const sessionOldCount = vue.ref(0);
-      const recommendedReviewStage = vue.ref("new");
-      const recommendedReviewState = vue.ref({
-        newWords: [],
-        wrongWords: [],
-        oldWords: [],
-        currentStage: "new",
-        newCompleted: false,
-        wrongCompleted: false,
-        oldCompleted: false
-      });
-      const getSettingsKey = () => `reviewSettings_${getCurrentBookId()}`;
-      const getLastReviewResultKey = () => `lastReviewResult_${getCurrentBookId()}`;
-      const getCurrentBookId = () => getCurrentWordbook() || "self";
-      const saveReviewProgress = () => {
-        if (!reviewStarted.value || reviewFinished.value || reviewWords.value.length === 0)
-          return;
-        uni.setStorageSync(getReviewProgressKey(), {
-          reviewWords: reviewWords.value,
-          currentIndex: currentIndex.value,
-          correctCount: correctCount.value,
-          wrongCount: wrongCount.value,
-          wrongWords: [...wrongWords.value],
-          settings: { ...settings.value },
-          reviewPreset: reviewPreset.value,
-          sessionNewCount: sessionNewCount.value,
-          sessionOldCount: sessionOldCount.value,
-          recommendedReviewState: { ...recommendedReviewState.value }
-        });
-        hasProgress.value = true;
-      };
-      const clearReviewProgress = () => {
-        uni.removeStorageSync(getReviewProgressKey());
-        hasProgress.value = false;
-      };
-      const loadReviewProgress = () => {
-        try {
-          const saved = uni.getStorageSync(getReviewProgressKey());
-          return saved && saved.reviewWords && saved.reviewWords.length > 0 ? saved : null;
-        } catch (e2) {
-          return null;
-        }
-      };
-      const resumeReview = () => {
-        const saved = loadReviewProgress();
-        if (!saved)
-          return;
-        reviewWords.value = saved.reviewWords;
-        currentIndex.value = saved.currentIndex;
-        correctCount.value = saved.correctCount;
-        wrongCount.value = saved.wrongCount;
-        wrongWords.value = saved.wrongWords || [];
-        settings.value = saved.settings || settings.value;
-        reviewPreset.value = saved.reviewPreset || "due";
-        sessionNewCount.value = Number(saved.sessionNewCount || 0);
-        sessionOldCount.value = Number(saved.sessionOldCount || 0);
-        if (saved.recommendedReviewState) {
-          recommendedReviewState.value = saved.recommendedReviewState;
-        }
-        reviewStarted.value = true;
-        reviewFinished.value = false;
-        showResumeModal.value = false;
-        syncDashboardProgress();
-        loadCurrentQuestion();
-      };
-      const discardReview = () => {
-        clearReviewProgress();
-        showResumeModal.value = false;
-        syncDashboardProgress();
-      };
-      const checkProgress = () => {
-        hasProgress.value = !!loadReviewProgress();
-        syncDashboardProgress();
-      };
-      const getCurrentBookTotalWords = async () => {
-        const book = getCurrentBookId();
-        try {
-          if (book === "self") {
-            const all = await db.getAllWords();
-            return Array.isArray(all) ? all.length : 0;
-          }
-          if (isLocalWordbookKey(book)) {
-            const list2 = await loadLocalWordbook(book);
-            return Array.isArray(list2) ? list2.length : 0;
-          }
-          const list = getWordbookWords(book) || [];
-          return Array.isArray(list) ? list.length : 0;
-        } catch (_2) {
-          return 0;
-        }
-      };
-      const getCurrentBookWordPool2 = async () => {
-        const book = getCurrentBookId();
-        if (book === "self") {
-          return await db.getAllWords();
-        }
-        if (isLocalWordbookKey(book)) {
-          const list = await loadLocalWordbook(book);
-          const dictLookup = await getWordBriefBatch(list.map((w2) => w2.english));
-          return list.map((w2) => {
-            const v2 = dictLookup[(w2.english || "").trim().toLowerCase()];
-            const chinese = v2 && typeof v2 === "object" && v2.chinese != null ? String(v2.chinese).trim() : (typeof v2 === "string" ? v2 : "").trim();
-            return {
-              id: null,
-              english: w2.english,
-              chinese,
-              importance: w2.importance,
-              examples: [],
-              synonyms: [],
-              antonyms: []
-            };
-          });
-        }
-        return getWordbookWords(book) || [];
-      };
-      const refreshDashboardSnapshot = async () => {
-        try {
-          const pool = await getCurrentBookWordPool2();
-          dashboardSnapshot.value = getLearningDashboard(pool, getCurrentBookId());
-        } catch (_2) {
-          dashboardSnapshot.value = { dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 };
-        }
-      };
-      const refreshPlanStats = async () => {
-        bookTotalWords.value = await getCurrentBookTotalWords();
-        const bookId = getCurrentBookId();
-        const plan = getPlanEntry(bookId);
-        totalReviewedWords.value = Number(plan.completed || 0);
-        learnedUniqueWords.value = plan.learnedKeys.length;
-        todayReviewed.value = plan.todayKey === getTodayKey() ? plan.todayKeys.length : 0;
-        refreshDashboardSnapshot().catch(() => {
-          dashboardSnapshot.value = { dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 };
-        });
-      };
-      const resetCurrentPlan = () => {
-        savePlanEntry(getCurrentBookId(), {
-          completed: 0,
-          learnedKeys: [],
-          roundReviewedKeys: [],
-          todayKey: getTodayKey(),
-          todayKeys: [],
-          updatedAt: Date.now()
-        });
-        totalReviewedWords.value = 0;
-        learnedUniqueWords.value = 0;
-        todayReviewed.value = 0;
-      };
-      const markWordsReviewed = (words) => {
-        const list = Array.isArray(words) ? words : [words];
-        if (!list.length)
-          return;
-        const bookId = getCurrentBookId();
-        const total = Math.max(0, Number(bookTotalWords.value || 0));
-        const todayKey = getTodayKey();
-        const old = getPlanEntry(bookId);
-        const learnedSet = new Set(old.learnedKeys);
-        const roundSet = new Set(old.roundReviewedKeys);
-        const todaySet = new Set(old.todayKey === todayKey ? old.todayKeys : []);
-        let completed = Number(old.completed || 0);
-        let newWordsCount = 0;
-        let oldWordsCount = 0;
-        for (const item of list) {
-          const key = getWordKey(item);
-          if (!key)
-            continue;
-          const isNew = !learnedSet.has(key);
-          if (isNew)
-            newWordsCount++;
-          else
-            oldWordsCount++;
-          learnedSet.add(key);
-          todaySet.add(key);
-          if (total > 0 && roundSet.size >= total) {
-            roundSet.clear();
-          }
-          if (!roundSet.has(key)) {
-            roundSet.add(key);
-            completed += 1;
-          }
-        }
-        const next = savePlanEntry(bookId, {
-          ...old,
-          completed,
-          learnedKeys: [...learnedSet],
-          roundReviewedKeys: [...roundSet],
-          todayKey,
-          todayKeys: [...todaySet],
-          updatedAt: Date.now()
-        });
-        totalReviewedWords.value = next.completed;
-        learnedUniqueWords.value = next.learnedKeys.length;
-        todayReviewed.value = next.todayKeys.length;
-        sessionNewCount.value += newWordsCount;
-        sessionOldCount.value += oldWordsCount;
-      };
-      const syncDashboardProgress = () => {
-        const saved = loadReviewProgress();
-        if (saved && Array.isArray(saved.reviewWords) && saved.reviewWords.length > 0) {
-          dashboardDone.value = Math.min(Number(saved.currentIndex || 0), saved.reviewWords.length);
-          dashboardTotal.value = saved.reviewWords.length;
-        } else {
-          dashboardDone.value = 0;
-          dashboardTotal.value = settings.value.count;
-        }
-      };
-      const dashboardTarget = vue.computed(() => {
-        if (settings.value.difficulty === "hard") {
-          return Math.max(settings.value.count, Math.ceil(settings.value.count * 1.2));
-        }
-        return settings.value.count;
-      });
-      const dashboardPercent = vue.computed(() => {
-        const total = Number(dashboardTotal.value || 0);
-        if (!total)
-          return 0;
-        const pct = Math.round(Number(dashboardDone.value || 0) / total * 100);
-        return Math.max(0, Math.min(100, pct));
-      });
-      const formatRelativeReviewTime = (isoString) => {
-        if (!isoString)
-          return "待计算";
-        const now = /* @__PURE__ */ new Date();
-        const target = new Date(isoString);
-        if (Number.isNaN(target.getTime()))
-          return "待计算";
-        const diffMs = target - now;
-        const absMinutes = Math.round(Math.abs(diffMs) / (1e3 * 60));
-        if (absMinutes < 60)
-          return diffMs >= 0 ? `${Math.max(1, absMinutes)} 分钟后` : `${Math.max(1, absMinutes)} 分钟前`;
-        const absHours = Math.round(absMinutes / 60);
-        if (absHours < 24)
-          return diffMs >= 0 ? `${absHours} 小时后` : `${absHours} 小时前`;
-        const absDays = Math.round(absHours / 24);
-        return diffMs >= 0 ? `${absDays} 天后` : `${absDays} 天前`;
-      };
-      const currentReviewInsight = vue.computed(() => {
-        var _a;
-        if (!isSelfWordbook() || !((_a = currentWord.value) == null ? void 0 : _a.id))
-          return null;
-        const insight = db.getReviewInsight(currentWord.value);
-        if (!insight)
-          return null;
-        return {
-          ...insight,
-          nextReviewText: formatRelativeReviewTime(insight.next_review_time)
-        };
-      });
-      const applyReviewPreview = (isCorrect) => {
-        var _a;
-        if (!((_a = currentWord.value) == null ? void 0 : _a.id))
-          return;
-        const preview = db.previewReviewState(currentWord.value, isCorrect);
-        if (!preview)
-          return;
-        currentWord.value = { ...currentWord.value, ...preview };
-        const idx = Number(currentIndex.value || 0);
-        if (Array.isArray(reviewWords.value) && reviewWords.value[idx]) {
-          reviewWords.value[idx] = { ...reviewWords.value[idx], ...preview };
-        }
-      };
-      const finishedReviewInsight = vue.computed(() => {
-        if (!isSelfWordbook())
-          return null;
-        const list = (reviewWords.value || []).map((word) => db.getReviewInsight(word)).filter(Boolean);
-        if (!list.length)
-          return null;
-        const avgMastery = Math.round(list.reduce((sum, item) => sum + (item.mastery || 0), 0) / list.length);
-        const nextTimes = list.map((item) => item.next_review_time).filter(Boolean).sort();
-        return {
-          avgMastery,
-          scheduledCount: list.length,
-          nextReviewText: nextTimes.length ? formatRelativeReviewTime(nextTimes[0]) : "待计算"
-        };
-      });
-      const completedInRound = vue.computed(() => {
-        const total = Number(bookTotalWords.value || 0);
-        if (total <= 0)
-          return 0;
-        return Number(totalReviewedWords.value || 0) % total;
-      });
-      const currentRound = vue.computed(() => {
-        const total = Number(bookTotalWords.value || 0);
-        if (total <= 0)
-          return 1;
-        return Math.floor(Number(totalReviewedWords.value || 0) / total) + 1;
-      });
-      const currentProgressPercent = vue.computed(() => {
-        const total = Number(bookTotalWords.value || 0);
-        if (total <= 0)
-          return 0;
-        return Math.max(0, Math.min(100, Math.round(Math.min(learnedUniqueWords.value, total) / total * 100)));
-      });
-      const oldReviewDailyTarget = vue.computed(() => {
-        if (!learnedUniqueWords.value)
-          return 0;
-        return Math.min(learnedUniqueWords.value, Math.max(3, Math.round(Number(settings.value.count || 0) * 0.25)));
-      });
-      const dailyNewTarget = vue.computed(() => {
-        return Math.max(1, Number(settings.value.count || 0) - Number(oldReviewDailyTarget.value || 0));
-      });
-      const remainDays = vue.computed(() => {
-        const total = Number(bookTotalWords.value || 0);
-        if (total <= 0)
-          return 0;
-        const remainingWords = Math.max(total - learnedUniqueWords.value, 0);
-        if (remainingWords <= 0)
-          return 0;
-        return Math.max(1, Math.ceil(remainingWords / dailyNewTarget.value));
-      });
-      const remainingNewWords = vue.computed(() => {
-        const total = Number(bookTotalWords.value || 0);
-        if (total <= 0)
-          return 0;
-        return Math.max(total - learnedUniqueWords.value, 0);
-      });
-      const estimatedFinishDate = vue.computed(() => {
-        if (!bookTotalWords.value)
-          return "—";
-        if (remainDays.value <= 0)
-          return "今日";
-        const days = Math.max(remainDays.value, 1);
-        const d2 = /* @__PURE__ */ new Date();
-        d2.setDate(d2.getDate() + days - 1);
-        const m2 = `${d2.getMonth() + 1}`.padStart(2, "0");
-        const day = `${d2.getDate()}`.padStart(2, "0");
-        return `${m2}/${day}`;
-      });
-      const dailyPlanText = vue.computed(() => {
-        if (oldReviewDailyTarget.value > 0) {
-          if (remainDays.value <= 0) {
-            return `新词已学完，当前每日复习 ${oldReviewDailyTarget.value} 词巩固记忆`;
-          }
-          return `每日新学 ${dailyNewTarget.value} 词，穿插复习 ${oldReviewDailyTarget.value} 词，剩余 ${remainDays.value} 天，预计完成 ${estimatedFinishDate.value}`;
-        }
-        return `每日 ${settings.value.count} 词，剩余 ${remainDays.value} 天，预计完成 ${estimatedFinishDate.value}`;
-      });
-      const isTodayTargetDone = vue.computed(() => {
-        const target = Number(settings.value.count || 0);
-        return target > 0 && todayReviewed.value >= target;
-      });
-      const primaryStartText = vue.computed(() => {
-        if (reviewPreset.value === "due")
-          return "开始到期复习";
-        if (reviewPreset.value === "new")
-          return "开始新词学习";
-        if (reviewPreset.value === "wrong")
-          return "开始错词再练";
-        if (reviewPreset.value === "old")
-          return "开始旧词复习";
-        return isTodayTargetDone.value ? "再来一组20" : "开始复习";
-      });
-      const todayProgressPercent = vue.computed(() => {
-        const target = Number(settings.value.count || 0);
-        if (target === 0)
-          return 0;
-        const current = reviewStarted.value ? currentIndex.value + 1 : todayReviewed.value;
-        return Math.min(100, Math.round(current / target * 100));
-      });
-      const recommendedPreset = vue.computed(() => {
-        const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
-        if (newWordsNeeded > 0)
-          return "new";
-        if (dashboardSnapshot.value.mistakeCount > 0)
-          return "wrong";
-        if (dashboardSnapshot.value.dueCount > 0)
-          return "old";
-        return "new";
-      });
-      const recommendedPresetIcon = vue.computed(() => {
-        return "";
-      });
-      const recommendedPresetTitle = vue.computed(() => {
-        const titles = { new: "今日新词", wrong: "错词本", old: "复习旧词" };
-        return titles[recommendedPreset.value] || "今日新词";
-      });
-      const recommendedPresetDesc = vue.computed(() => {
-        const preset = recommendedPreset.value;
-        const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
-        if (preset === "new")
-          return `还需学习 ${newWordsNeeded} 个新词`;
-        if (preset === "wrong")
-          return `${dashboardSnapshot.value.mistakeCount} 个单词需要巩固`;
-        if (preset === "old")
-          return `${dashboardSnapshot.value.dueCount} 个单词待复习`;
-        return "从所有单词中随机抽取";
-      });
-      const otherPresets = vue.computed(() => {
-        const preset = recommendedPreset.value;
-        const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
-        const allPresets = {
-          new: { key: "new", icon: "", title: "今日新词", count: newWordsNeeded },
-          wrong: { key: "wrong", icon: "", title: "错词本", count: dashboardSnapshot.value.mistakeCount },
-          old: { key: "old", icon: "", title: "复习旧词", count: dashboardSnapshot.value.dueCount }
-        };
-        const all = [];
-        for (const [key, item] of Object.entries(allPresets)) {
-          if (key !== preset) {
-            all.push(item);
-          }
-        }
-        return all;
-      });
-      const currentWordbookName = vue.computed(() => {
-        const current = getCurrentWordbook();
-        if (current === "self")
-          return "自用单词";
-        const list = getWordbookListForUI();
-        const hit = list.find((item) => item.id === current);
-        return (hit == null ? void 0 : hit.name) || current || "当前词书";
-      });
-      const openSettings = (key) => {
-        activeSettingCard.value = key;
-        showSettings.value = true;
-      };
-      const sortByText = vue.computed(() => {
-        const map = { smart: "智能推荐", error: "难点先行", new: "新词优先" };
-        return map[settings.value.sortBy] || "智能推荐";
-      });
-      const isLastQuestion = vue.computed(() => {
-        return currentIndex.value >= reviewWords.value.length - 1;
-      });
-      const modeOptions = ["看英文选中文", "看中文选英文", "AI例句填空", "AI语境复习", "拼写填空"];
-      const sortOptions = ["智能推荐", "难点先行", "新词优先"];
-      const countOptions = [20, 30, 40, 50, 80, 100, 200, 500, 800, 1e3];
-      const dailyQuickOptions = [20, 50, 100, 200, 500, 800, 1e3];
-      const modeIndex = vue.computed(() => {
-        const map = { choice: 0, choice_en: 1, fill: 2, ai: 3, spell: 4 };
-        return map[settings.value.mode] ?? 0;
-      });
-      const modeDisplayText = vue.computed(() => {
-        const map = { choice: "看英文选中文", choice_en: "看中文选英文", fill: "AI例句填空", ai: "AI语境复习", spell: "拼写填空" };
-        return map[settings.value.mode] || "看英文选中文";
-      });
-      const sortIndex = vue.computed(() => {
-        const map = { smart: 0, error: 1, new: 2 };
-        return map[settings.value.sortBy] || 0;
-      });
-      const countIndex = vue.computed(() => countOptions.indexOf(settings.value.count) >= 0 ? countOptions.indexOf(settings.value.count) : 3);
-      const onModeChange = (e2) => {
-        const map = ["choice", "choice_en", "fill", "ai", "spell"];
-        settings.value.mode = map[e2.detail.value] || "choice";
-        saveSettings();
-      };
-      const onSortChange = (e2) => {
-        const map = ["smart", "error", "new"];
-        settings.value.sortBy = map[e2.detail.value];
-        saveSettings();
-      };
-      const onCountChange = (e2) => {
-        settings.value.count = countOptions[e2.detail.value];
-        saveSettings();
-      };
-      const setDailyTarget = (n2) => {
-        settings.value.count = Number(n2);
-        saveSettings();
-      };
-      const onDifficultyChange = (difficulty) => {
-        settings.value.difficulty = difficulty;
-        saveSettings();
-      };
-      const openModeSelector = () => {
-        showModeSelector.value = true;
-      };
-      const openSortSelector = () => {
-        showSortSelector.value = true;
-      };
-      const openCountSelector = () => {
-        showCountSelector.value = true;
-      };
-      const openDifficultySelector = () => {
-        showDifficultySelector.value = true;
-      };
-      onLoad((options) => {
-        reviewPreset.value = options && options.preset ? String(options.preset) : "due";
-      });
-      vue.onMounted(() => {
-        loadSettings();
-        loadLastReviewResult();
-        checkProgress();
-        syncDashboardProgress();
-        setTimeout(() => {
-          refreshPlanStats();
-        }, 350);
-      });
-      onShow(() => {
-        loadLastReviewResult();
-        checkProgress();
-        setTimeout(() => {
-          refreshPlanStats();
-        }, 350);
-      });
-      onHide(() => {
-        if (reviewStarted.value && !reviewFinished.value) {
-          setTimeout(() => saveReviewProgress(), 300);
-        }
-      });
-      onUnload(() => {
-        if (reviewStarted.value && !reviewFinished.value) {
-          saveReviewProgress();
-        }
-        try {
-          cleanupExpiredCaches();
-        } catch (error) {
-          logger.warn("Review", "清理缓存失败", error);
-        }
-      });
-      const loadSettings = () => {
-        const saved = uni.getStorageSync(getSettingsKey()) || uni.getStorageSync("reviewSettings");
-        if (saved) {
-          settings.value = saved;
-        }
-      };
-      const saveSettings = () => {
-        uni.setStorageSync(getSettingsKey(), settings.value);
-        syncDashboardProgress();
-        refreshPlanStats();
-      };
-      const loadLastReviewResult = () => {
-        const saved = uni.getStorageSync(getLastReviewResultKey()) || getLatestSession(getCurrentBookId());
-        if (saved) {
-          lastReviewResult.value = saved.accuracy != null ? saved : {
-            correctCount: saved.correctCount || 0,
-            wrongCount: saved.wrongCount || 0,
-            accuracy: Math.round(Number(saved.correctCount || 0) / Math.max(1, Number(saved.reviewedCount || 0)) * 100),
-            wrongWords: []
-          };
-        }
-      };
-      const saveReviewResult = () => {
-        const result = {
-          correctCount: correctCount.value,
-          wrongCount: wrongCount.value,
-          accuracy: Math.round(correctCount.value / (correctCount.value + wrongCount.value || 1) * 100) || 0,
-          wrongWords: wrongWords.value,
-          reviewedCount: correctCount.value + wrongCount.value,
-          preset: reviewPreset.value,
-          newCount: sessionNewCount.value,
-          oldCount: sessionOldCount.value
-        };
-        uni.setStorageSync(getLastReviewResultKey(), result);
-        lastReviewResult.value = result;
-      };
-      const buildPresetQueue = (list, count) => {
-        const preset = reviewPreset.value || "due";
-        if (!Array.isArray(list) || !list.length)
-          return [];
-        if (preset === "new") {
-          const profiles = list.map((item) => getWordProfile(item)).filter(Boolean);
-          const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
-          return shuffleList(newWords.map((p2) => ({ english: p2.english, chinese: p2.chinese }))).slice(0, count);
-        }
-        if (preset === "wrong") {
-          const wrongSet = new Set(getMistakeWords(getCurrentBookId(), true).map((item) => getWordKey(item)));
-          return shuffleList(filterWordsByKeys(list, wrongSet)).slice(0, count);
-        }
-        if (preset === "old") {
-          const dueProfiles = getDueProfilesForWords(list, getCurrentBookId());
-          const filtered = dueProfiles.filter((item) => {
-            const reviewCount = Number(item.review_count || 0);
-            return reviewCount < 3;
-          });
-          const dueSet = new Set(filtered.map((item) => getWordKey(item)));
-          return shuffleList(filterWordsByKeys(list, dueSet)).slice(0, count);
-        }
-        if (preset === "due") {
-          const dueProfiles = getDueProfilesForWords(list, getCurrentBookId());
-          const dueSet = new Set(dueProfiles.map((item) => getWordKey(item)));
-          return shuffleList(filterWordsByKeys(list, dueSet)).slice(0, count);
-        }
-        return [];
-      };
-      const buildBookReviewQueue = async (list, count) => {
-        if (!Array.isArray(list) || !list.length)
-          return [];
-        const bookId = getCurrentBookId();
-        let filteredList = list;
-        if (bookId && bookId !== "self") {
-          try {
-            const masteredSet = getMasteredWordbookWords(bookId);
-            filteredList = list.filter((item) => {
-              const english = (item.english || "").trim().toLowerCase();
-              return !masteredSet.has(english);
-            });
-          } catch (e2) {
-            formatAppLog("error", "at pages/review/review.vue:1230", "buildBookReviewQueue: 过滤已斯单词失败", e2);
-          }
-        }
-        return shuffleList(filteredList).slice(0, count);
-      };
-      const saveSettingsAndStart = () => {
-        saveSettings();
-        showSettings.value = false;
-        startReview();
-      };
-      const startReviewInternal = async (forceCount = null) => {
-        ensureDictWords();
-        const bookId = getCurrentBookId();
-        const oldPlanEntry = getPlanEntry(bookId);
-        oldPlanEntry.todayKey === getTodayKey() ? oldPlanEntry.todayKeys : [];
-        clearReviewProgress();
-        const count = forceCount != null ? Number(forceCount) : Number(settings.value.count || 20);
-        if (recommendedReviewState.value.currentStage && reviewWords.value.length > 0)
-          ;
-        else if (isSelfWordbook()) {
-          if (reviewPreset.value === "due") {
-            reviewWords.value = await db.getReviewWords({
-              sortBy: settings.value.sortBy,
-              count,
-              difficulty: "normal"
-            });
-          } else {
-            const allWords = await db.getAllWords();
-            reviewWords.value = buildPresetQueue(allWords, count);
-          }
-        } else {
-          const list = await getCurrentBookWordPool2();
-          const presetQueue = buildPresetQueue(list, count);
-          reviewWords.value = presetQueue.length ? presetQueue : await buildBookReviewQueue(list, count);
-        }
-        if (reviewWords.value.length === 0) {
-          uni.showToast({
-            title: "没有单词可复习",
-            icon: "none"
-          });
-          return;
-        }
-        reviewStarted.value = true;
-        reviewFinished.value = false;
-        currentIndex.value = 0;
-        correctCount.value = 0;
-        wrongCount.value = 0;
-        wrongWords.value = [];
-        sessionNewCount.value = reviewWords.value.filter((item) => !item.__isOldReview).length;
-        sessionOldCount.value = reviewWords.value.filter((item) => !!item.__isOldReview).length;
-        loadCurrentQuestion();
-      };
-      const startReview = async () => {
-        const progress = loadReviewProgress();
-        if (progress) {
-          resumeReview();
-        } else {
-          await startReviewInternal(null);
-        }
-      };
-      const startExtraRound20 = async () => startReviewInternal(20);
-      const onPrimaryStartClick = async () => {
-        if (isTodayTargetDone.value) {
-          await startExtraRound20();
-          return;
-        }
-        await startReview();
-      };
-      const startRecommendedReview = async () => {
-        const count = Number(settings.value.count || 20);
-        const bookId = getCurrentBookId();
-        recommendedReviewState.value = {
-          newWords: [],
-          wrongWords: [],
-          oldWords: [],
-          currentStage: "new",
-          newCompleted: false,
-          wrongCompleted: false,
-          oldCompleted: false
-        };
-        try {
-          let allWords = [];
-          if (isSelfWordbook()) {
-            allWords = await db.getAllWords();
-          } else {
-            allWords = await getCurrentBookWordPool2();
-          }
-          const profiles = allWords.map((item) => getWordProfile(item)).filter(Boolean);
-          const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
-          recommendedReviewState.value.newWords = shuffleList(newWords.map((p2) => ({ english: p2.english, chinese: p2.chinese }))).slice(0, count);
-          const wrongSet = new Set(getMistakeWords(bookId, true).map((item) => getWordKey(item)));
-          recommendedReviewState.value.wrongWords = shuffleList(filterWordsByKeys(allWords, wrongSet));
-          const dueProfiles = getDueProfilesForWords(allWords, bookId);
-          const oldWordsFiltered = dueProfiles.filter((item) => {
-            const reviewCount = Number(item.review_count || 0);
-            return reviewCount < 3;
-          });
-          const oldSet = new Set(oldWordsFiltered.map((item) => getWordKey(item)));
-          recommendedReviewState.value.oldWords = shuffleList(filterWordsByKeys(allWords, oldSet));
-          reviewPreset.value = "new";
-          reviewWords.value = recommendedReviewState.value.newWords;
-          if (reviewWords.value.length === 0) {
-            await continueRecommendedReview("wrong");
-          } else {
-            await startReviewInternal(null);
-          }
-        } catch (e2) {
-          formatAppLog("error", "at pages/review/review.vue:1374", "startRecommendedReview 失败:", e2);
-          uni.showToast({ title: "加载失败", icon: "none" });
-        }
-      };
-      const continueRecommendedReview = async (nextStage) => {
-        recommendedReviewState.value.currentStage = nextStage;
-        if (nextStage === "wrong") {
-          recommendedReviewState.value.newCompleted = true;
-          reviewPreset.value = "wrong";
-          reviewWords.value = recommendedReviewState.value.wrongWords;
-          if (reviewWords.value.length === 0) {
-            await continueRecommendedReview("old");
-          } else {
-            await startReviewInternal(null);
-          }
-        } else if (nextStage === "old") {
-          recommendedReviewState.value.wrongCompleted = true;
-          reviewPreset.value = "old";
-          reviewWords.value = recommendedReviewState.value.oldWords;
-          if (reviewWords.value.length === 0) {
-            recommendedReviewState.value.oldCompleted = true;
-            recommendedReviewState.value = {
-              newWords: [],
-              wrongWords: [],
-              oldWords: [],
-              currentStage: "",
-              newCompleted: false,
-              wrongCompleted: false,
-              oldCompleted: false
-            };
-            uni.showToast({ title: "推荐复习已完成！", icon: "success" });
-          } else {
-            await startReviewInternal(null);
-          }
-        }
-      };
-      const startPresetReview = async (preset) => {
-        reviewPreset.value = preset;
-        recommendedReviewState.value = {
-          newWords: [],
-          wrongWords: [],
-          oldWords: [],
-          currentStage: "",
-          newCompleted: false,
-          wrongCompleted: false,
-          oldCompleted: false
-        };
-        await startReviewInternal(null);
-      };
-      const prefetchNextWordDetail = (nextIndex) => {
-        const nextWord = reviewWords.value[nextIndex];
-        if (nextWord && nextWord.english) {
-          getWordFullDetail(nextWord.english).catch(() => {
-          });
-        }
-      };
-      const loadCurrentQuestion = async () => {
-        var _a;
-        showResult.value = false;
-        showWrongFeedback.value = false;
-        selectedOption.value = "";
-        userTranslation.value = "";
-        aiResult.value = null;
-        if (currentIndex.value >= reviewWords.value.length) {
-          reviewFinished.value = true;
-          return;
-        }
-        currentWord.value = reviewWords.value[currentIndex.value];
-        prefetchNextWordDetail(currentIndex.value + 1);
-        if ((_a = currentWord.value) == null ? void 0 : _a.english) {
-          try {
-            const detail = await getWordFullDetail(currentWord.value.english);
-            if (detail) {
-              const merged = {
-                ...currentWord.value,
-                chinese: detail.chinese || currentWord.value.chinese,
-                examples: Array.isArray(detail.examples) && detail.examples.length ? detail.examples : currentWord.value.examples || [],
-                synonyms: Array.isArray(detail.synonyms) && detail.synonyms.length ? detail.synonyms : currentWord.value.synonyms || [],
-                antonyms: Array.isArray(detail.antonyms) && detail.antonyms.length ? detail.antonyms : currentWord.value.antonyms || [],
-                defs: Array.isArray(detail.defs) ? detail.defs : currentWord.value.defs || [],
-                exam_tip: detail.exam_tip || currentWord.value.exam_tip || ""
-              };
-              currentWord.value = merged;
-              reviewWords.value[currentIndex.value] = merged;
-            }
-          } catch (_2) {
-          }
-        }
-        spellInput.value = "";
-        if (settings.value.mode === "choice") {
-          await loadChoiceQuestion();
-        } else if (settings.value.mode === "choice_en") {
-          await loadChoiceEnQuestion();
-        } else if (settings.value.mode === "fill") {
-          await loadFillQuestion();
-        } else if (settings.value.mode === "ai") {
-          await loadAIQuestion();
-        } else if (settings.value.mode === "spell")
-          ;
-      };
-      let _dictWordsCache = [];
-      let _dictWordsPromise = null;
-      const ensureDictWords = () => {
-        if (_dictWordsCache.length > 0)
-          return Promise.resolve();
-        if (_dictWordsPromise)
-          return _dictWordsPromise;
-        _dictWordsPromise = getWordListForReview().then((list) => {
-          _dictWordsCache = list || [];
-          _dictWordsPromise = null;
-        }).catch(() => {
-          _dictWordsPromise = null;
-        });
-        return _dictWordsPromise;
-      };
-      const getFormSimilarFromDict = (targetEnglish, count, needChinese) => {
-        if (!targetEnglish || !_dictWordsCache.length)
-          return needChinese ? [] : [];
-        const target = (targetEnglish || "").trim().toLowerCase();
-        const len = target.length;
-        const pool = _dictWordsCache.filter(
-          (item) => item.word && item.chinese && item.word.trim().toLowerCase() !== target
-        ).filter((item) => Math.abs((item.word || "").trim().length - len) <= 2);
-        const capped = pool.length > 3e3 ? pool.slice(0, 3e3) : pool;
-        const scored = capped.map((item) => ({
-          word: (item.word || "").trim(),
-          chinese: (item.chinese || "").trim(),
-          score: formSimilarityScore((item.word || "").trim(), targetEnglish)
-        }));
-        scored.sort((a2, b2) => b2.score - a2.score);
-        const top = scored.slice(0, Math.max(count, 5));
-        const pick = top.length <= count ? top : top.slice(0, 5).sort(() => Math.random() - 0.5).slice(0, count);
-        return needChinese ? pick.map((p2) => ({ word: p2.word, chinese: p2.chinese })) : pick.map((p2) => p2.word);
-      };
-      const loadChoiceQuestion = async () => {
-        await ensureDictWords();
-        const distractors = getFormSimilarFromDict(currentWord.value.english, 3, true);
-        let currentWordOption = { chinese: currentWord.value.chinese, pos: "" };
-        try {
-          const currentDetail = await getWordFullDetail(currentWord.value.english);
-          if (currentDetail) {
-            if (currentDetail.data_json && currentDetail.data_json.phonetic) {
-              currentWord.value.phonetic = currentDetail.data_json.phonetic;
-            }
-            if (currentDetail.defs && currentDetail.defs.length > 0) {
-              const def = currentDetail.defs[0];
-              currentWordOption = {
-                pos: def.pos || "",
-                chinese: def.trans || currentWord.value.chinese
-              };
-            }
-          }
-        } catch (e2) {
-          formatAppLog("error", "at pages/review/review.vue:1550", "获取当前单词释义失败:", e2);
-        }
-        const distractorOptions = [];
-        for (const d2 of distractors) {
-          let option = { pos: "", chinese: d2.chinese };
-          try {
-            const detail = await getWordFullDetail(d2.word);
-            if (detail && detail.defs && detail.defs.length > 0) {
-              const def = detail.defs[0];
-              option = {
-                pos: def.pos || "",
-                chinese: def.trans || d2.chinese
-              };
-            }
-          } catch (e2) {
-            formatAppLog("error", "at pages/review/review.vue:1567", "获取干扰项释义失败:", e2);
-          }
-          distractorOptions.push(option);
-        }
-        const options = [currentWordOption, ...distractorOptions].filter((o2) => o2.chinese);
-        const unique = [];
-        const seen = /* @__PURE__ */ new Set();
-        for (const opt of options) {
-          const key = `${opt.pos}:${opt.chinese}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            unique.push(opt);
-          }
-        }
-        while (unique.length < 4) {
-          const extra = getFormSimilarFromDict(currentWord.value.english, 1, true);
-          if (extra[0]) {
-            let option = { pos: "", chinese: extra[0].chinese };
-            try {
-              const detail = await getWordFullDetail(extra[0].word);
-              if (detail && detail.defs && detail.defs.length > 0) {
-                const def = detail.defs[0];
-                option = {
-                  pos: def.pos || "",
-                  chinese: def.trans || extra[0].chinese
-                };
-              }
-            } catch (e2) {
-            }
-            const key = `${option.pos}:${option.chinese}`;
-            if (!seen.has(key)) {
-              unique.push(option);
-              seen.add(key);
-            }
-          } else {
-            break;
-          }
-        }
-        currentOptions.value = unique.slice(0, 4).sort(() => Math.random() - 0.5);
-      };
-      const levenshtein = (a2, b2) => {
-        if (!a2 || !b2)
-          return Math.max((a2 || "").length, (b2 || "").length);
-        const m2 = a2.length, n2 = b2.length;
-        const dp = Array(m2 + 1).fill(null).map(() => Array(n2 + 1).fill(0));
-        for (let i2 = 0; i2 <= m2; i2++)
-          dp[i2][0] = i2;
-        for (let j2 = 0; j2 <= n2; j2++)
-          dp[0][j2] = j2;
-        for (let i2 = 1; i2 <= m2; i2++) {
-          for (let j2 = 1; j2 <= n2; j2++) {
-            const cost = a2[i2 - 1].toLowerCase() === b2[j2 - 1].toLowerCase() ? 0 : 1;
-            dp[i2][j2] = Math.min(dp[i2 - 1][j2] + 1, dp[i2][j2 - 1] + 1, dp[i2 - 1][j2 - 1] + cost);
-          }
-        }
-        return dp[m2][n2];
-      };
-      const formSimilarityScore = (eng, target) => {
-        if (!eng || !target)
-          return 0;
-        const a2 = eng.trim().toLowerCase();
-        const b2 = target.trim().toLowerCase();
-        if (a2 === b2)
-          return -1e9;
-        let score = 0;
-        const lenDiff = Math.abs(a2.length - b2.length);
-        if (lenDiff === 0)
-          score += 10;
-        else if (lenDiff === 1)
-          score += 5;
-        if (a2.slice(0, 2) === b2.slice(0, 2))
-          score += 4;
-        if (a2.length >= 2 && b2.length >= 2 && a2.slice(-2) === b2.slice(-2))
-          score += 4;
-        score -= levenshtein(a2, b2);
-        return score;
-      };
-      const getFormSimilarDistractors = (targetEnglish, wordList, count = 3) => {
-        const pool = (wordList || []).filter((w2) => {
-          var _a;
-          return w2.id !== ((_a = currentWord.value) == null ? void 0 : _a.id) && w2.english;
-        }).map((w2) => typeof w2.english === "string" ? w2.english.trim() : "").filter((eng) => eng && eng.toLowerCase() !== (targetEnglish || "").trim().toLowerCase());
-        if (pool.length === 0)
-          return [];
-        const scored = pool.map((eng) => ({ eng, score: formSimilarityScore(eng, targetEnglish) }));
-        scored.sort((x2, y2) => y2.score - x2.score);
-        const top = scored.slice(0, Math.max(count, scored.length));
-        const pick = top.length <= count ? top : top.slice(0, 5).sort(() => Math.random() - 0.5).slice(0, count);
-        return pick.map((p2) => p2.eng);
-      };
-      const loadChoiceEnQuestion = async () => {
-        var _a;
-        await ensureDictWords();
-        const target = (_a = currentWord.value) == null ? void 0 : _a.english;
-        const distractors = getFormSimilarFromDict(target, 3, false);
-        const options = [target, ...distractors].filter(Boolean);
-        const unique = [...new Set(options)];
-        while (unique.length < 4) {
-          const extra = getFormSimilarFromDict(target, 1, false);
-          if (extra[0] && !unique.includes(extra[0]))
-            unique.push(extra[0]);
-          else
-            break;
-        }
-        currentOptions.value = unique.slice(0, 4).sort(() => Math.random() - 0.5);
-      };
-      const loadFillQuestion = async () => {
-        const examples = currentWord.value.examples || [];
-        currentFillSentenceChinese.value = "";
-        if (examples.length === 0) {
-          currentSentence.value = "暂无例句";
-          fillAnswer.value = currentWord.value.english;
-          fillOptions.value = [currentWord.value.english];
-          return;
-        }
-        const randomExample = examples[Math.floor(Math.random() * examples.length)];
-        const sentence = randomExample.english;
-        const targetWord = currentWord.value.english;
-        currentFillSentenceChinese.value = randomExample.chinese || "";
-        const blankSentence = sentence.replace(new RegExp(`\\b${escapeRegExp(targetWord)}\\b`, "gi"), "____");
-        currentSentence.value = blankSentence;
-        fillAnswer.value = targetWord;
-        await ensureDictWords();
-        const otherWords = getFormSimilarFromDict(targetWord, 3, false);
-        fillOptions.value = [...otherWords, targetWord].filter(Boolean);
-        const unique = [...new Set(fillOptions.value)];
-        while (unique.length < 4) {
-          const extra = getFormSimilarFromDict(targetWord, 1, false);
-          if (extra[0] && !unique.includes(extra[0]))
-            unique.push(extra[0]);
-          else
-            break;
-        }
-        fillOptions.value = unique.slice(0, 4).sort(() => Math.random() - 0.5);
-      };
-      const loadAIQuestion = async () => {
-        isGenerating.value = true;
-        aiSentence.value = "";
-        try {
-          const word = currentWord.value.english;
-          const prompt = `你是一个考研英语名师。请为单词 '${word}' 生成一句符合考研难度、简短且地道的英文例句。只需返回纯英文句子，不要任何解释和标点符号外的多余字符。`;
-          const response = await aiService.callAPI(prompt);
-          aiSentence.value = response.trim();
-        } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1717", "生成例句失败:", error);
-          aiSentence.value = "生成例句失败，请重试";
-        } finally {
-          isGenerating.value = false;
-        }
-      };
-      const queueRetryWord = () => {
-        const key = getWordKey(currentWord.value);
-        if (!key)
-          return;
-        const retryCount = Number(currentWord.value.__retryCount || 0);
-        if (retryCount >= 1)
-          return;
-        reviewWords.value.push({
-          ...currentWord.value,
-          __retryCount: retryCount + 1,
-          __isOldReview: true,
-          __fromWrongRetry: true
-        });
-      };
-      const applyReviewOutcome = async (isCorrect, wrongPayload = null) => {
-        recordReviewOutcome(currentWord.value, isCorrect, {
-          bookId: getCurrentBookId(),
-          mode: settings.value.mode,
-          source: "review"
-        });
-        if (currentWord.value.id) {
-          await db.updateErrorRate(currentWord.value.id, isCorrect);
-          applyReviewPreview(isCorrect);
-        }
-        if (isCorrect) {
-          correctCount.value++;
-          return;
-        }
-        wrongCount.value++;
-        queueRetryWord();
-        if (wrongPayload) {
-          wrongWords.value.push(wrongPayload);
-        }
-      };
-      const submitAnswer = async () => {
-        if (!userTranslation.value.trim() || isSubmitting.value)
-          return;
-        isSubmitting.value = true;
-        try {
-          const word = currentWord.value.english;
-          const sentence = aiSentence.value;
-          const userInput = userTranslation.value.trim();
-          const prompt = `目标单词：'${word}'。英文例句：'${sentence}'。学生输入该词在此句中的中文意思：'${userInput}'。
-
-请以宽松、包容的标准判分：只要学生表达的意思与目标词在本句中的含义相近、同义、或合理意译，就应判为正确（is_correct: true）。只有明显错误、完全偏离才判错。
-请同时给出该英文例句的完整中文翻译。
-严格返回 JSON，不要其他内容：{"is_correct": true或false, "explanation": "简短解析", "sentence_chinese": "整句中文翻译"}`;
-          const response = await aiService.callAPI(prompt);
-          const jsonMatch = response.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            aiResult.value = {
-              is_correct: !!parsed.is_correct,
-              explanation: parsed.explanation || "解析失败",
-              sentence_chinese: parsed.sentence_chinese || ""
-            };
-          } else {
-            aiResult.value = { is_correct: false, explanation: "解析失败，请重试", sentence_chinese: "" };
-          }
-          showResult.value = true;
-          markWordsReviewed(currentWord.value);
-          if (aiResult.value.is_correct) {
-            await applyReviewOutcome(true);
-          } else {
-            await applyReviewOutcome(false, {
-              english: currentWord.value.english,
-              chinese: currentWord.value.chinese,
-              yourAnswer: userInput,
-              explanation: aiResult.value.explanation,
-              synonyms: currentWord.value.synonyms || []
-            });
-          }
-        } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1806", "提交答案失败:", error);
-          uni.showToast({
-            title: "AI判卷失败，请重试",
-            icon: "none"
-          });
-        } finally {
-          isSubmitting.value = false;
-        }
-      };
-      const handleChoice = async (option) => {
-        selectedOption.value = option;
-        showResult.value = true;
-        markWordsReviewed(currentWord.value);
-        const optionChinese = typeof option === "object" ? option.chinese : option;
-        let isCorrect = false;
-        if (currentWord.value.defs && currentWord.value.defs.length > 0) {
-          const firstDef = currentWord.value.defs[0];
-          isCorrect = optionChinese === (firstDef.trans || currentWord.value.chinese);
-        } else {
-          isCorrect = optionChinese === currentWord.value.chinese;
-        }
-        if (isCorrect) {
-          await applyReviewOutcome(true);
-        } else {
-          await applyReviewOutcome(false, {
-            english: currentWord.value.english,
-            chinese: currentWord.value.chinese,
-            yourAnswer: optionChinese,
-            synonyms: currentWord.value.synonyms || []
-          });
-        }
-      };
-      const handleChoiceEn = async (option) => {
-        selectedOption.value = option;
-        showResult.value = true;
-        markWordsReviewed(currentWord.value);
-        const correct = (option || "").trim().toLowerCase() === (currentWord.value.english || "").trim().toLowerCase();
-        if (correct) {
-          await applyReviewOutcome(true);
-        } else {
-          await applyReviewOutcome(false, {
-            english: currentWord.value.english,
-            chinese: currentWord.value.chinese,
-            yourAnswer: option,
-            synonyms: currentWord.value.synonyms || []
-          });
-        }
-      };
-      const handleFillChoice = async (option) => {
-        selectedOption.value = option;
-        showResult.value = true;
-        markWordsReviewed(currentWord.value);
-        if (option === fillAnswer.value) {
-          await applyReviewOutcome(true);
-        } else {
-          await applyReviewOutcome(false, {
-            english: currentWord.value.english,
-            chinese: currentWord.value.chinese,
-            yourAnswer: option,
-            correctAnswer: fillAnswer.value,
-            synonyms: currentWord.value.synonyms || []
-          });
-        }
-      };
-      const handleSpellSubmit = async () => {
-        const input = (spellInput.value || "").trim().toLowerCase();
-        if (!input)
-          return;
-        const correct = input === (currentWord.value.english || "").trim().toLowerCase();
-        showResult.value = true;
-        markWordsReviewed(currentWord.value);
-        if (correct) {
-          await applyReviewOutcome(true);
-        } else {
-          await applyReviewOutcome(false, {
-            english: currentWord.value.english,
-            chinese: currentWord.value.chinese,
-            yourAnswer: spellInput.value.trim(),
-            correctAnswer: currentWord.value.english,
-            synonyms: currentWord.value.synonyms || []
-          });
-        }
-      };
-      const nextQuestion = () => {
-        if (currentIndex.value >= reviewWords.value.length - 1) {
-          finishReview();
-          return;
-        }
-        currentIndex.value++;
-        saveReviewProgress();
-        loadCurrentQuestion();
-      };
-      const finishReview = async () => {
-        reviewFinished.value = true;
-        clearReviewProgress();
-        saveReviewResult();
-        logStudySession({
-          bookId: getCurrentBookId(),
-          mode: settings.value.mode,
-          preset: reviewPreset.value,
-          reviewedCount: correctCount.value + wrongCount.value,
-          correctCount: correctCount.value,
-          wrongCount: wrongCount.value,
-          newCount: sessionNewCount.value,
-          oldCount: sessionOldCount.value,
-          mistakeCount: wrongWords.value.length
-        });
-        refreshPlanStats();
-        if (recommendedReviewState.value.currentStage === "new" && !recommendedReviewState.value.newCompleted) {
-          await continueRecommendedReview("wrong");
-        } else if (recommendedReviewState.value.currentStage === "wrong" && !recommendedReviewState.value.wrongCompleted) {
-          await continueRecommendedReview("old");
-        }
-      };
-      const restartReview = () => {
-        onPrimaryStartClick();
-      };
-      const goBack = () => {
-        uni.navigateBack();
-      };
-      const goToWordDetail = () => {
-        if (!currentWord.value) {
-          uni.showToast({ title: "无法查看详情", icon: "none" });
-          return;
-        }
-        saveReviewProgress();
-        uni.navigateTo({
-          url: `/pages/word-detail/word-detail?english=${encodeURIComponent(currentWord.value.english)}&source=masterdb`,
-          fail: (err) => {
-            formatAppLog("error", "at pages/review/review.vue:1959", "跳转失败:", err);
-            uni.showToast({ title: "跳转失败", icon: "none" });
-          }
-        });
-      };
-      const markCurrentWordAsMastered = async () => {
-        if (!currentWord.value || !currentWord.value.english) {
-          uni.showToast({ title: "无法斩掉该单词", icon: "none" });
-          showMasteredConfirm.value = false;
-          return;
-        }
-        try {
-          const bookId = getCurrentBookId();
-          if (bookId && bookId !== "self") {
-            formatAppLog("log", "at pages/review/review.vue:1978", "markCurrentWordAsMastered: 词书单词，存储到本地");
-            addMasteredWordbookWord(bookId, currentWord.value.english);
-          } else if (currentWord.value.id) {
-            formatAppLog("log", "at pages/review/review.vue:1982", "markCurrentWordAsMastered: 自用词库单词，使用id斯掉");
-            await db.masterWord(currentWord.value.id);
-          } else {
-            formatAppLog("log", "at pages/review/review.vue:1986", "markCurrentWordAsMastered: 其他情况，使用english斯掉");
-            await db.masterWordByEnglish(currentWord.value.english);
-          }
-          formatAppLog("log", "at pages/review/review.vue:1990", "markCurrentWordAsMastered: 斯掉成功");
-          uni.showToast({ title: "已斯掉！", icon: "success" });
-          showMasteredConfirm.value = false;
-          setTimeout(() => {
-            nextQuestion();
-          }, 500);
-        } catch (error) {
-          formatAppLog("error", "at pages/review/review.vue:1999", "markCurrentWordAsMastered: 斯掉失败", error);
-          uni.showToast({ title: "斯掉失败: " + (error.message || "未知错误"), icon: "none" });
-          showMasteredConfirm.value = false;
-        }
-      };
-      const backToStartScreen = () => {
-        saveReviewProgress();
-        checkProgress();
-        reviewStarted.value = false;
-        reviewFinished.value = false;
-        selectedOption.value = "";
-        showResult.value = false;
-        showWrongFeedback.value = false;
-        userTranslation.value = "";
-        aiResult.value = null;
-      };
-      onBackPress(() => {
-        if (reviewStarted.value && !reviewFinished.value) {
-          backToStartScreen();
-          return true;
-        }
-        return false;
-      });
-      const __returned__ = { showSettings, showModeSelector, showSortSelector, showCountSelector, showDifficultySelector, reviewStarted, reviewFinished, settings, reviewWords, currentIndex, currentWord, currentOptions, fillOptions, currentFillSentenceChinese, spellInput, escapeRegExp, formatHighlight, currentSentence, fillAnswer, aiSentence, userTranslation, aiResult, isGenerating, isSubmitting, formatAIPhighlight, selectedOption, showResult, showWrongFeedback, correctCount, wrongCount, wrongWords, lastReviewResult, showResumeModal, hasProgress, activeSettingCard, dashboardDone, dashboardTotal, bookTotalWords, totalReviewedWords, todayReviewed, learnedUniqueWords, dashboardSnapshot, showMasteredConfirm, reviewPreset, sessionNewCount, sessionOldCount, recommendedReviewStage, recommendedReviewState, getSettingsKey, getLastReviewResultKey, getCurrentBookId, saveReviewProgress, clearReviewProgress, loadReviewProgress, resumeReview, discardReview, checkProgress, getCurrentBookTotalWords, getCurrentBookWordPool: getCurrentBookWordPool2, refreshDashboardSnapshot, refreshPlanStats, resetCurrentPlan, markWordsReviewed, syncDashboardProgress, dashboardTarget, dashboardPercent, formatRelativeReviewTime, currentReviewInsight, applyReviewPreview, finishedReviewInsight, completedInRound, currentRound, currentProgressPercent, oldReviewDailyTarget, dailyNewTarget, remainDays, remainingNewWords, estimatedFinishDate, dailyPlanText, isTodayTargetDone, primaryStartText, todayProgressPercent, recommendedPreset, recommendedPresetIcon, recommendedPresetTitle, recommendedPresetDesc, otherPresets, currentWordbookName, openSettings, sortByText, isLastQuestion, modeOptions, sortOptions, countOptions, dailyQuickOptions, modeIndex, modeDisplayText, sortIndex, countIndex, onModeChange, onSortChange, onCountChange, setDailyTarget, onDifficultyChange, openModeSelector, openSortSelector, openCountSelector, openDifficultySelector, loadSettings, saveSettings, loadLastReviewResult, saveReviewResult, buildPresetQueue, buildBookReviewQueue, saveSettingsAndStart, startReviewInternal, startReview, startExtraRound20, onPrimaryStartClick, startRecommendedReview, continueRecommendedReview, startPresetReview, prefetchNextWordDetail, loadCurrentQuestion, get _dictWordsCache() {
-        return _dictWordsCache;
-      }, set _dictWordsCache(v2) {
-        _dictWordsCache = v2;
-      }, get _dictWordsPromise() {
-        return _dictWordsPromise;
-      }, set _dictWordsPromise(v2) {
-        _dictWordsPromise = v2;
-      }, ensureDictWords, getFormSimilarFromDict, loadChoiceQuestion, levenshtein, formSimilarityScore, getFormSimilarDistractors, loadChoiceEnQuestion, loadFillQuestion, loadAIQuestion, queueRetryWord, applyReviewOutcome, submitAnswer, handleChoice, handleChoiceEn, handleFillChoice, handleSpellSubmit, nextQuestion, finishReview, restartReview, goBack, goToWordDetail, markCurrentWordAsMastered, backToStartScreen, ref: vue.ref, computed: vue.computed, onMounted: vue.onMounted, get onBackPress() {
-        return onBackPress;
-      }, get onShow() {
-        return onShow;
-      }, get onHide() {
-        return onHide;
-      }, get onUnload() {
-        return onUnload;
-      }, get onLoad() {
-        return onLoad;
-      }, get db() {
-        return db;
-      }, get aiService() {
-        return aiService;
-      }, get masterDb() {
-        return masterDb;
-      }, get getCurrentWordbook() {
-        return getCurrentWordbook;
-      }, get getWordbookListForUI() {
-        return getWordbookListForUI;
-      }, get isSelfWordbook() {
-        return isSelfWordbook;
-      }, get isLocalWordbookKey() {
-        return isLocalWordbookKey;
-      }, get loadLocalWordbook() {
-        return loadLocalWordbook;
-      }, get getWordbookWords() {
-        return getWordbookWords;
-      }, get recordReviewOutcome() {
-        return recordReviewOutcome;
-      }, get getLearningDashboard() {
-        return getLearningDashboard;
-      }, get getMistakeWords() {
-        return getMistakeWords;
-      }, get getDueProfilesForWords() {
-        return getDueProfilesForWords;
-      }, get getLatestSession() {
-        return getLatestSession;
-      }, get logStudySession() {
-        return logStudySession;
-      }, get logger() {
-        return logger;
-      }, get errorHandler() {
-        return errorHandler;
-      }, get cleanupExpiredCaches() {
-        return cleanupExpiredCaches;
-      }, get getMasteredWordbookWords() {
-        return getMasteredWordbookWords;
-      }, get addMasteredWordbookWord() {
-        return addMasteredWordbookWord;
-      }, get getWordKey() {
-        return getWordKey;
-      }, get uniqueWordKeys() {
-        return uniqueWordKeys;
-      }, get getTodayKey() {
-        return getTodayKey;
-      }, get normalizePlanEntry() {
-        return normalizePlanEntry;
-      }, get filterWordsByKeys() {
-        return filterWordsByKeys;
-      }, get shuffleList() {
-        return shuffleList;
-      }, get getReviewProgressKey() {
-        return getReviewProgressKey;
-      }, get REVIEW_PLAN_KEY() {
-        return REVIEW_PLAN_KEY;
-      }, get loadPlanStore() {
-        return loadPlanStore;
-      }, get savePlanStore() {
-        return savePlanStore;
-      }, get getPlanEntry() {
-        return getPlanEntry;
-      }, get savePlanEntry() {
-        return savePlanEntry;
-      }, get interleaveOldWords() {
-        return interleaveOldWords;
-      }, get getOldReviewQuota() {
-        return getOldReviewQuota;
-      } };
-      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
-      return __returned__;
-    }
-  };
-  function _sfc_render$9(_ctx, _cache, $props, $setup, $data, $options) {
-    var _a, _b, _c, _d;
-    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
-      !$setup.reviewStarted ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 0,
-        class: "custom-nav-bar"
-      }, [
-        vue.createElementVNode("view", {
-          class: "nav-back-btn",
-          onClick: $setup.goBack
-        }, "‹"),
-        vue.createElementVNode(
-          "text",
-          { class: "nav-title" },
-          vue.toDisplayString($setup.currentWordbookName),
-          1
-          /* TEXT */
-        ),
-        vue.createElementVNode("view", {
-          class: "nav-settings-btn",
-          onClick: _cache[0] || (_cache[0] = ($event) => $setup.showSettings = true)
-        }, "⚙")
-      ])) : vue.createCommentVNode("v-if", true),
-      !$setup.reviewStarted ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 1,
-        class: "start-review-fixed"
-      }, [
-        vue.createElementVNode("view", { class: "section-label" }, "今日进度"),
-        vue.createElementVNode("view", { class: "card stat-card-large" }, [
-          vue.createElementVNode("view", { class: "stat-value-large" }, [
-            vue.createElementVNode(
-              "text",
-              { class: "stat-number" },
-              vue.toDisplayString($setup.todayReviewed),
-              1
-              /* TEXT */
-            ),
-            vue.createElementVNode(
-              "text",
-              { class: "stat-sep" },
-              "/ " + vue.toDisplayString($setup.settings.count),
-              1
-              /* TEXT */
-            )
-          ]),
-          vue.createElementVNode("view", { class: "stat-bar" }, [
-            vue.createElementVNode(
-              "view",
-              {
-                class: "stat-bar-fill",
-                style: vue.normalizeStyle({ width: $setup.todayReviewed / $setup.settings.count * 100 + "%" })
-              },
-              null,
-              4
-              /* STYLE */
-            )
-          ]),
-          vue.createElementVNode(
-            "view",
-            { class: "stat-detail-row" },
-            "新学 " + vue.toDisplayString($setup.sessionNewCount) + " · 复习 " + vue.toDisplayString($setup.sessionOldCount),
-            1
-            /* TEXT */
-          )
-        ]),
-        vue.createElementVNode("view", { class: "section-label" }, "词书进度"),
-        vue.createElementVNode("view", { class: "card stat-card-large stat-card-book" }, [
-          vue.createElementVNode("view", { class: "stat-header-row" }, [
-            vue.createElementVNode(
-              "text",
-              { class: "stat-left-text" },
-              "已学 " + vue.toDisplayString($setup.learnedUniqueWords) + " / " + vue.toDisplayString($setup.bookTotalWords) + " 词",
-              1
-              /* TEXT */
-            )
-          ]),
-          vue.createElementVNode("view", { class: "stat-bar" }, [
-            vue.createElementVNode(
-              "view",
-              {
-                class: "stat-bar-fill",
-                style: vue.normalizeStyle({ width: $setup.currentProgressPercent + "%" })
-              },
-              null,
-              4
-              /* STYLE */
-            )
-          ]),
-          vue.createElementVNode(
-            "view",
-            { class: "stat-detail-row" },
-            "剩余 " + vue.toDisplayString($setup.remainingNewWords) + " 词 · 预计 " + vue.toDisplayString($setup.remainDays) + " 天完成",
-            1
-            /* TEXT */
-          )
-        ]),
-        vue.createElementVNode("view", { class: "section-label" }, "推荐复习"),
-        vue.createElementVNode("view", {
-          class: "card recommend-card",
-          onClick: $setup.startRecommendedReview
-        }, [
-          vue.createElementVNode("view", { class: "recommend-info" }, [
-            vue.createElementVNode(
-              "text",
-              { class: "recommend-title" },
-              vue.toDisplayString($setup.recommendedPresetTitle),
-              1
-              /* TEXT */
-            ),
-            vue.createElementVNode(
-              "text",
-              { class: "recommend-desc" },
-              vue.toDisplayString($setup.recommendedPresetDesc),
-              1
-              /* TEXT */
-            )
-          ]),
-          vue.createElementVNode("button", { class: "start-btn" }, "开始复习")
-        ]),
-        vue.createElementVNode("view", { class: "section-label" }, "其他复习方式"),
-        vue.createElementVNode("view", { class: "other-buttons" }, [
-          (vue.openBlock(true), vue.createElementBlock(
-            vue.Fragment,
-            null,
-            vue.renderList($setup.otherPresets, (preset) => {
-              return vue.openBlock(), vue.createElementBlock("view", {
-                key: preset.key,
-                class: "card other-btn",
-                onClick: ($event) => $setup.startPresetReview(preset.key)
-              }, [
-                vue.createElementVNode(
-                  "text",
-                  { class: "btn-title" },
-                  vue.toDisplayString(preset.title),
-                  1
-                  /* TEXT */
-                ),
-                vue.createElementVNode(
-                  "text",
-                  { class: "btn-count" },
-                  vue.toDisplayString(preset.count) + "个",
-                  1
-                  /* TEXT */
-                )
-              ], 8, ["onClick"]);
-            }),
-            128
-            /* KEYED_FRAGMENT */
-          ))
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      $setup.showSettings ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 2,
-        class: "modal-overlay",
-        onClick: _cache[14] || (_cache[14] = ($event) => $setup.showSettings = false)
-      }, [
-        vue.createElementVNode("view", {
-          class: "settings-modal",
-          onClick: _cache[13] || (_cache[13] = vue.withModifiers(() => {
-          }, ["stop"]))
-        }, [
-          vue.createElementVNode("view", { class: "modal-header" }, [
-            vue.createElementVNode("text", { class: "modal-title" }, "复习设置"),
-            vue.createElementVNode("view", {
-              class: "modal-close",
-              onClick: _cache[1] || (_cache[1] = ($event) => $setup.showSettings = false)
-            }, "✕")
-          ]),
-          vue.createElementVNode("view", { class: "settings-cards-grid" }, [
-            vue.createElementVNode("view", {
-              class: "settings-card",
-              onClick: $setup.openModeSelector
-            }, [
-              vue.createElementVNode("text", { class: "card-title" }, "复习模式"),
-              vue.createElementVNode(
-                "text",
-                { class: "card-description" },
-                vue.toDisplayString($setup.modeDisplayText),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
-            ]),
-            vue.createElementVNode("view", {
-              class: "settings-card",
-              onClick: $setup.openSortSelector
-            }, [
-              vue.createElementVNode("text", { class: "card-title" }, "排序方式"),
-              vue.createElementVNode(
-                "text",
-                { class: "card-description" },
-                vue.toDisplayString($setup.sortByText),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
-            ]),
-            vue.createElementVNode("view", {
-              class: "settings-card",
-              onClick: $setup.openCountSelector
-            }, [
-              vue.createElementVNode("text", { class: "card-title" }, "复习数量"),
-              vue.createElementVNode(
-                "text",
-                { class: "card-description" },
-                vue.toDisplayString($setup.settings.count) + " 个",
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
-            ]),
-            vue.createElementVNode("view", {
-              class: "settings-card",
-              onClick: $setup.openDifficultySelector
-            }, [
-              vue.createElementVNode("text", { class: "card-title" }, "复习难度"),
-              vue.createElementVNode(
-                "text",
-                { class: "card-description" },
-                vue.toDisplayString($setup.settings.difficulty === "hard" ? "困难" : "标准"),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
-            ])
-          ]),
-          $setup.showModeSelector ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "selector-overlay",
-            onClick: _cache[3] || (_cache[3] = ($event) => $setup.showModeSelector = false)
-          }, [
-            vue.createElementVNode("view", {
-              class: "selector-modal",
-              onClick: _cache[2] || (_cache[2] = vue.withModifiers(() => {
-              }, ["stop"]))
-            }, [
-              vue.createElementVNode("text", { class: "selector-title" }, "选择复习模式"),
-              vue.createElementVNode("view", { class: "selector-options" }, [
-                (vue.openBlock(), vue.createElementBlock(
-                  vue.Fragment,
-                  null,
-                  vue.renderList($setup.modeOptions, (name, idx) => {
-                    return vue.createElementVNode("view", {
-                      key: "mode-" + idx,
-                      class: vue.normalizeClass(["selector-item", { active: $setup.modeIndex === idx }]),
-                      onClick: ($event) => {
-                        $setup.onModeChange({ detail: { value: idx } });
-                        $setup.showModeSelector = false;
-                      }
-                    }, vue.toDisplayString(name), 11, ["onClick"]);
-                  }),
-                  64
-                  /* STABLE_FRAGMENT */
-                ))
-              ])
-            ])
-          ])) : vue.createCommentVNode("v-if", true),
-          $setup.showSortSelector ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "selector-overlay",
-            onClick: _cache[5] || (_cache[5] = ($event) => $setup.showSortSelector = false)
-          }, [
-            vue.createElementVNode("view", {
-              class: "selector-modal",
-              onClick: _cache[4] || (_cache[4] = vue.withModifiers(() => {
-              }, ["stop"]))
-            }, [
-              vue.createElementVNode("text", { class: "selector-title" }, "选择排序方式"),
-              vue.createElementVNode("view", { class: "selector-options" }, [
-                (vue.openBlock(), vue.createElementBlock(
-                  vue.Fragment,
-                  null,
-                  vue.renderList($setup.sortOptions, (name, idx) => {
-                    return vue.createElementVNode("view", {
-                      key: "sort-" + idx,
-                      class: vue.normalizeClass(["selector-item", { active: $setup.sortIndex === idx }]),
-                      onClick: ($event) => {
-                        $setup.onSortChange({ detail: { value: idx } });
-                        $setup.showSortSelector = false;
-                      }
-                    }, vue.toDisplayString(name), 11, ["onClick"]);
-                  }),
-                  64
-                  /* STABLE_FRAGMENT */
-                ))
-              ])
-            ])
-          ])) : vue.createCommentVNode("v-if", true),
-          $setup.showCountSelector ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 2,
-            class: "selector-overlay",
-            onClick: _cache[7] || (_cache[7] = ($event) => $setup.showCountSelector = false)
-          }, [
-            vue.createElementVNode("view", {
-              class: "selector-modal",
-              onClick: _cache[6] || (_cache[6] = vue.withModifiers(() => {
-              }, ["stop"]))
-            }, [
-              vue.createElementVNode("text", { class: "selector-title" }, "选择复习数量"),
-              vue.createElementVNode("view", { class: "selector-options" }, [
-                (vue.openBlock(), vue.createElementBlock(
-                  vue.Fragment,
-                  null,
-                  vue.renderList($setup.countOptions, (n2) => {
-                    return vue.createElementVNode("view", {
-                      key: "count-" + n2,
-                      class: vue.normalizeClass(["selector-item", { active: $setup.settings.count === n2 }]),
-                      onClick: ($event) => {
-                        $setup.setDailyTarget(n2);
-                        $setup.showCountSelector = false;
-                      }
-                    }, vue.toDisplayString(n2) + " 个 ", 11, ["onClick"]);
-                  }),
-                  64
-                  /* STABLE_FRAGMENT */
-                ))
-              ])
-            ])
-          ])) : vue.createCommentVNode("v-if", true),
-          $setup.showDifficultySelector ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 3,
-            class: "selector-overlay",
-            onClick: _cache[11] || (_cache[11] = ($event) => $setup.showDifficultySelector = false)
-          }, [
-            vue.createElementVNode("view", {
-              class: "selector-modal",
-              onClick: _cache[10] || (_cache[10] = vue.withModifiers(() => {
-              }, ["stop"]))
-            }, [
-              vue.createElementVNode("text", { class: "selector-title" }, "选择复习难度"),
-              vue.createElementVNode("view", { class: "selector-options" }, [
-                vue.createElementVNode(
-                  "view",
-                  {
-                    class: vue.normalizeClass(["selector-item", { active: $setup.settings.difficulty === "normal" }]),
-                    onClick: _cache[8] || (_cache[8] = ($event) => {
-                      $setup.onDifficultyChange("normal");
-                      $setup.showDifficultySelector = false;
-                    })
-                  },
-                  " 标准 ",
-                  2
-                  /* CLASS */
-                ),
-                vue.createElementVNode(
-                  "view",
-                  {
-                    class: vue.normalizeClass(["selector-item", { active: $setup.settings.difficulty === "hard" }]),
-                    onClick: _cache[9] || (_cache[9] = ($event) => {
-                      $setup.onDifficultyChange("hard");
-                      $setup.showDifficultySelector = false;
-                    })
-                  },
-                  " 困难 ",
-                  2
-                  /* CLASS */
-                )
-              ])
-            ])
-          ])) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode("view", { class: "modal-actions" }, [
-            vue.createElementVNode("button", {
-              class: "modal-btn",
-              onClick: _cache[12] || (_cache[12] = ($event) => $setup.showSettings = false)
-            }, "关闭")
-          ])
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      $setup.showResumeModal ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 3,
-        class: "modal-overlay",
-        onClick: vue.withModifiers($setup.discardReview, ["self"])
-      }, [
-        vue.createElementVNode("view", {
-          class: "resume-modal",
-          onClick: _cache[15] || (_cache[15] = vue.withModifiers(() => {
-          }, ["stop"]))
-        }, [
-          vue.createElementVNode("text", { class: "modal-title" }, "发现未完成的复习"),
-          vue.createElementVNode("text", { class: "resume-text" }, "是否继续上次的复习？"),
-          vue.createElementVNode("view", { class: "modal-actions" }, [
-            vue.createElementVNode("button", {
-              class: "modal-btn secondary",
-              onClick: $setup.discardReview
-            }, "放弃"),
-            vue.createElementVNode("button", {
-              class: "modal-btn primary",
-              onClick: $setup.resumeReview
-            }, "继续")
-          ])
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      $setup.showMasteredConfirm ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 4,
-        class: "modal-overlay",
-        onClick: _cache[18] || (_cache[18] = ($event) => $setup.showMasteredConfirm = false)
-      }, [
-        vue.createElementVNode("view", {
-          class: "resume-modal",
-          onClick: _cache[17] || (_cache[17] = vue.withModifiers(() => {
-          }, ["stop"]))
-        }, [
-          vue.createElementVNode("text", { class: "modal-title" }, "斩掉这个单词？"),
-          vue.createElementVNode(
-            "text",
-            { class: "resume-text" },
-            vue.toDisplayString($setup.currentWord.english) + " - " + vue.toDisplayString($setup.currentWord.chinese),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode("text", {
-            class: "resume-text",
-            style: { "font-size": "13px", "color": "#A1A1AA" }
-          }, "斩掉后该单词将在复习中隐藏"),
-          vue.createElementVNode("view", { class: "modal-actions" }, [
-            vue.createElementVNode("button", {
-              class: "modal-btn secondary",
-              onClick: _cache[16] || (_cache[16] = ($event) => $setup.showMasteredConfirm = false)
-            }, "取消"),
-            vue.createElementVNode("button", {
-              class: "modal-btn primary",
-              onClick: $setup.markCurrentWordAsMastered
-            }, "确认斩掉")
-          ])
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      $setup.showMasteredConfirm ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 5,
-        class: "modal-overlay",
-        onClick: _cache[21] || (_cache[21] = ($event) => $setup.showMasteredConfirm = false)
-      }, [
-        vue.createElementVNode("view", {
-          class: "resume-modal",
-          onClick: _cache[20] || (_cache[20] = vue.withModifiers(() => {
-          }, ["stop"]))
-        }, [
-          vue.createElementVNode("text", { class: "modal-title" }, "斩掉这个单词？"),
-          vue.createElementVNode(
-            "text",
-            { class: "resume-text" },
-            vue.toDisplayString($setup.currentWord.english) + " - " + vue.toDisplayString($setup.currentWord.chinese),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode("text", {
-            class: "resume-text",
-            style: { "font-size": "13px", "color": "#A1A1AA" }
-          }, "斩掉后该单词将在复习中隐藏"),
-          vue.createElementVNode("view", { class: "modal-actions" }, [
-            vue.createElementVNode("button", {
-              class: "modal-btn secondary",
-              onClick: _cache[19] || (_cache[19] = ($event) => $setup.showMasteredConfirm = false)
-            }, "取消"),
-            vue.createElementVNode("button", {
-              class: "modal-btn primary",
-              onClick: $setup.markCurrentWordAsMastered
-            }, "确认斩掉")
-          ])
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      $setup.reviewStarted && !$setup.reviewFinished ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 6,
-        class: "stats-bar"
-      }, [
-        vue.createElementVNode("view", {
-          class: "stats-back-btn",
-          onClick: $setup.backToStartScreen
-        }, "‹"),
-        vue.createElementVNode("view", { class: "stats-info" }, [
-          vue.createElementVNode(
-            "text",
-            null,
-            vue.toDisplayString($setup.currentIndex + 1) + "/" + vue.toDisplayString($setup.reviewWords.length),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode(
-            "text",
-            null,
-            "正确 " + vue.toDisplayString($setup.correctCount),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode(
-            "text",
-            null,
-            "错误 " + vue.toDisplayString($setup.wrongCount),
-            1
-            /* TEXT */
-          )
-        ]),
-        vue.createElementVNode("view", {
-          class: "stats-action-btn",
-          onClick: _cache[22] || (_cache[22] = ($event) => $setup.showMasteredConfirm = true)
-        }, "斩")
-      ])) : vue.createCommentVNode("v-if", true),
-      $setup.reviewStarted && !$setup.reviewFinished && $setup.currentReviewInsight ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 7,
-        class: "review-insight-strip"
-      }, [
-        vue.createElementVNode("view", { class: "insight-chip" }, [
-          vue.createElementVNode("text", { class: "insight-label" }, "掌握度"),
-          vue.createElementVNode(
-            "text",
-            { class: "insight-value" },
-            vue.toDisplayString($setup.currentReviewInsight.mastery) + "%",
-            1
-            /* TEXT */
-          )
-        ]),
-        vue.createElementVNode("view", { class: "insight-chip" }, [
-          vue.createElementVNode("text", { class: "insight-label" }, "下次复习"),
-          vue.createElementVNode(
-            "text",
-            { class: "insight-value" },
-            vue.toDisplayString($setup.currentReviewInsight.nextReviewText),
-            1
-            /* TEXT */
-          )
-        ])
-      ])) : vue.createCommentVNode("v-if", true),
-      $setup.reviewStarted && $setup.currentWord && !$setup.reviewFinished ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 8,
-        class: "content"
-      }, [
-        $setup.settings.mode === "choice" ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
-          class: "choice-mode"
-        }, [
-          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "review-word-flag"
-          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode("view", { class: "word-display" }, [
-            vue.createElementVNode(
-              "view",
-              { class: "word-english" },
-              vue.toDisplayString($setup.currentWord.english),
-              1
-              /* TEXT */
-            ),
-            $setup.currentWord.phonetic ? (vue.openBlock(), vue.createElementBlock(
-              "view",
-              {
-                key: 0,
-                class: "word-phonetic"
-              },
-              "/" + vue.toDisplayString($setup.currentWord.phonetic) + "/",
-              1
-              /* TEXT */
-            )) : vue.createCommentVNode("v-if", true)
-          ]),
-          vue.createElementVNode("view", { class: "options-grid" }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.currentOptions, (option, idx) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: idx,
-                  class: vue.normalizeClass(["option-card", {
-                    "correct": $setup.showResult && $setup.currentWord.defs && $setup.currentWord.defs.length > 0 && option.chinese === $setup.currentWord.defs[0].trans,
-                    "wrong": $setup.showResult && $setup.selectedOption && option.chinese === $setup.selectedOption.chinese && !($setup.currentWord.defs && $setup.currentWord.defs.length > 0 && option.chinese === $setup.currentWord.defs[0].trans)
-                  }]),
-                  onClick: ($event) => !$setup.showResult && $setup.handleChoice(option)
-                }, [
-                  vue.createElementVNode("view", { class: "option-content" }, [
-                    option.pos ? (vue.openBlock(), vue.createElementBlock(
-                      "text",
-                      {
-                        key: 0,
-                        class: "option-pos"
-                      },
-                      vue.toDisplayString(option.pos),
-                      1
-                      /* TEXT */
-                    )) : vue.createCommentVNode("v-if", true),
-                    vue.createElementVNode(
-                      "text",
-                      { class: "option-text" },
-                      vue.toDisplayString(option.chinese),
-                      1
-                      /* TEXT */
-                    )
-                  ])
-                ], 10, ["onClick"]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ]),
-          $setup.showResult ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "action-buttons"
-          }, [
-            vue.createElementVNode("view", {
-              class: "action-btn",
-              onClick: $setup.goToWordDetail
-            }, "详情"),
-            vue.createElementVNode(
-              "view",
-              {
-                class: "action-btn",
-                onClick: $setup.nextQuestion
-              },
-              vue.toDisplayString($setup.isLastQuestion ? "查看结果" : "下一题 →"),
-              1
-              /* TEXT */
-            )
-          ])) : vue.createCommentVNode("v-if", true)
-        ])) : vue.createCommentVNode("v-if", true),
-        $setup.settings.mode === "choice_en" ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 1,
-          class: "choice-mode"
-        }, [
-          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "review-word-flag"
-          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode(
-            "view",
-            { class: "word-chinese-prompt" },
-            vue.toDisplayString($setup.currentWord.chinese),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode("view", { class: "options-grid" }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.currentOptions, (option, idx) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: idx,
-                  class: vue.normalizeClass(["option-card", {
-                    "correct": $setup.showResult && (option || "").trim().toLowerCase() === ($setup.currentWord.english || "").trim().toLowerCase(),
-                    "wrong": $setup.showResult && option === $setup.selectedOption && (option || "").trim().toLowerCase() !== ($setup.currentWord.english || "").trim().toLowerCase()
-                  }]),
-                  onClick: ($event) => !$setup.showResult && $setup.handleChoiceEn(option)
-                }, [
-                  vue.createElementVNode(
-                    "text",
-                    { class: "option-text" },
-                    vue.toDisplayString(option),
-                    1
-                    /* TEXT */
-                  )
-                ], 10, ["onClick"]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ]),
-          $setup.showResult ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "action-buttons"
-          }, [
-            vue.createElementVNode("view", {
-              class: "action-btn",
-              onClick: $setup.goToWordDetail
-            }, "详情"),
-            vue.createElementVNode(
-              "view",
-              {
-                class: "action-btn",
-                onClick: $setup.nextQuestion
-              },
-              vue.toDisplayString($setup.isLastQuestion ? "查看结果" : "下一题 →"),
-              1
-              /* TEXT */
-            )
-          ])) : vue.createCommentVNode("v-if", true)
-        ])) : vue.createCommentVNode("v-if", true),
-        $setup.settings.mode === "fill" ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 2,
-          class: "fill-mode"
-        }, [
-          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "review-word-flag"
-          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode("view", { class: "fill-sentence" }, [
-            vue.createElementVNode("rich-text", {
-              nodes: $setup.formatHighlight($setup.currentSentence)
-            }, null, 8, ["nodes"])
-          ]),
-          vue.createElementVNode("view", { class: "options-grid" }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.fillOptions, (option, idx) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: idx,
-                  class: vue.normalizeClass(["option-card", {
-                    "correct": $setup.showResult && option === $setup.fillAnswer,
-                    "wrong": $setup.showResult && option === $setup.selectedOption && option !== $setup.fillAnswer
-                  }]),
-                  onClick: ($event) => !$setup.showResult && $setup.handleFillChoice(option)
-                }, [
-                  vue.createElementVNode(
-                    "text",
-                    { class: "option-text" },
-                    vue.toDisplayString(option),
-                    1
-                    /* TEXT */
-                  )
-                ], 10, ["onClick"]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ]),
-          $setup.showResult && $setup.currentFillSentenceChinese ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "fill-result"
-          }, [
-            vue.createElementVNode("view", { class: "sentence-chinese" }, [
-              vue.createTextVNode("句子释义："),
-              vue.createElementVNode("rich-text", {
-                nodes: $setup.formatHighlight($setup.currentFillSentenceChinese)
-              }, null, 8, ["nodes"])
-            ])
-          ])) : vue.createCommentVNode("v-if", true),
-          $setup.showResult ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 2,
-            class: "action-buttons"
-          }, [
-            vue.createElementVNode("view", {
-              class: "action-btn",
-              onClick: $setup.goToWordDetail
-            }, "详情"),
-            vue.createElementVNode(
-              "view",
-              {
-                class: "action-btn",
-                onClick: $setup.nextQuestion
-              },
-              vue.toDisplayString($setup.isLastQuestion ? "查看结果" : "下一题 →"),
-              1
-              /* TEXT */
-            )
-          ])) : vue.createCommentVNode("v-if", true)
-        ])) : vue.createCommentVNode("v-if", true),
-        $setup.settings.mode === "spell" ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 3,
-          class: "spell-mode"
-        }, [
-          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "review-word-flag"
-          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode("view", { class: "spell-prompt" }, "根据中文释义写出英文单词"),
-          vue.createElementVNode(
-            "view",
-            { class: "spell-chinese" },
-            vue.toDisplayString($setup.currentWord.chinese),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode("view", { class: "input-area" }, [
-            vue.withDirectives(vue.createElementVNode("input", {
-              type: "text",
-              "onUpdate:modelValue": _cache[23] || (_cache[23] = ($event) => $setup.spellInput = $event),
-              class: "spell-input",
-              placeholder: "输入英文单词",
-              disabled: $setup.showResult,
-              onConfirm: $setup.handleSpellSubmit
-            }, null, 40, ["disabled"]), [
-              [vue.vModelText, $setup.spellInput]
-            ])
-          ]),
-          !$setup.showResult ? (vue.openBlock(), vue.createElementBlock("button", {
-            key: 1,
-            onClick: $setup.handleSpellSubmit,
-            class: "btn-next",
-            disabled: !($setup.spellInput || "").trim()
-          }, " 提交 ", 8, ["disabled"])) : vue.createCommentVNode("v-if", true),
-          $setup.showResult ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 2,
-            class: "action-buttons"
-          }, [
-            vue.createElementVNode("view", {
-              class: "action-btn",
-              onClick: $setup.goToWordDetail
-            }, "详情"),
-            vue.createElementVNode(
-              "view",
-              {
-                class: "action-btn",
-                onClick: $setup.nextQuestion
-              },
-              vue.toDisplayString($setup.isLastQuestion ? "查看结果" : "下一题 →"),
-              1
-              /* TEXT */
-            )
-          ])) : vue.createCommentVNode("v-if", true)
-        ])) : vue.createCommentVNode("v-if", true),
-        $setup.settings.mode === "ai" ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 4,
-          class: "ai-mode"
-        }, [
-          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "review-word-flag"
-          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode(
-            "view",
-            { class: "ai-word" },
-            vue.toDisplayString($setup.currentWord.english),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode("view", { class: "context-card" }, [
-            vue.createElementVNode("view", { class: "context-sentence" }, [
-              vue.createElementVNode("rich-text", {
-                nodes: $setup.formatAIPhighlight($setup.aiSentence)
-              }, null, 8, ["nodes"])
-            ]),
-            $setup.isGenerating ? (vue.openBlock(), vue.createElementBlock("view", {
-              key: 0,
-              class: "generating-indicator"
-            }, [
-              vue.createElementVNode("text", null, "AI 生成例句中...")
-            ])) : vue.createCommentVNode("v-if", true)
-          ]),
-          vue.createElementVNode("view", { class: "input-area" }, [
-            vue.withDirectives(vue.createElementVNode("input", {
-              type: "text",
-              "onUpdate:modelValue": _cache[24] || (_cache[24] = ($event) => $setup.userTranslation = $event),
-              class: "translation-input",
-              placeholder: $setup.isGenerating ? "等待例句生成..." : "输入该单词在此句中的意思...",
-              disabled: $setup.isGenerating || $setup.showResult,
-              onConfirm: $setup.submitAnswer
-            }, null, 40, ["placeholder", "disabled"]), [
-              [vue.vModelText, $setup.userTranslation]
-            ])
-          ]),
-          $setup.showResult ? (vue.openBlock(), vue.createElementBlock(
-            "view",
-            {
-              key: 1,
-              class: vue.normalizeClass(["result-card", ((_a = $setup.aiResult) == null ? void 0 : _a.is_correct) ? "result-correct" : "result-wrong"])
-            },
-            [
-              vue.createElementVNode("view", { class: "result-header" }, [
-                vue.createElementVNode(
-                  "text",
-                  { class: "result-tag" },
-                  vue.toDisplayString(((_b = $setup.aiResult) == null ? void 0 : _b.is_correct) ? "✅ 回答正确" : "❌ 需要纠正"),
-                  1
-                  /* TEXT */
-                )
-              ]),
-              ((_c = $setup.aiResult) == null ? void 0 : _c.sentence_chinese) ? (vue.openBlock(), vue.createElementBlock(
-                "view",
-                {
-                  key: 0,
-                  class: "sentence-chinese"
-                },
-                "原句翻译：" + vue.toDisplayString($setup.aiResult.sentence_chinese),
-                1
-                /* TEXT */
-              )) : vue.createCommentVNode("v-if", true),
-              vue.createElementVNode("view", { class: "result-explanation" }, [
-                vue.createElementVNode(
-                  "text",
-                  null,
-                  vue.toDisplayString((_d = $setup.aiResult) == null ? void 0 : _d.explanation),
-                  1
-                  /* TEXT */
-                )
-              ])
-            ],
-            2
-            /* CLASS */
-          )) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode("button", {
-            onClick: _cache[25] || (_cache[25] = ($event) => $setup.showResult ? $setup.nextQuestion() : $setup.submitAnswer()),
-            class: "btn-submit",
-            disabled: $setup.isSubmitting || $setup.isGenerating
-          }, vue.toDisplayString($setup.isSubmitting ? "AI 判卷中..." : $setup.showResult ? $setup.isLastQuestion ? "查看结果" : "下一题" : "提交答案"), 9, ["disabled"])
-        ])) : vue.createCommentVNode("v-if", true)
-      ])) : $setup.reviewStarted && $setup.reviewFinished ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 9,
-        class: "finished"
-      }, [
-        vue.createElementVNode(
-          "view",
-          {
-            class: vue.normalizeClass(["finished-icon", $setup.wrongCount === 0 ? "icon-perfect" : "icon-good"])
-          },
-          [
-            vue.createElementVNode(
-              "text",
-              { class: "finished-icon-text" },
-              vue.toDisplayString($setup.wrongCount === 0 ? "全对" : "加油"),
-              1
-              /* TEXT */
-            )
-          ],
-          2
-          /* CLASS */
-        ),
-        vue.createElementVNode("h3", null, "复习完成！"),
-        vue.createElementVNode("view", { class: "finished-stats" }, [
-          vue.createElementVNode(
-            "text",
-            null,
-            "正确: " + vue.toDisplayString($setup.correctCount),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode(
-            "text",
-            null,
-            "错误: " + vue.toDisplayString($setup.wrongCount),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode(
-            "text",
-            null,
-            "正确率: " + vue.toDisplayString(Math.round($setup.correctCount / ($setup.correctCount + $setup.wrongCount || 1) * 100) || 0) + "%",
-            1
-            /* TEXT */
-          )
-        ]),
-        $setup.finishedReviewInsight ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
-          class: "finished-insight-card"
-        }, [
-          vue.createElementVNode("text", { class: "finished-insight-title" }, "算法调度结果"),
-          vue.createElementVNode(
-            "text",
-            null,
-            "平均掌握度 " + vue.toDisplayString($setup.finishedReviewInsight.avgMastery) + "%",
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode(
-            "text",
-            null,
-            "已更新 " + vue.toDisplayString($setup.finishedReviewInsight.scheduledCount) + " 个词条",
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode(
-            "text",
-            null,
-            "最近一次建议复习：" + vue.toDisplayString($setup.finishedReviewInsight.nextReviewText),
-            1
-            /* TEXT */
-          )
-        ])) : vue.createCommentVNode("v-if", true),
-        $setup.wrongWords.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 1,
-          class: "wrong-words-section"
-        }, [
-          vue.createElementVNode(
-            "view",
-            { class: "wrong-title" },
-            "本次错误单词 (" + vue.toDisplayString($setup.wrongWords.length) + ")",
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode("scroll-view", {
-            "scroll-y": "",
-            class: "wrong-list"
-          }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.wrongWords, (item, idx) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: idx,
-                  class: "wrong-item"
-                }, [
-                  vue.createElementVNode("view", { class: "wrong-word" }, [
-                    vue.createElementVNode(
-                      "text",
-                      { class: "eng" },
-                      vue.toDisplayString(item.english),
-                      1
-                      /* TEXT */
-                    ),
-                    vue.createElementVNode(
-                      "text",
-                      { class: "chi" },
-                      vue.toDisplayString(item.correctAnswer ? item.correctAnswer : item.chinese),
-                      1
-                      /* TEXT */
-                    )
-                  ]),
-                  item.yourAnswer && item.yourAnswer !== item.correctAnswer && item.yourAnswer !== item.chinese ? (vue.openBlock(), vue.createElementBlock(
-                    "view",
-                    {
-                      key: 0,
-                      class: "your-answer"
-                    },
-                    " 你的答案: " + vue.toDisplayString(item.yourAnswer),
-                    1
-                    /* TEXT */
-                  )) : vue.createCommentVNode("v-if", true),
-                  item.synonyms && item.synonyms.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
-                    key: 1,
-                    class: "wrong-synonyms"
-                  }, [
-                    (vue.openBlock(true), vue.createElementBlock(
-                      vue.Fragment,
-                      null,
-                      vue.renderList(item.synonyms.slice(0, 3), (syn, sidx) => {
-                        return vue.openBlock(), vue.createElementBlock(
-                          "text",
-                          {
-                            key: sidx,
-                            class: "syn-tag"
-                          },
-                          vue.toDisplayString(syn.synonym) + " (" + vue.toDisplayString(syn.chinese) + ") ",
-                          1
-                          /* TEXT */
-                        );
-                      }),
-                      128
-                      /* KEYED_FRAGMENT */
-                    ))
-                  ])) : vue.createCommentVNode("v-if", true)
-                ]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])
-        ])) : vue.createCommentVNode("v-if", true),
-        vue.createElementVNode("view", { class: "finished-buttons" }, [
-          $setup.wrongWords.length > 0 ? (vue.openBlock(), vue.createElementBlock("button", {
-            key: 0,
-            onClick: _cache[26] || (_cache[26] = ($event) => {
-              $setup.reviewPreset = "wrong";
-              $setup.restartReview();
-            }),
-            class: "btn-secondary"
-          }, "错词再练")) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode("button", {
-            onClick: $setup.restartReview,
-            class: "btn-primary"
-          }, "再来一轮"),
-          vue.createElementVNode("button", {
-            onClick: $setup.goBack,
-            class: "btn-secondary"
-          }, "返回")
-        ])
-      ])) : vue.createCommentVNode("v-if", true)
-    ]);
-  }
-  const PagesReviewReview = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$9], ["__scopeId", "data-v-7018a65d"], ["__file", "E:/vocal/wordbook_new/pages/review/review.vue"]]);
-  function buildShortChineseFromDefs(defs) {
-    if (!Array.isArray(defs))
-      return "";
-    const parts = [];
-    for (const d2 of defs) {
-      if (!d2 || typeof d2 !== "object")
-        continue;
-      const pos = String(d2.pos || "").trim();
-      const trans = String(d2.trans || "").trim();
-      if (!trans)
-        continue;
-      parts.push(pos ? `${pos} ${trans}` : trans);
-      if (parts.length >= 4)
-        break;
-    }
-    return parts.join("；");
-  }
-  function splitTags(tags) {
-    if (!tags)
-      return [];
-    return String(tags).split(/[,，\s]+/).map((t2) => t2.trim()).filter(Boolean);
-  }
-  async function getLocalWordSnapshot(english, options = {}) {
-    var _a, _b, _c;
-    const key = String(english || "").trim().toLowerCase();
-    if (!key) {
-      return {
-        chinese: "",
-        examples: [],
-        synonyms: [],
-        antonyms: [],
-        tags: "",
-        importance: void 0,
-        examCount: 0
-      };
-    }
-    const briefMap = options.briefMap && typeof options.briefMap === "object" ? options.briefMap : {};
-    const brief = briefMap[key] && typeof briefMap[key] === "object" ? briefMap[key] : null;
-    const [detail, pregen] = await Promise.all([
-      getWordFullDetail(key).catch(() => null),
-      getPregenWord(key).catch(() => null)
-    ]);
-    (detail == null ? void 0 : detail.examStats) || null;
-    const chinese = ((brief == null ? void 0 : brief.chinese) || "").trim() || ((detail == null ? void 0 : detail.chinese) || "").trim() || buildShortChineseFromDefs(detail == null ? void 0 : detail.defs) || ((pregen == null ? void 0 : pregen.chinese) || "").trim() || "";
-    const examples = Array.isArray(detail == null ? void 0 : detail.examples) && detail.examples.length ? detail.examples : Array.isArray(pregen == null ? void 0 : pregen.examples) ? pregen.examples : [];
-    const synonyms = Array.isArray(detail == null ? void 0 : detail.synonyms) && detail.synonyms.length ? detail.synonyms : Array.isArray(pregen == null ? void 0 : pregen.synonyms) ? pregen.synonyms : [];
-    const antonyms = Array.isArray(detail == null ? void 0 : detail.antonyms) && detail.antonyms.length ? detail.antonyms : Array.isArray(pregen == null ? void 0 : pregen.antonyms) ? pregen.antonyms : [];
-    const tagSet = /* @__PURE__ */ new Set([
-      ...splitTags((brief == null ? void 0 : brief.tags) || ""),
-      ...((_a = detail == null ? void 0 : detail.examStats) == null ? void 0 : _a.tags) && Array.isArray(detail.examStats.tags) ? detail.examStats.tags : []
-    ]);
-    let importance;
-    if (typeof ((_b = detail == null ? void 0 : detail.examStats) == null ? void 0 : _b.importance) === "number") {
-      importance = detail.examStats.importance;
-    } else if (typeof (brief == null ? void 0 : brief.importance) === "number") {
-      importance = brief.importance;
-    } else if (typeof (brief == null ? void 0 : brief.examCount) === "number") {
-      importance = brief.examCount > 0 ? 1 : 0;
-    }
-    return {
-      chinese,
-      examples,
-      synonyms,
-      antonyms,
-      tags: Array.from(tagSet).join(","),
-      importance,
-      examCount: typeof (brief == null ? void 0 : brief.examCount) === "number" ? brief.examCount : typeof ((_c = detail == null ? void 0 : detail.examStats) == null ? void 0 : _c.total_count) === "number" ? detail.examStats.total_count : 0
-    };
-  }
-  const _sfc_main$8 = {
-    __name: "quick-add",
-    setup(__props, { expose: __expose }) {
-      var _a;
-      __expose();
-      const word = vue.ref({
-        english: "",
-        chinese: "",
-        importance: 3,
-        // 默认三星
-        source_page: "",
-        year: "",
-        tags: ""
-      });
-      const foundWord = vue.ref(null);
-      const isLoading = vue.ref(false);
-      const isSaving = vue.ref(false);
-      const goBack = () => uni.navigateBack();
-      const cloudWordbooks = vue.ref(getCloudWordbooks());
-      const addToWordbook = vue.ref(((_a = cloudWordbooks.value[0]) == null ? void 0 : _a.id) || "self");
-      const addToWordbookOptions = vue.computed(() => cloudWordbooks.value.map((o2) => o2.name));
-      const addToWordbookIndex = vue.computed(() => {
-        const i2 = cloudWordbooks.value.findIndex((o2) => o2.id === addToWordbook.value);
-        return i2 >= 0 ? i2 : 0;
-      });
-      const addToWordbookLabel = vue.computed(() => {
-        const w2 = cloudWordbooks.value.find((o2) => o2.id === addToWordbook.value);
-        return w2 ? w2.name : "自用单词";
-      });
-      const onAddToWordbookChange = (e2) => {
-        const i2 = Number(e2.detail.value) || 0;
-        const w2 = cloudWordbooks.value[i2];
-        addToWordbook.value = w2 ? w2.id : "self";
-      };
-      const applyLocalSnapshotToWord = (local) => {
-        if (!local || typeof local !== "object")
-          return;
-        if (local.chinese && !word.value.chinese)
-          word.value.chinese = local.chinese;
-        if (local.tags)
-          word.value.tags = local.tags;
-        if (typeof local.importance === "number")
-          word.value.importance = local.importance;
-        word.value.examples = local.examples || [];
-        word.value.synonyms = local.synonyms || [];
-        word.value.antonyms = local.antonyms || [];
-      };
-      const normalizeWordHeavyFields = () => {
-        word.value.examples = word.value.examples || [];
-        word.value.synonyms = word.value.synonyms || [];
-        word.value.antonyms = word.value.antonyms || [];
-      };
-      let _searchTimer = null;
-      const searchWord = () => {
-        if (_searchTimer)
-          clearTimeout(_searchTimer);
-        if (!word.value.english) {
-          foundWord.value = null;
-          return;
-        }
-        _searchTimer = setTimeout(async () => {
-          _searchTimer = null;
-          const english = word.value.english;
-          if (!english)
-            return;
-          foundWord.value = null;
-          const local = await getLocalWordSnapshot(english);
-          if (word.value.english !== english)
-            return;
-          if (local && local.chinese) {
-            foundWord.value = { word: english.trim(), chinese: local.chinese };
-            word.value.chinese = local.chinese;
-          } else {
-            word.value.chinese = "";
-          }
-        }, 400);
-      };
-      const saveQuick = async () => {
-        if (isSaving.value) {
-          return;
-        }
-        if (!word.value.english || !word.value.chinese) {
-          uni.showToast({
-            title: "请输入英文单词",
-            duration: 2e3
-          });
-          return;
-        }
-        try {
-          const targetId = addToWordbook.value || "self";
-          if (targetId !== "self") {
-            const list = getWordbookWords(targetId) || [];
-            const existing = list.find((w2) => (w2.english || "").toLowerCase() === word.value.english.toLowerCase());
-            if (existing) {
-              uni.showToast({ title: "该单词本中已存在该词", icon: "none" });
-              return;
-            }
-            const local2 = await getLocalWordSnapshot(word.value.english);
-            applyLocalSnapshotToWord(local2);
-            isSaving.value = true;
-            normalizeWordHeavyFields();
-            const newWord = {
-              id: String(Date.now()),
-              ...word.value,
-              create_time: (/* @__PURE__ */ new Date()).toISOString(),
-              update_time: (/* @__PURE__ */ new Date()).toISOString(),
-              view_count: 0
-            };
-            list.push(newWord);
-            setWordbookWords(targetId, list);
-            noteNewWordLearned(newWord, { bookId: targetId, source: "quick-add" });
-            uni.showToast({ title: "已加入首日巩固", icon: "none", duration: 1800 });
-            uni.$emit("refreshWordList");
-            uni.navigateTo({ url: "/pages/index/index" });
-            return;
-          }
-          const existingList = await db.getWordsForList(1, 0, "create_time", "desc", { search: word.value.english.trim() });
-          const existingWord = existingList.find(
-            (w2) => (w2.english || "").toLowerCase() === word.value.english.toLowerCase()
-          );
-          if (existingWord) {
-            const newRepeat = (existingWord.repeat_count || 0) + 1;
-            await db.updateWord(existingWord.id, {
-              repeat_count: newRepeat,
-              update_time: (/* @__PURE__ */ new Date()).toISOString()
-            });
-            uni.showToast({
-              title: `该单词已存在，重复次数已增加到 ${newRepeat} 次`,
-              duration: 2e3
-            });
-            uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${existingWord.id}` });
-            return;
-          }
-          const local = await getLocalWordSnapshot(word.value.english);
-          applyLocalSnapshotToWord(local);
-          isSaving.value = true;
-          normalizeWordHeavyFields();
-          const payload = { ...word.value };
-          const added = await db.addWord(payload);
-          const addedId = added == null ? void 0 : added.id;
-          noteNewWordLearned({ ...payload, id: addedId }, { bookId: "self", source: "quick-add" });
-          uni.showToast({ title: "已加入首日巩固", icon: "none", duration: 1800 });
-          uni.navigateTo({ url: "/pages/index/index" });
-          const english = word.value.english;
-          (async () => {
-            var _a2, _b, _c, _d, _e2, _f, _g, _h;
-            try {
-              const pregen = await getPregenWord(english);
-              if (pregen && (((_a2 = pregen.examples) == null ? void 0 : _a2.length) || ((_b = pregen.synonyms) == null ? void 0 : _b.length) || ((_c = pregen.antonyms) == null ? void 0 : _c.length))) {
-                const updates2 = { update_time: (/* @__PURE__ */ new Date()).toISOString() };
-                if ((_d = pregen.examples) == null ? void 0 : _d.length)
-                  updates2.examples = pregen.examples;
-                if ((_e2 = pregen.synonyms) == null ? void 0 : _e2.length)
-                  updates2.synonyms = pregen.synonyms;
-                if ((_f = pregen.antonyms) == null ? void 0 : _f.length)
-                  updates2.antonyms = pregen.antonyms;
-                if (Object.keys(updates2).length > 1) {
-                  await db.updateWord(addedId, updates2);
-                  uni.$emit("wordEnriched", addedId);
-                }
-                return;
-              }
-              const recentWords = await db.getWordsForList(10, 0, "create_time", "desc", {});
-              const existingWords = recentWords.filter((w2) => w2.english && w2.english.toLowerCase() !== english.toLowerCase()).map((w2) => w2.english).slice(0, 10);
-              let examStatsText = "";
-              try {
-                const examData = await getWordExamData(english);
-                if (examData == null ? void 0 : examData.examStats)
-                  examStatsText = formatWordStatsForPrompt(examData.examStats);
-              } catch (_2) {
-              }
-              const [result, antonyms] = await Promise.all([
-                aiService.generateExamplesAndSynonyms(english, existingWords, examStatsText),
-                aiService.generateAntonyms(english, 3)
-              ]);
-              const updates = { update_time: (/* @__PURE__ */ new Date()).toISOString() };
-              if ((_g = result == null ? void 0 : result.examples) == null ? void 0 : _g.length)
-                updates.examples = result.examples;
-              if ((_h = result == null ? void 0 : result.synonyms) == null ? void 0 : _h.length)
-                updates.synonyms = result.synonyms;
-              if (antonyms == null ? void 0 : antonyms.length)
-                updates.antonyms = antonyms;
-              if (Object.keys(updates).length > 1) {
-                await db.updateWord(addedId, updates);
-                uni.$emit("wordEnriched", addedId);
-              }
-            } catch (_2) {
-            }
-          })();
-        } catch (error) {
-          formatAppLog("error", "at pages/quick-add/quick-add.vue:268", "保存失败:", error);
-          uni.showToast({ title: "保存失败，请重试", icon: "none", duration: 2e3 });
-        } finally {
-          isSaving.value = false;
-        }
-      };
-      const saveAndEdit = async () => {
-        if (isSaving.value)
-          return;
-        if (!word.value.english || !word.value.chinese) {
-          uni.showToast({ title: "请输入英文单词", duration: 2e3 });
-          return;
-        }
-        try {
-          const targetId = addToWordbook.value || "self";
-          if (targetId !== "self") {
-            const list = getWordbookWords(targetId) || [];
-            const existing = list.find((w2) => (w2.english || "").toLowerCase() === word.value.english.toLowerCase());
-            if (existing) {
-              uni.showToast({ title: "该单词本中已存在该词", icon: "none" });
-              return;
-            }
-            const local2 = await getLocalWordSnapshot(word.value.english);
-            applyLocalSnapshotToWord(local2);
-            isSaving.value = true;
-            normalizeWordHeavyFields();
-            const newWord = {
-              id: String(Date.now()),
-              ...word.value,
-              create_time: (/* @__PURE__ */ new Date()).toISOString(),
-              update_time: (/* @__PURE__ */ new Date()).toISOString(),
-              view_count: 0
-            };
-            list.push(newWord);
-            setWordbookWords(targetId, list);
-            noteNewWordLearned(newWord, { bookId: targetId, source: "quick-add" });
-            uni.showToast({ title: "已加入首日巩固", icon: "none", duration: 1800 });
-            uni.$emit("refreshWordList");
-            uni.navigateTo({ url: "/pages/index/index" });
-            return;
-          }
-          const existingList2 = await db.getWordsForList(1, 0, "create_time", "desc", { search: word.value.english.trim() });
-          const existingWord = existingList2.find(
-            (w2) => (w2.english || "").toLowerCase() === word.value.english.toLowerCase()
-          );
-          if (existingWord) {
-            const newRepeat = (existingWord.repeat_count || 0) + 1;
-            await db.updateWord(existingWord.id, {
-              repeat_count: newRepeat,
-              update_time: (/* @__PURE__ */ new Date()).toISOString()
-            });
-            uni.showToast({
-              title: `该单词已存在，重复次数已增加到 ${newRepeat} 次`,
-              duration: 1e3
-            });
-            uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${existingWord.id}` });
-            return;
-          }
-          const local = await getLocalWordSnapshot(word.value.english);
-          applyLocalSnapshotToWord(local);
-          isSaving.value = true;
-          normalizeWordHeavyFields();
-          const payload = { ...word.value };
-          const added = await db.addWord(payload);
-          const addedId = added == null ? void 0 : added.id;
-          noteNewWordLearned({ ...payload, id: addedId }, { bookId: "self", source: "quick-add" });
-          uni.showToast({ title: "已加入首日巩固", icon: "none", duration: 1800 });
-          uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${addedId}` });
-          const english = word.value.english;
-          (async () => {
-            var _a2, _b, _c, _d, _e2, _f, _g, _h;
-            try {
-              const pregen = await getPregenWord(english);
-              if (pregen && (((_a2 = pregen.examples) == null ? void 0 : _a2.length) || ((_b = pregen.synonyms) == null ? void 0 : _b.length) || ((_c = pregen.antonyms) == null ? void 0 : _c.length))) {
-                const updates2 = { update_time: (/* @__PURE__ */ new Date()).toISOString() };
-                if ((_d = pregen.examples) == null ? void 0 : _d.length)
-                  updates2.examples = pregen.examples;
-                if ((_e2 = pregen.synonyms) == null ? void 0 : _e2.length)
-                  updates2.synonyms = pregen.synonyms;
-                if ((_f = pregen.antonyms) == null ? void 0 : _f.length)
-                  updates2.antonyms = pregen.antonyms;
-                if (Object.keys(updates2).length > 1) {
-                  await db.updateWord(addedId, updates2);
-                  uni.$emit("wordEnriched", addedId);
-                }
-                return;
-              }
-              const recentWords2 = await db.getWordsForList(10, 0, "create_time", "desc", {});
-              const existingWords = recentWords2.filter((w2) => w2.english && w2.english.toLowerCase() !== english.toLowerCase()).map((w2) => w2.english).slice(0, 10);
-              let examStatsText = "";
-              try {
-                const examData = await getWordExamData(english);
-                if (examData == null ? void 0 : examData.examStats)
-                  examStatsText = formatWordStatsForPrompt(examData.examStats);
-              } catch (_2) {
-              }
-              const [result, antonyms] = await Promise.all([
-                aiService.generateExamplesAndSynonyms(english, existingWords, examStatsText),
-                aiService.generateAntonyms(english, 3)
-              ]);
-              const updates = { update_time: (/* @__PURE__ */ new Date()).toISOString() };
-              if ((_g = result == null ? void 0 : result.examples) == null ? void 0 : _g.length)
-                updates.examples = result.examples;
-              if ((_h = result == null ? void 0 : result.synonyms) == null ? void 0 : _h.length)
-                updates.synonyms = result.synonyms;
-              if (antonyms == null ? void 0 : antonyms.length)
-                updates.antonyms = antonyms;
-              if (Object.keys(updates).length > 1) {
-                await db.updateWord(addedId, updates);
-                uni.$emit("wordEnriched", addedId);
-              }
-            } catch (_2) {
-            }
-          })();
-        } catch (error) {
-          formatAppLog("error", "at pages/quick-add/quick-add.vue:384", "保存失败:", error);
-          uni.showToast({ title: "保存失败，请重试", icon: "none", duration: 2e3 });
-        } finally {
-          isSaving.value = false;
-        }
-      };
-      vue.onMounted(async () => {
-        cloudWordbooks.value = getCloudWordbooks();
-        const lastWord = await db.getLastWord();
-        if (lastWord) {
-          word.value.source_page = lastWord.source_page || "";
-          word.value.year = lastWord.year || "";
-        }
-      });
-      onShow(() => {
-        cloudWordbooks.value = getCloudWordbooks();
-      });
-      onUnload(() => {
-        try {
-          cleanupExpiredCaches();
-        } catch (error) {
-          logger.warn("QuickAdd", "清理缓存失败", error);
-        }
-      });
-      const __returned__ = { word, foundWord, isLoading, isSaving, goBack, cloudWordbooks, addToWordbook, addToWordbookOptions, addToWordbookIndex, addToWordbookLabel, onAddToWordbookChange, applyLocalSnapshotToWord, normalizeWordHeavyFields, get _searchTimer() {
-        return _searchTimer;
-      }, set _searchTimer(v2) {
-        _searchTimer = v2;
-      }, searchWord, saveQuick, saveAndEdit, ref: vue.ref, computed: vue.computed, onMounted: vue.onMounted, VocalColorBlockSelector, get onShow() {
-        return onShow;
-      }, get onUnload() {
-        return onUnload;
-      }, get db() {
-        return db;
-      }, get aiService() {
-        return aiService;
-      }, get formatWordStatsForPrompt() {
-        return formatWordStatsForPrompt;
-      }, get pregenVocab() {
-        return pregenVocab;
-      }, get masterDb() {
-        return masterDb;
-      }, get getLocalWordSnapshot() {
-        return getLocalWordSnapshot;
-      }, get getCloudWordbooks() {
-        return getCloudWordbooks;
-      }, get getWordbookWords() {
-        return getWordbookWords;
-      }, get setWordbookWords() {
-        return setWordbookWords;
-      }, get noteNewWordLearned() {
-        return noteNewWordLearned;
-      }, get logger() {
-        return logger;
-      }, get errorHandler() {
-        return errorHandler;
-      }, get cleanupExpiredCaches() {
-        return cleanupExpiredCaches;
-      } };
-      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
-      return __returned__;
-    }
-  };
-  function _sfc_render$8(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
-      vue.createElementVNode("view", { class: "custom-nav-bar" }, [
-        vue.createElementVNode("view", {
-          class: "nav-back-btn",
-          onClick: $setup.goBack
-        }, "‹")
-      ]),
-      vue.createElementVNode("view", { class: "main-content" }, [
-        vue.createElementVNode("view", { class: "qa-english-wrap" }, [
-          vue.withDirectives(vue.createElementVNode("input", {
-            type: "text",
-            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.word.english = $event),
-            onInput: $setup.searchWord,
-            placeholder: "请输入英文单词...",
-            disabled: $setup.isSaving,
-            class: "qa-english-input"
-          }, null, 40, ["disabled"]), [
-            [vue.vModelText, $setup.word.english]
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "qa-meta-row" }, [
-          vue.createElementVNode("view", { class: "qa-meta-item" }, [
-            vue.createElementVNode("text", { class: "qa-meta-label" }, "P."),
-            vue.withDirectives(vue.createElementVNode(
-              "input",
-              {
-                type: "number",
-                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.word.source_page = $event),
-                placeholder: "页码",
-                class: "qa-meta-input"
-              },
-              null,
-              512
-              /* NEED_PATCH */
-            ), [
-              [vue.vModelText, $setup.word.source_page]
-            ])
-          ]),
-          vue.createElementVNode("view", { class: "qa-meta-item" }, [
-            vue.createElementVNode("text", { class: "qa-meta-label" }, "Year"),
-            vue.withDirectives(vue.createElementVNode(
-              "input",
-              {
-                type: "number",
-                "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.word.year = $event),
-                placeholder: "年份",
-                class: "qa-meta-input"
-              },
-              null,
-              512
-              /* NEED_PATCH */
-            ), [
-              [vue.vModelText, $setup.word.year]
-            ])
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "add-to-wordbook-row" }, [
-          vue.createElementVNode("text", { class: "add-to-label" }, "添加到单词本"),
-          vue.createVNode($setup["VocalColorBlockSelector"], {
-            range: $setup.addToWordbookOptions,
-            value: $setup.addToWordbookIndex,
-            onChange: $setup.onAddToWordbookChange
-          }, {
-            default: vue.withCtx(() => [
-              vue.createElementVNode(
-                "view",
-                { class: "add-to-picker" },
-                vue.toDisplayString($setup.addToWordbookLabel),
-                1
-                /* TEXT */
-              )
-            ]),
-            _: 1
-            /* STABLE */
-          }, 8, ["range", "value"])
-        ]),
-        $setup.foundWord ? (vue.openBlock(), vue.createElementBlock("div", {
-          key: 0,
-          style: { "background-color": "#f5f7fa", "padding": "15px", "border-radius": "12px", "margin-top": "20px" }
-        }, [
-          vue.createElementVNode("div", { style: { "font-size": "14px", "line-height": "1.5" } }, [
-            vue.createElementVNode("span", { style: { "font-weight": "bold", "color": "#4A4E69", "margin-right": "8px" } }, "中文释义："),
-            vue.createElementVNode(
-              "span",
-              null,
-              vue.toDisplayString($setup.foundWord.chinese),
-              1
-              /* TEXT */
-            )
-          ])
-        ])) : vue.createCommentVNode("v-if", true)
-      ]),
-      vue.createElementVNode("view", { class: "footer" }, [
-        vue.createElementVNode("button", {
-          onClick: $setup.goBack,
-          disabled: $setup.isSaving
-        }, "取消", 8, ["disabled"]),
-        vue.createElementVNode("button", {
-          onClick: $setup.saveQuick,
-          disabled: $setup.isSaving
-        }, "快速保存", 8, ["disabled"]),
-        vue.createElementVNode("button", {
-          onClick: $setup.saveAndEdit,
-          disabled: $setup.isSaving
-        }, "保存并编辑", 8, ["disabled"])
-      ])
-    ]);
-  }
-  const PagesQuickAddQuickAdd = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$8], ["__scopeId", "data-v-59bf85e1"], ["__file", "E:/vocal/wordbook_new/pages/quick-add/quick-add.vue"]]);
   const pages = [
     {
       path: "pages/index/index",
@@ -13072,6 +3242,10152 @@ ${i3}
     }();
   })();
   var _r = yr;
+  const _export_sfc = (sfc, props) => {
+    const target = sfc.__vccOpts || sfc;
+    for (const [key, val] of props) {
+      target[key] = val;
+    }
+    return target;
+  };
+  const _sfc_main$c = {
+    __name: "vocal-color-block-selector",
+    props: {
+      range: { type: Array, default: () => [] },
+      value: { type: Number, default: 0 }
+    },
+    emits: ["change"],
+    setup(__props, { expose: __expose, emit: __emit }) {
+      __expose();
+      const props = __props;
+      const emit = __emit;
+      const visible = vue.ref(false);
+      const currentIndex = vue.ref(0);
+      const displayRange = vue.computed(() => {
+        const r2 = props.range;
+        return Array.isArray(r2) ? r2 : [];
+      });
+      vue.watch(() => props.value, (v2) => {
+        currentIndex.value = Math.max(0, Math.min(Number(v2) || 0, displayRange.value.length - 1));
+      }, { immediate: true });
+      function open() {
+        currentIndex.value = Math.max(0, Math.min(props.value, displayRange.value.length - 1));
+        visible.value = true;
+      }
+      function close() {
+        visible.value = false;
+      }
+      function select(idx) {
+        emit("change", { detail: { value: idx } });
+        close();
+      }
+      const __returned__ = { props, emit, visible, currentIndex, displayRange, open, close, select, ref: vue.ref, computed: vue.computed, watch: vue.watch };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$c(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "vocal-selector" }, [
+      vue.createElementVNode("view", {
+        class: "selector-trigger",
+        onClick: $setup.open
+      }, [
+        vue.renderSlot(_ctx.$slots, "default", {}, void 0, true)
+      ]),
+      $setup.visible ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "selector-overlay",
+        onClick: $setup.close
+      })) : vue.createCommentVNode("v-if", true),
+      $setup.visible ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "selector-drawer"
+      }, [
+        vue.createElementVNode("view", { class: "drawer-handle" }),
+        vue.createElementVNode("scroll-view", {
+          "scroll-y": "",
+          class: "drawer-body"
+        }, [
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($setup.displayRange, (item, idx) => {
+              return vue.openBlock(), vue.createElementBlock("view", {
+                key: idx,
+                class: vue.normalizeClass(["block-option", { selected: idx === $setup.currentIndex }]),
+                onClick: ($event) => $setup.select(idx)
+              }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "block-text" },
+                  vue.toDisplayString(item),
+                  1
+                  /* TEXT */
+                )
+              ], 10, ["onClick"]);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ])
+      ])) : vue.createCommentVNode("v-if", true)
+    ]);
+  }
+  const VocalColorBlockSelector = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["render", _sfc_render$c], ["__scopeId", "data-v-62b10f5c"], ["__file", "E:/vocal/wordbook_new/components/vocal-color-block-selector/vocal-color-block-selector.vue"]]);
+  const REVIEW_DEFAULTS = {
+    difficulty_score: 0.35,
+    stability: 0.6,
+    retrievability: 0.92,
+    interval_days: 0,
+    lapse_count: 0,
+    review_count: 0,
+    next_review_time: "",
+    last_reviewed_at: ""
+  };
+  const clamp = (num, min, max) => Math.min(max, Math.max(min, num));
+  const normalizeReviewFields = (word = {}) => ({
+    difficulty_score: clamp(Number(word.difficulty_score ?? REVIEW_DEFAULTS.difficulty_score) || REVIEW_DEFAULTS.difficulty_score, 0.15, 0.98),
+    stability: Math.max(0.2, Number(word.stability ?? REVIEW_DEFAULTS.stability) || REVIEW_DEFAULTS.stability),
+    retrievability: clamp(Number(word.retrievability ?? REVIEW_DEFAULTS.retrievability) || REVIEW_DEFAULTS.retrievability, 0.05, 0.99),
+    interval_days: Math.max(0, Number(word.interval_days ?? REVIEW_DEFAULTS.interval_days) || 0),
+    lapse_count: Math.max(0, Number(word.lapse_count ?? REVIEW_DEFAULTS.lapse_count) || 0),
+    review_count: Math.max(0, Number(word.review_count ?? word.review_frequency ?? REVIEW_DEFAULTS.review_count) || 0),
+    next_review_time: word.next_review_time || "",
+    last_reviewed_at: word.last_reviewed_at || ""
+  });
+  const computeElapsedDays = (word = {}, now = /* @__PURE__ */ new Date()) => {
+    const base = word.last_reviewed_at || word.update_time || word.create_time;
+    if (!base)
+      return 999;
+    return Math.max(0, (now - new Date(base)) / (1e3 * 60 * 60 * 24));
+  };
+  const computeRetrievabilityByStability = (stability, elapsedDays) => {
+    const s2 = Math.max(0.2, Number(stability) || REVIEW_DEFAULTS.stability);
+    return clamp(Math.exp(-elapsedDays / s2), 0.02, 0.999);
+  };
+  const scheduleReviewState = (word = {}, isCorrect = false, now = /* @__PURE__ */ new Date()) => {
+    const importance = clamp(Number(word.importance) || 3, 0, 5);
+    const prev = normalizeReviewFields(word);
+    const elapsedDays = computeElapsedDays(word, now);
+    const recallProb = computeRetrievabilityByStability(prev.stability, elapsedDays);
+    const nextReviewCount = prev.review_count + 1;
+    let difficulty = prev.difficulty_score;
+    let stability = prev.stability;
+    let lapseCount = prev.lapse_count;
+    let retrievability = prev.retrievability;
+    let intervalDays = prev.interval_days;
+    if (isCorrect) {
+      difficulty = clamp(
+        difficulty - 0.06 + (1 - recallProb) * 0.05 - importance / 100,
+        0.15,
+        0.95
+      );
+      stability = Math.max(
+        0.5,
+        stability * (1.55 + (1 - difficulty) * 0.65 + recallProb * 0.35 + importance * 0.04)
+      );
+      intervalDays = clamp(stability * (0.7 + (1 - difficulty) * 0.9), 0.5, 90);
+      retrievability = 0.97;
+    } else {
+      difficulty = clamp(
+        difficulty + 0.12 + (1 - recallProb) * 0.12 + 0.02 * Math.max(0, 3 - importance),
+        0.2,
+        0.98
+      );
+      stability = Math.max(0.2, stability * (0.42 + (1 - difficulty) * 0.22));
+      lapseCount += 1;
+      intervalDays = 0.125;
+      retrievability = 0.35;
+    }
+    return {
+      difficulty_score: Number(difficulty.toFixed(4)),
+      stability: Number(stability.toFixed(4)),
+      retrievability: Number(retrievability.toFixed(4)),
+      interval_days: Number(intervalDays.toFixed(4)),
+      lapse_count: lapseCount,
+      review_count: nextReviewCount,
+      review_frequency: nextReviewCount,
+      next_review_time: new Date(now.getTime() + intervalDays * 24 * 60 * 60 * 1e3).toISOString(),
+      last_reviewed_at: now.toISOString()
+    };
+  };
+  const calculateReviewPriority = (word = {}, hardMode = false) => {
+    const now = /* @__PURE__ */ new Date();
+    const fields = normalizeReviewFields(word);
+    const elapsedDays = computeElapsedDays(word, now);
+    const forgetProb = 1 - computeRetrievabilityByStability(fields.stability, elapsedDays);
+    const dueAt = fields.next_review_time ? new Date(fields.next_review_time) : new Date(word.last_reviewed_at || word.update_time || word.create_time || now.toISOString());
+    const overdueDays = Math.max(0, (now - dueAt) / (1e3 * 60 * 60 * 24));
+    const importance = clamp(Number(word.importance) || 3, 0, 5);
+    let score = forgetProb * 55 + fields.difficulty_score * 22 + overdueDays * 12 + fields.lapse_count * 8 + importance * 4;
+    if (hardMode)
+      score += forgetProb * 10 + fields.difficulty_score * 8 + (word.error_rate || 0) * 0.2;
+    return {
+      score,
+      forget_probability: Number(forgetProb.toFixed(4)),
+      overdue_days: Number(overdueDays.toFixed(3))
+    };
+  };
+  const calculateMastery = (word = {}) => {
+    const fields = normalizeReviewFields(word);
+    const elapsedDays = computeElapsedDays(word, /* @__PURE__ */ new Date());
+    const forgetProbability = 1 - computeRetrievabilityByStability(fields.stability, elapsedDays);
+    return clamp(
+      Math.round((1 - (forgetProbability * 0.72 + fields.difficulty_score * 0.28)) * 100),
+      1,
+      99
+    );
+  };
+  const sqlLiteral = (value) => {
+    if (value === null || value === void 0)
+      return "NULL";
+    if (typeof value === "number")
+      return Number.isFinite(value) ? String(value) : "NULL";
+    if (typeof value === "boolean")
+      return value ? "1" : "0";
+    return `'${String(value).replace(/'/g, "''")}'`;
+  };
+  const bindSql = (sql, params = []) => {
+    let i2 = 0;
+    return String(sql).replace(/\?/g, () => sqlLiteral(params[i2++]));
+  };
+  const toJsonString = (value, fallback = []) => {
+    if (typeof value === "string")
+      return value;
+    try {
+      return JSON.stringify(value ?? fallback);
+    } catch (_2) {
+      return JSON.stringify(fallback);
+    }
+  };
+  const parseJsonSafe$1 = (jsonStr, fallback = null) => {
+    if (!jsonStr)
+      return fallback;
+    try {
+      return JSON.parse(jsonStr);
+    } catch (_2) {
+      return fallback;
+    }
+  };
+  const H5_STORAGE_KEY$1 = "wordbook_h5_words";
+  const getH5Words$1 = () => {
+    try {
+      const raw = uni.getStorageSync(H5_STORAGE_KEY$1);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/databaseAdapter.js:18", "[H5Adapter] 读取 H5 单词列表失败:", e2);
+      return [];
+    }
+  };
+  const setH5Words$1 = (words) => {
+    try {
+      uni.setStorageSync(H5_STORAGE_KEY$1, JSON.stringify(words));
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/databaseAdapter.js:30", "[H5Adapter] 保存 H5 单词列表失败:", e2);
+    }
+  };
+  class H5DatabaseAdapter {
+    async init() {
+      return Promise.resolve();
+    }
+    async query(sql, params = []) {
+      return Promise.resolve([]);
+    }
+    async execute(sql, params = []) {
+      return Promise.resolve();
+    }
+    async getWords() {
+      return Promise.resolve(getH5Words$1());
+    }
+    async addWord(word) {
+      if (!word.english)
+        throw new Error("单词不能为空");
+      const words = getH5Words$1();
+      const newWord = {
+        ...word,
+        id: Date.now().toString(),
+        create_time: (/* @__PURE__ */ new Date()).toISOString(),
+        update_time: (/* @__PURE__ */ new Date()).toISOString(),
+        examples: word.examples || [],
+        synonyms: word.synonyms || [],
+        antonyms: word.antonyms || [],
+        view_count: 0
+      };
+      words.unshift(newWord);
+      setH5Words$1(words);
+      return Promise.resolve(newWord);
+    }
+    async updateWord(id, updates) {
+      if (!id)
+        throw new Error("无效 id");
+      const words = getH5Words$1();
+      const idx = words.findIndex((w2) => w2.id === id);
+      if (idx === -1)
+        throw new Error("未找到单词");
+      words[idx] = {
+        ...words[idx],
+        ...updates,
+        update_time: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      setH5Words$1(words);
+      return Promise.resolve();
+    }
+    async deleteWord(id) {
+      if (!id)
+        throw new Error("无效 id");
+      const words = getH5Words$1().filter((w2) => w2.id !== id);
+      setH5Words$1(words);
+      return Promise.resolve();
+    }
+    async getWordById(id) {
+      if (!id)
+        return Promise.resolve(null);
+      const words = getH5Words$1();
+      const found = words.find((w2) => w2.id === id);
+      return Promise.resolve(found || null);
+    }
+    async getWordByEnglish(english) {
+      if (!english)
+        return Promise.resolve(null);
+      const key = String(english).trim().toLowerCase();
+      const words = getH5Words$1();
+      const found = words.find((w2) => (w2.english || "").toLowerCase() === key);
+      return Promise.resolve(found || null);
+    }
+    async getRandomDistractors(excludeId, count = 3) {
+      const words = getH5Words$1().filter((w2) => w2.id !== excludeId);
+      for (let i2 = words.length - 1; i2 > 0; i2--) {
+        const j2 = Math.floor(Math.random() * (i2 + 1));
+        [words[i2], words[j2]] = [words[j2], words[i2]];
+      }
+      return Promise.resolve(words.slice(0, count).map((w2) => w2.chinese));
+    }
+    async getWordsByTag(tag, excludeId) {
+      if (!tag || !tag.trim())
+        return Promise.resolve([]);
+      const t2 = tag.trim();
+      const words = getH5Words$1();
+      return Promise.resolve(
+        words.filter((w2) => w2.id !== excludeId && (w2.tags || "").split(/[,，\s]+/).map((x2) => x2.trim()).filter(Boolean).includes(t2)).slice(0, 20).map((w2) => ({ id: w2.id, english: w2.english, chinese: w2.chinese }))
+      );
+    }
+  }
+  class AppDatabaseAdapter {
+    constructor(dbName = "wordbook_db", dbPath = "_doc/wordbook.db") {
+      this.dbName = dbName;
+      this.dbPath = dbPath;
+      this.isOpen = false;
+    }
+    async init() {
+      formatAppLog("log", "at src/utils/databaseAdapter.js:154", "[AppAdapter] init() 被调用");
+      if (this.isOpen) {
+        formatAppLog("log", "at src/utils/databaseAdapter.js:156", "[AppAdapter] 数据库已打开，跳过初始化");
+        return Promise.resolve();
+      }
+      try {
+        formatAppLog("log", "at src/utils/databaseAdapter.js:161", "[AppAdapter] 检查数据库是否已打开...");
+        formatAppLog("log", "at src/utils/databaseAdapter.js:162", "[AppAdapter] plus:", typeof plus);
+        formatAppLog("log", "at src/utils/databaseAdapter.js:163", "[AppAdapter] plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
+        if (plus && plus.sqlite && plus.sqlite.isOpenDatabase({ name: this.dbName, path: this.dbPath })) {
+          formatAppLog("log", "at src/utils/databaseAdapter.js:166", "[AppAdapter] 数据库已打开");
+          this.isOpen = true;
+          return Promise.resolve();
+        }
+        formatAppLog("log", "at src/utils/databaseAdapter.js:171", "[AppAdapter] 打开数据库...");
+        await this.openDatabase();
+        this.isOpen = true;
+        formatAppLog("log", "at src/utils/databaseAdapter.js:174", "[AppAdapter] 数据库打开成功");
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/databaseAdapter.js:177", "[AppAdapter] 初始化失败:", error);
+        throw error;
+      }
+    }
+    openDatabase() {
+      return new Promise((resolve, reject) => {
+        plus.sqlite.openDatabase({
+          name: this.dbName,
+          path: this.dbPath,
+          success: () => {
+            formatAppLog("log", "at src/utils/databaseAdapter.js:188", "[AppAdapter] 数据库打开成功");
+            resolve();
+          },
+          fail: (e2) => {
+            formatAppLog("error", "at src/utils/databaseAdapter.js:192", "[AppAdapter] 数据库打开失败:", e2);
+            reject(e2);
+          }
+        });
+      });
+    }
+    async query(sql, params = []) {
+      await this.init();
+      return new Promise((resolve) => {
+        plus.sqlite.selectSql({
+          name: this.dbName,
+          sql: bindSql(sql, params),
+          success: (data) => resolve(data || []),
+          fail: (e2) => {
+            formatAppLog("error", "at src/utils/databaseAdapter.js:208", "[AppAdapter] 查询失败:", e2);
+            resolve([]);
+          }
+        });
+      });
+    }
+    async execute(sql, params = []) {
+      await this.init();
+      return new Promise((resolve, reject) => {
+        plus.sqlite.executeSql({
+          name: this.dbName,
+          sql: bindSql(sql, params),
+          success: resolve,
+          fail: reject
+        });
+      });
+    }
+    async transaction(callback) {
+      await this.init();
+      try {
+        await this.execute("BEGIN TRANSACTION");
+        await callback();
+        await this.execute("COMMIT");
+      } catch (error) {
+        await this.execute("ROLLBACK").catch(() => {
+        });
+        throw error;
+      }
+    }
+    async getWords() {
+      const data = await this.query("SELECT * FROM words ORDER BY create_time DESC");
+      return data || [];
+    }
+    async addWord(word) {
+      if (!word.english)
+        return Promise.reject("单词不能为空");
+      const wordId = Date.now().toString();
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const sql = `INSERT INTO words (
+      id, english, chinese, tags, source_page, year, importance, repeat_count, view_count,
+      difficulty_score, stability, retrievability, interval_days, lapse_count, review_count,
+      next_review_time, last_reviewed_at, examples, synonyms, antonyms, create_time, update_time
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const params = [
+        wordId,
+        word.english,
+        word.chinese || "",
+        word.tags || "",
+        word.source_page || "",
+        word.year || "",
+        word.importance || 3,
+        word.repeat_count || 1,
+        word.view_count != null ? word.view_count : 0,
+        word.difficulty_score || 0.35,
+        word.stability || 0.6,
+        word.retrievability || 0.92,
+        word.interval_days || 0,
+        word.lapse_count || 0,
+        word.review_count || 0,
+        word.next_review_time || "",
+        word.last_reviewed_at || "",
+        toJsonString(word.examples || []),
+        toJsonString(word.synonyms || []),
+        toJsonString(word.antonyms || []),
+        now,
+        now
+      ];
+      await this.execute(sql, params);
+      return Promise.resolve({ ...word, id: wordId });
+    }
+    async updateWord(id, updates) {
+      if (!id)
+        return Promise.reject("无效 id");
+      const fields = [];
+      const params = [];
+      for (const [key, value] of Object.entries(updates)) {
+        if (value === void 0)
+          continue;
+        fields.push(`${key} = ?`);
+        params.push(value);
+      }
+      if (fields.length === 0)
+        return Promise.resolve();
+      fields.push("update_time = ?");
+      params.push((/* @__PURE__ */ new Date()).toISOString());
+      params.push(id);
+      const sql = `UPDATE words SET ${fields.join(", ")} WHERE id = ?`;
+      await this.execute(sql, params);
+      return Promise.resolve();
+    }
+    async deleteWord(id) {
+      if (!id)
+        return Promise.reject("无效 id");
+      await this.execute("DELETE FROM words WHERE id = ?", [id]);
+      return Promise.resolve();
+    }
+    async getWordById(id) {
+      if (!id)
+        return Promise.resolve(null);
+      const data = await this.query("SELECT * FROM words WHERE id = ?", [id]);
+      return Promise.resolve(data && data.length ? data[0] : null);
+    }
+    async getWordByEnglish(english) {
+      if (!english)
+        return Promise.resolve(null);
+      const key = String(english).trim().toLowerCase();
+      const data = await this.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
+      return Promise.resolve(data && data.length ? data[0] : null);
+    }
+    async getRandomDistractors(excludeId, count = 3) {
+      const data = await this.query(
+        "SELECT id, chinese FROM words WHERE id != ? ORDER BY RANDOM() LIMIT ?",
+        [excludeId, count + 5]
+      );
+      return Promise.resolve((data || []).slice(0, count).map((item) => item.chinese));
+    }
+    async getWordsByTag(tag, excludeId) {
+      if (!tag || !tag.trim())
+        return Promise.resolve([]);
+      const t2 = tag.trim();
+      const data = await this.query(
+        "SELECT id, english, chinese, tags FROM words WHERE (tags LIKE ? OR tags LIKE ? OR tags LIKE ? OR tags = ?) LIMIT 30",
+        [`%,${t2},%`, `${t2},%`, `%,${t2}`, t2]
+      );
+      return Promise.resolve(
+        (data || []).filter((item) => item.id !== excludeId && (item.tags || "").split(/[,，\s]+/).map((x2) => x2.trim()).filter(Boolean).includes(t2)).slice(0, 20).map((item) => ({ id: item.id, english: item.english, chinese: item.chinese }))
+      );
+    }
+  }
+  function createDatabaseAdapter() {
+    formatAppLog("log", "at src/utils/databaseAdapter.js:363", "[databaseAdapter] 检查运行环境...");
+    formatAppLog("log", "at src/utils/databaseAdapter.js:364", "[databaseAdapter] typeof plus:", typeof plus);
+    formatAppLog("log", "at src/utils/databaseAdapter.js:365", "[databaseAdapter] typeof plus.sqlite:", typeof (plus == null ? void 0 : plus.sqlite));
+    const isApp2 = typeof plus !== "undefined" && typeof plus.sqlite !== "undefined";
+    formatAppLog("log", "at src/utils/databaseAdapter.js:369", "[databaseAdapter] isApp:", isApp2);
+    if (isApp2) {
+      formatAppLog("log", "at src/utils/databaseAdapter.js:372", "[databaseAdapter] 使用 AppDatabaseAdapter");
+      return new AppDatabaseAdapter();
+    } else {
+      formatAppLog("log", "at src/utils/databaseAdapter.js:375", "[databaseAdapter] 使用 H5DatabaseAdapter");
+      return new H5DatabaseAdapter();
+    }
+  }
+  const H5_STORAGE_KEY = "wordbook_h5_words";
+  const H5_MASTERED_KEY = "wordbook_h5_mastered_words";
+  const parseWord = (item) => {
+    let examples = [], synonyms = [], antonyms = [];
+    if (Array.isArray(item.examples))
+      examples = item.examples;
+    else if (item.examples)
+      examples = parseJsonSafe$1(item.examples, []);
+    if (Array.isArray(item.synonyms))
+      synonyms = item.synonyms;
+    else if (item.synonyms)
+      synonyms = parseJsonSafe$1(item.synonyms, []);
+    if (Array.isArray(item.antonyms))
+      antonyms = item.antonyms;
+    else if (item.antonyms)
+      antonyms = parseJsonSafe$1(item.antonyms, []);
+    return { ...item, ...normalizeReviewFields(item), examples, synonyms, antonyms };
+  };
+  const getH5Words = () => {
+    try {
+      const raw = uni.getStorageSync(H5_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/db_v2.js:46", "[db] 读取 H5 单词列表失败:", e2);
+      return [];
+    }
+  };
+  const setH5Words = (words) => {
+    try {
+      uni.setStorageSync(H5_STORAGE_KEY, JSON.stringify(words));
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/db_v2.js:55", "[db] 保存 H5 单词列表失败:", e2);
+    }
+  };
+  const getH5MasteredWords = () => {
+    try {
+      const raw = uni.getStorageSync(H5_MASTERED_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e2) {
+      return [];
+    }
+  };
+  const setH5MasteredWords = (words) => {
+    try {
+      uni.setStorageSync(H5_MASTERED_KEY, JSON.stringify(words));
+    } catch (e2) {
+    }
+  };
+  class DatabaseManager {
+    constructor() {
+      formatAppLog("log", "at src/utils/db_v2.js:79", "[db] DatabaseManager 构造函数被调用");
+      this.adapter = createDatabaseAdapter();
+      this.isH5 = null;
+      formatAppLog("log", "at src/utils/db_v2.js:83", "[db] adapter 类型:", this.adapter.constructor.name);
+    }
+    /**
+     * 初始化数据库
+     */
+    async init() {
+      try {
+        formatAppLog("log", "at src/utils/db_v2.js:91", "[db] 开始初始化数据库...");
+        formatAppLog("log", "at src/utils/db_v2.js:92", "[db] 调用 adapter.init()...");
+        if (typeof plus === "undefined") {
+          formatAppLog("warn", "at src/utils/db_v2.js:97", "[db] plus 对象未就绪，等待 plusready 事件...");
+          await Promise.race([
+            new Promise((resolve) => {
+              const checkPlus = () => {
+                if (typeof plus !== "undefined") {
+                  formatAppLog("log", "at src/utils/db_v2.js:102", "[db] plus 对象已就绪");
+                  resolve();
+                } else {
+                  setTimeout(checkPlus, 100);
+                }
+              };
+              checkPlus();
+            }),
+            new Promise(
+              (_2, reject) => setTimeout(() => reject(new Error("[db] plus 初始化超时（5秒）")), 5e3)
+            )
+          ]);
+        }
+        this.isH5 = typeof plus === "undefined";
+        formatAppLog("log", "at src/utils/db_v2.js:118", "[db] isH5:", this.isH5);
+        await this.adapter.init();
+        formatAppLog("log", "at src/utils/db_v2.js:121", "[db] adapter.init() 完成");
+        if (!this.isH5) {
+          formatAppLog("log", "at src/utils/db_v2.js:124", "[db] 设置数据库架构...");
+          await this.setupSchema();
+          formatAppLog("log", "at src/utils/db_v2.js:126", "[db] 数据库架构设置完成");
+        } else {
+          formatAppLog("log", "at src/utils/db_v2.js:128", "[db] H5 环境，跳过架构设置");
+        }
+        formatAppLog("log", "at src/utils/db_v2.js:130", "[db] 数据库初始化完成");
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:132", "[db] 初始化失败:", error);
+        throw error;
+      }
+    }
+    /**
+     * 设置数据库架构（仅 App）
+     */
+    async setupSchema() {
+      if (this.isH5)
+        return;
+      try {
+        await this.adapter.execute(`CREATE TABLE IF NOT EXISTS words (
+        "id" TEXT PRIMARY KEY,
+        "english" TEXT NOT NULL,
+        "chinese" TEXT,
+        "tags" TEXT,
+        "source_page" TEXT,
+        "year" TEXT,
+        "importance" INTEGER,
+        "error_rate" REAL,
+        "review_frequency" INTEGER,
+        "repeat_count" INTEGER DEFAULT 1,
+        "view_count" INTEGER DEFAULT 0,
+        "difficulty_score" REAL DEFAULT 0.35,
+        "stability" REAL DEFAULT 0.6,
+        "retrievability" REAL DEFAULT 0.92,
+        "interval_days" REAL DEFAULT 0,
+        "lapse_count" INTEGER DEFAULT 0,
+        "review_count" INTEGER DEFAULT 0,
+        "next_review_time" TEXT,
+        "last_reviewed_at" TEXT,
+        "examples" TEXT,
+        "synonyms" TEXT,
+        "antonyms" TEXT,
+        "create_time" TEXT,
+        "update_time" TEXT,
+        "is_mastered" INTEGER DEFAULT 0,
+        "mastered_at" TEXT,
+        "is_favorite" INTEGER DEFAULT 0
+      )`);
+        await this.adapter.execute(`CREATE TABLE IF NOT EXISTS mastered_words (
+        "id" TEXT PRIMARY KEY,
+        "english" TEXT NOT NULL,
+        "chinese" TEXT,
+        "tags" TEXT,
+        "source_page" TEXT,
+        "year" TEXT,
+        "importance" INTEGER,
+        "error_rate" REAL,
+        "review_frequency" INTEGER,
+        "repeat_count" INTEGER DEFAULT 1,
+        "view_count" INTEGER DEFAULT 0,
+        "difficulty_score" REAL DEFAULT 0.35,
+        "stability" REAL DEFAULT 0.6,
+        "retrievability" REAL DEFAULT 0.92,
+        "interval_days" REAL DEFAULT 0,
+        "lapse_count" INTEGER DEFAULT 0,
+        "review_count" INTEGER DEFAULT 0,
+        "next_review_time" TEXT,
+        "last_reviewed_at" TEXT,
+        "examples" TEXT,
+        "synonyms" TEXT,
+        "antonyms" TEXT,
+        "create_time" TEXT,
+        "update_time" TEXT,
+        "is_mastered" INTEGER DEFAULT 1,
+        "mastered_at" TEXT,
+        "wordbook_type" TEXT DEFAULT 'self',
+        "is_favorite" INTEGER DEFAULT 0
+      )`);
+        await this.addColumnIfNotExists("words", "is_favorite", "INTEGER DEFAULT 0");
+        await this.addColumnIfNotExists("mastered_words", "is_favorite", "INTEGER DEFAULT 0");
+        const indexes = [
+          "CREATE INDEX IF NOT EXISTS idx_words_importance ON words(importance)",
+          "CREATE INDEX IF NOT EXISTS idx_words_english ON words(english)",
+          "CREATE INDEX IF NOT EXISTS idx_words_create_time ON words(create_time)",
+          "CREATE INDEX IF NOT EXISTS idx_words_next_review_time ON words(next_review_time)"
+        ];
+        for (const sql of indexes) {
+          await this.adapter.execute(sql).catch(() => {
+          });
+        }
+        formatAppLog("log", "at src/utils/db_v2.js:223", "[db] 数据库架构初始化完成");
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:225", "[db] 设置架构失败:", error);
+      }
+    }
+    /**
+     * 添加列如果不存在
+     */
+    async addColumnIfNotExists(tableName, columnName, columnType) {
+      try {
+        await this.adapter.execute(`ALTER TABLE ${tableName} ADD COLUMN "${columnName}" ${columnType}`).catch((error) => {
+          if (error && error.message && error.message.includes("duplicate column")) {
+            formatAppLog("log", "at src/utils/db_v2.js:238", `[db] 列 ${tableName}.${columnName} 已存在，跳过添加`);
+            return;
+          }
+          throw error;
+        });
+      } catch (error) {
+        formatAppLog("warn", "at src/utils/db_v2.js:244", `[db] 添加列 ${tableName}.${columnName} 失败:`, error);
+      }
+    }
+    /**
+     * 获取分页单词列表
+     */
+    async getWordsForList(limit = 20, offset = 0, orderBy = "create_time", orderDir = "desc", filters = {}) {
+      await this.init();
+      if (this.isH5) {
+        return this.getWordsForListH5(limit, offset, orderBy, orderDir, filters);
+      }
+      const safeOrderBy = { create_time: "create_time", english: "english", importance: "importance", repeat_count: "repeat_count", view_count: "view_count" }[orderBy] || "create_time";
+      const safeDir = orderDir === "asc" ? "ASC" : "DESC";
+      const conditions = [];
+      const params = [];
+      if (!filters.showMastered) {
+        conditions.push("(is_mastered IS NULL OR is_mastered = 0)");
+      }
+      if ((filters.search || "").trim()) {
+        const q2 = `%${filters.search.trim()}%`;
+        conditions.push("(english LIKE ? OR chinese LIKE ?)");
+        params.push(q2, q2);
+      }
+      if ((filters.tag || "").trim()) {
+        const t2 = filters.tag.trim();
+        conditions.push("(tags LIKE ? OR tags LIKE ? OR tags LIKE ? OR tags = ?)");
+        params.push(`%,${t2},%`, `${t2},%`, `%,${t2}`, t2);
+      }
+      if (filters.year != null && filters.year !== "") {
+        conditions.push("year = ?");
+        params.push(String(filters.year));
+      }
+      if (filters.page != null && filters.page !== "") {
+        conditions.push("source_page = ?");
+        params.push(String(filters.page));
+      }
+      const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
+      const sql = `SELECT id, english, chinese, tags, source_page, year, importance, repeat_count, view_count, create_time FROM words${where} ORDER BY ${safeOrderBy} ${safeDir} LIMIT ${Math.max(0, limit)} OFFSET ${Math.max(0, offset)}`;
+      try {
+        return await this.adapter.query(sql, params);
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:295", "[db] getWordsForList 失败:", error);
+        return [];
+      }
+    }
+    /**
+     * H5 环境的分页单词列表
+     */
+    getWordsForListH5(limit, offset, orderBy, orderDir, filters) {
+      const all = getH5Words();
+      let list = all.map((w2) => ({
+        id: w2.id,
+        english: w2.english,
+        chinese: w2.chinese,
+        tags: w2.tags,
+        source_page: w2.source_page,
+        year: w2.year,
+        importance: w2.importance,
+        repeat_count: w2.repeat_count,
+        view_count: w2.view_count,
+        create_time: w2.create_time,
+        is_mastered: w2.is_mastered
+      }));
+      if (!filters.showMastered) {
+        list = list.filter((w2) => !w2.is_mastered);
+      }
+      const search = (filters.search || "").trim().toLowerCase();
+      if (search) {
+        list = list.filter((w2) => (w2.english || "").toLowerCase().includes(search) || (w2.chinese || "").toLowerCase().includes(search));
+      }
+      if (filters.tag) {
+        const tag = String(filters.tag).trim();
+        list = list.filter((w2) => (w2.tags || "").split(/[,，\s]+/).map((t2) => t2.trim()).includes(tag));
+      }
+      if (filters.year != null && filters.year !== "")
+        list = list.filter((w2) => w2.year == filters.year);
+      if (filters.page != null && filters.page !== "")
+        list = list.filter((w2) => w2.source_page == filters.page);
+      const col = { create_time: "create_time", english: "english", importance: "importance", repeat_count: "repeat_count", view_count: "view_count" }[orderBy] || "create_time";
+      const mul = orderDir === "asc" ? 1 : -1;
+      list.sort((a2, b2) => {
+        const va = a2[col];
+        const vb = b2[col];
+        if (col === "create_time")
+          return (new Date(va || 0) - new Date(vb || 0)) * mul;
+        if (col === "english")
+          return (va || "").localeCompare(vb || "") * mul;
+        return ((Number(va) || 0) - (Number(vb) || 0)) * mul;
+      });
+      return Promise.resolve(list.slice(offset, offset + limit));
+    }
+    /**
+     * 添加单词
+     */
+    async addWord(word) {
+      if (!word.english)
+        return Promise.reject("单词不能为空");
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const newWord = {
+          ...word,
+          id: Date.now().toString(),
+          create_time: (/* @__PURE__ */ new Date()).toISOString(),
+          update_time: (/* @__PURE__ */ new Date()).toISOString(),
+          examples: word.examples || [],
+          synonyms: word.synonyms || [],
+          antonyms: word.antonyms || [],
+          view_count: 0
+        };
+        words.unshift(newWord);
+        setH5Words(words);
+        return Promise.resolve(newWord);
+      }
+      const wordId = Date.now().toString();
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      const reviewFields = normalizeReviewFields(word);
+      const sql = `INSERT INTO words (
+      id, english, chinese, tags, source_page, year, importance, repeat_count, view_count,
+      difficulty_score, stability, retrievability, interval_days, lapse_count, review_count,
+      next_review_time, last_reviewed_at, examples, synonyms, antonyms, create_time, update_time
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+      const params = [
+        wordId,
+        word.english,
+        word.chinese || "",
+        word.tags || "",
+        word.source_page || "",
+        word.year || "",
+        word.importance || 3,
+        word.repeat_count || 1,
+        word.view_count != null ? word.view_count : 0,
+        reviewFields.difficulty_score,
+        reviewFields.stability,
+        reviewFields.retrievability,
+        reviewFields.interval_days,
+        reviewFields.lapse_count,
+        reviewFields.review_count,
+        reviewFields.next_review_time,
+        reviewFields.last_reviewed_at,
+        toJsonString(word.examples || []),
+        toJsonString(word.synonyms || []),
+        toJsonString(word.antonyms || []),
+        now,
+        now
+      ];
+      try {
+        await this.adapter.execute(sql, params);
+        return Promise.resolve({ ...word, id: wordId });
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:414", "[db] addWord 失败:", error);
+        throw error;
+      }
+    }
+    /**
+     * 获取所有单词
+     */
+    async getWords() {
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words().map(parseWord).sort((a2, b2) => new Date(b2.create_time || 0) - new Date(a2.create_time || 0));
+        return Promise.resolve(words);
+      }
+      try {
+        const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC");
+        return Promise.resolve((data || []).map(parseWord));
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:434", "[db] getWords 失败:", error);
+        return Promise.resolve([]);
+      }
+    }
+    /**
+     * 根据 ID 获取单词
+     */
+    async getWordById(id) {
+      if (!id)
+        return Promise.resolve(null);
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const found = words.find((w2) => w2.id === id);
+        return Promise.resolve(found ? parseWord(found) : null);
+      }
+      try {
+        const data = await this.adapter.query("SELECT * FROM words WHERE id = ?", [id]);
+        return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:457", "[db] getWordById 失败:", error);
+        return Promise.resolve(null);
+      }
+    }
+    /**
+     * 根据英文获取单词
+     */
+    async getWordByEnglish(english) {
+      if (!english)
+        return Promise.resolve(null);
+      await this.init();
+      const key = String(english).trim().toLowerCase();
+      if (this.isH5) {
+        const found = getH5Words().find((w2) => (w2.english || "").toLowerCase() === key);
+        return Promise.resolve(found ? parseWord(found) : null);
+      }
+      try {
+        const data = await this.adapter.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
+        return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:481", "[db] getWordByEnglish 失败:", error);
+        return Promise.resolve(null);
+      }
+    }
+    /**
+     * 更新单词
+     */
+    async updateWord(id, updates) {
+      if (!id)
+        return Promise.reject("无效 id");
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const idx = words.findIndex((w2) => w2.id === id);
+        if (idx === -1)
+          return Promise.reject("未找到单词");
+        words[idx] = {
+          ...words[idx],
+          ...updates,
+          update_time: (/* @__PURE__ */ new Date()).toISOString()
+        };
+        setH5Words(words);
+        return Promise.resolve();
+      }
+      try {
+        await this.adapter.updateWord(id, updates);
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:512", "[db] updateWord 失败:", error);
+        throw error;
+      }
+    }
+    /**
+     * 删除单词
+     */
+    async deleteWord(id) {
+      if (!id)
+        return Promise.reject("无效 id");
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words().filter((w2) => w2.id !== id);
+        setH5Words(words);
+        return Promise.resolve();
+      }
+      try {
+        await this.adapter.deleteWord(id);
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:535", "[db] deleteWord 失败:", error);
+        throw error;
+      }
+    }
+    /**
+     * 更新错误率（带事务保护）
+     */
+    async updateErrorRate(id, isCorrect) {
+      if (!id)
+        return Promise.resolve();
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const idx = words.findIndex((w3) => w3.id === id);
+        if (idx === -1)
+          return Promise.resolve();
+        const w2 = words[idx];
+        const er2 = w2.error_rate || 0;
+        const reviewState = scheduleReviewState(w2, isCorrect);
+        words[idx] = {
+          ...w2,
+          ...reviewState,
+          error_rate: isCorrect ? Math.max(0, er2 - 8) : Math.min(100, er2 + 18),
+          update_time: (/* @__PURE__ */ new Date()).toISOString()
+        };
+        setH5Words(words);
+        return Promise.resolve();
+      }
+      try {
+        const word = await this.getWordById(id);
+        if (!word)
+          return Promise.resolve();
+        const currentErrorRate = word.error_rate || 0;
+        const reviewState = scheduleReviewState(word, isCorrect);
+        const newErrorRate = isCorrect ? Math.max(0, currentErrorRate - 8) : Math.min(100, currentErrorRate + 18);
+        await this.updateWord(id, {
+          error_rate: newErrorRate,
+          review_frequency: reviewState.review_frequency,
+          difficulty_score: reviewState.difficulty_score,
+          stability: reviewState.stability,
+          retrievability: reviewState.retrievability,
+          interval_days: reviewState.interval_days,
+          lapse_count: reviewState.lapse_count,
+          review_count: reviewState.review_count,
+          next_review_time: reviewState.next_review_time,
+          last_reviewed_at: reviewState.last_reviewed_at
+        });
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:590", "[db] updateErrorRate 失败:", error);
+        return Promise.resolve();
+      }
+    }
+    /**
+     * 获取复习单词列表
+     */
+    async getReviewWords(params = {}) {
+      const { sortBy = "smart", count = 20, difficulty = "normal" } = params;
+      const hardMode = difficulty === "hard";
+      await this.init();
+      if (this.isH5) {
+        let list = getH5Words().map((w2) => parseWord(w2));
+        list = list.map((w2) => ({
+          ...w2,
+          ...calculateReviewPriority(w2, hardMode)
+        }));
+        if (sortBy === "error") {
+          list.sort((a2, b2) => (b2.forget_probability || 0) - (a2.forget_probability || 0) || (b2.error_rate || 0) - (a2.error_rate || 0));
+        } else if (sortBy === "new") {
+          list.sort((a2, b2) => new Date(b2.create_time) - new Date(a2.create_time));
+        } else {
+          list.sort((a2, b2) => b2.score - a2.score);
+        }
+        return Promise.resolve(list.slice(0, count));
+      }
+      try {
+        const data = await this.adapter.query("SELECT * FROM words");
+        if (!data || data.length === 0)
+          return Promise.resolve([]);
+        let words = data.map((item) => {
+          const priority = calculateReviewPriority(item, hardMode);
+          return { ...parseWord(item), ...priority };
+        });
+        if (sortBy === "error") {
+          words.sort((a2, b2) => (b2.forget_probability || 0) - (a2.forget_probability || 0) || (b2.error_rate || 0) - (a2.error_rate || 0));
+        } else if (sortBy === "new") {
+          words.sort((a2, b2) => new Date(b2.create_time) - new Date(a2.create_time));
+        } else if (sortBy === "smart") {
+          words.sort((a2, b2) => b2.score - a2.score);
+        }
+        return Promise.resolve(words.slice(0, count));
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:641", "[db] getReviewWords 失败:", error);
+        return Promise.resolve([]);
+      }
+    }
+    /**
+     * 获取随机干扰项
+     */
+    async getRandomDistractors(excludeId, count = 3) {
+      await this.init();
+      return this.adapter.getRandomDistractors(excludeId, count);
+    }
+    /**
+     * 获取同标签单词
+     */
+    async getWordsByTag(tag, excludeId) {
+      await this.init();
+      return this.adapter.getWordsByTag(tag, excludeId);
+    }
+    /**
+     * 斩掉单词
+     */
+    async masterWord(id) {
+      if (!id)
+        return Promise.reject("无效 id");
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const idx = words.findIndex((w2) => w2.id === id);
+        if (idx === -1)
+          return Promise.reject("未找到单词");
+        const word = words[idx];
+        word.is_mastered = 1;
+        word.mastered_at = (/* @__PURE__ */ new Date()).toISOString();
+        words.splice(idx, 1);
+        setH5Words(words);
+        const masteredWords = getH5MasteredWords();
+        masteredWords.push(word);
+        setH5MasteredWords(masteredWords);
+        return Promise.resolve();
+      }
+      try {
+        const word = await this.getWordById(id);
+        if (!word)
+          return Promise.reject("未找到单词");
+        await this.adapter.transaction(async () => {
+          const sql = `INSERT INTO mastered_words (
+          id, english, chinese, tags, source_page, year, importance, error_rate, review_frequency,
+          repeat_count, view_count, difficulty_score, stability, retrievability, interval_days,
+          lapse_count, review_count, next_review_time, last_reviewed_at, examples, synonyms,
+          antonyms, create_time, update_time, is_mastered, mastered_at, wordbook_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          const params = [
+            word.id,
+            word.english,
+            word.chinese,
+            word.tags,
+            word.source_page,
+            word.year,
+            word.importance,
+            word.error_rate,
+            word.review_frequency,
+            word.repeat_count,
+            word.view_count,
+            word.difficulty_score,
+            word.stability,
+            word.retrievability,
+            word.interval_days,
+            word.lapse_count,
+            word.review_count,
+            word.next_review_time,
+            word.last_reviewed_at,
+            toJsonString(word.examples),
+            toJsonString(word.synonyms),
+            toJsonString(word.antonyms),
+            word.create_time,
+            (/* @__PURE__ */ new Date()).toISOString(),
+            1,
+            (/* @__PURE__ */ new Date()).toISOString(),
+            "self"
+          ];
+          await this.adapter.execute(sql, params);
+          await this.adapter.deleteWord(id);
+        });
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:720", "[db] masterWord 失败:", error);
+        throw error;
+      }
+    }
+    /**
+     * 获取已斩单词
+     */
+    async getMasteredWords() {
+      await this.init();
+      if (this.isH5) {
+        return Promise.resolve(getH5MasteredWords().map(parseWord));
+      }
+      try {
+        const data = await this.adapter.query("SELECT * FROM mastered_words ORDER BY mastered_at DESC");
+        return Promise.resolve((data || []).map(parseWord));
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:739", "[db] getMasteredWords 失败:", error);
+        return Promise.resolve([]);
+      }
+    }
+    /**
+     * 获取单词轻量信息（仅基础字段，用于详情页首帧）
+     */
+    async getWordByIdLight(id) {
+      if (!id)
+        return Promise.resolve(null);
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const found = words.find((w2) => w2.id === id);
+        if (!found)
+          return Promise.resolve(null);
+        return Promise.resolve({
+          id: found.id,
+          english: found.english,
+          chinese: found.chinese,
+          tags: found.tags,
+          source_page: found.source_page,
+          year: found.year,
+          importance: found.importance,
+          repeat_count: found.repeat_count,
+          view_count: found.view_count,
+          create_time: found.create_time
+        });
+      }
+      try {
+        const data = await this.adapter.query(
+          "SELECT id, english, chinese, tags, source_page, year, importance, repeat_count, view_count, create_time FROM words WHERE id = ? LIMIT 1",
+          [id]
+        );
+        return Promise.resolve(data && data.length ? data[0] : null);
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:777", "[db] getWordByIdLight 失败:", error);
+        return Promise.resolve(null);
+      }
+    }
+    /**
+     * 获取单词重型信息（examples/synonyms/antonyms，用于详情页异步补全）
+     */
+    async getWordByIdHeavy(id) {
+      if (!id)
+        return Promise.resolve(null);
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const found = words.find((w2) => w2.id === id);
+        if (!found)
+          return Promise.resolve(null);
+        return Promise.resolve({
+          examples: Array.isArray(found.examples) ? found.examples : parseJsonSafe$1(found.examples, []),
+          synonyms: Array.isArray(found.synonyms) ? found.synonyms : parseJsonSafe$1(found.synonyms, []),
+          antonyms: Array.isArray(found.antonyms) ? found.antonyms : parseJsonSafe$1(found.antonyms, [])
+        });
+      }
+      try {
+        const data = await this.adapter.query(
+          "SELECT examples, synonyms, antonyms FROM words WHERE id = ? LIMIT 1",
+          [id]
+        );
+        if (!data || !data.length)
+          return Promise.resolve(null);
+        const row = data[0];
+        return Promise.resolve({
+          examples: parseJsonSafe$1(row.examples, []),
+          synonyms: parseJsonSafe$1(row.synonyms, []),
+          antonyms: parseJsonSafe$1(row.antonyms, [])
+        });
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:815", "[db] getWordByIdHeavy 失败:", error);
+        return Promise.resolve(null);
+      }
+    }
+    /**
+     * 根据英文单词标记为已掌握（用于复习页）
+     */
+    async masterWordByEnglish(english) {
+      if (!english)
+        return Promise.reject("单词不能为空");
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const idx = words.findIndex((w2) => (w2.english || "").toLowerCase() === String(english).trim().toLowerCase());
+        if (idx === -1)
+          return Promise.reject("未找到单词");
+        const word = words[idx];
+        word.is_mastered = 1;
+        word.mastered_at = (/* @__PURE__ */ new Date()).toISOString();
+        words.splice(idx, 1);
+        setH5Words(words);
+        const masteredWords = getH5MasteredWords();
+        masteredWords.push(word);
+        setH5MasteredWords(masteredWords);
+        return Promise.resolve();
+      }
+      try {
+        const key = String(english).trim().toLowerCase();
+        const word = await this.adapter.query("SELECT * FROM words WHERE LOWER(english) = ? LIMIT 1", [key]);
+        if (!word || !word.length)
+          return Promise.reject("未找到单词");
+        const wordData = parseWord(word[0]);
+        await this.adapter.transaction(async () => {
+          const sql = `INSERT INTO mastered_words (
+          id, english, chinese, tags, source_page, year, importance, error_rate, review_frequency,
+          repeat_count, view_count, difficulty_score, stability, retrievability, interval_days,
+          lapse_count, review_count, next_review_time, last_reviewed_at, examples, synonyms,
+          antonyms, create_time, update_time, is_mastered, mastered_at, wordbook_type
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          const params = [
+            wordData.id,
+            wordData.english,
+            wordData.chinese,
+            wordData.tags,
+            wordData.source_page,
+            wordData.year,
+            wordData.importance,
+            wordData.error_rate,
+            wordData.review_frequency,
+            wordData.repeat_count,
+            wordData.view_count,
+            wordData.difficulty_score,
+            wordData.stability,
+            wordData.retrievability,
+            wordData.interval_days,
+            wordData.lapse_count,
+            wordData.review_count,
+            wordData.next_review_time,
+            wordData.last_reviewed_at,
+            toJsonString(wordData.examples),
+            toJsonString(wordData.synonyms),
+            toJsonString(wordData.antonyms),
+            wordData.create_time,
+            (/* @__PURE__ */ new Date()).toISOString(),
+            1,
+            (/* @__PURE__ */ new Date()).toISOString(),
+            "self"
+          ];
+          await this.adapter.execute(sql, params);
+          await this.adapter.deleteWord(wordData.id);
+        });
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:881", "[db] masterWordByEnglish 失败:", error);
+        throw error;
+      }
+    }
+    /**
+     * 清空并批量插入单词（用于云端恢复）
+     * 先删除所有现有单词，再插入新单词
+     */
+    async clearAndInsertWords(words) {
+      if (!Array.isArray(words) || words.length === 0) {
+        formatAppLog("warn", "at src/utils/db_v2.js:892", "[db] clearAndInsertWords: 单词列表为空");
+        return Promise.resolve();
+      }
+      await this.init();
+      if (this.isH5) {
+        const newWords = words.map((w2, idx) => ({
+          ...w2,
+          id: w2.id || Date.now().toString() + idx,
+          create_time: w2.create_time || (/* @__PURE__ */ new Date()).toISOString(),
+          update_time: w2.update_time || (/* @__PURE__ */ new Date()).toISOString(),
+          examples: Array.isArray(w2.examples) ? w2.examples : [],
+          synonyms: Array.isArray(w2.synonyms) ? w2.synonyms : [],
+          antonyms: Array.isArray(w2.antonyms) ? w2.antonyms : [],
+          view_count: w2.view_count != null ? w2.view_count : 0
+        }));
+        setH5Words(newWords);
+        formatAppLog("log", "at src/utils/db_v2.js:911", "[db] H5 环境：已清空并插入", newWords.length, "个单词");
+        return Promise.resolve();
+      }
+      try {
+        await this.adapter.transaction(async () => {
+          await this.adapter.execute("DELETE FROM words");
+          formatAppLog("log", "at src/utils/db_v2.js:920", "[db] 已清空 words 表");
+          const now = (/* @__PURE__ */ new Date()).toISOString();
+          for (const word of words) {
+            const wordId = word.id || Date.now().toString() + Math.random();
+            const reviewFields = normalizeReviewFields(word);
+            const sql = `INSERT INTO words (
+            id, english, chinese, tags, source_page, year, importance, repeat_count, view_count,
+            difficulty_score, stability, retrievability, interval_days, lapse_count, review_count,
+            next_review_time, last_reviewed_at, examples, synonyms, antonyms, create_time, update_time
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            const params = [
+              wordId,
+              word.english,
+              word.chinese || "",
+              word.tags || "",
+              word.source_page || "",
+              word.year || "",
+              word.importance || 3,
+              word.repeat_count || 1,
+              word.view_count != null ? word.view_count : 0,
+              reviewFields.difficulty_score,
+              reviewFields.stability,
+              reviewFields.retrievability,
+              reviewFields.interval_days,
+              reviewFields.lapse_count,
+              reviewFields.review_count,
+              reviewFields.next_review_time,
+              reviewFields.last_reviewed_at,
+              toJsonString(word.examples || []),
+              toJsonString(word.synonyms || []),
+              toJsonString(word.antonyms || []),
+              word.create_time || now,
+              word.update_time || now
+            ];
+            await this.adapter.execute(sql, params);
+          }
+          formatAppLog("log", "at src/utils/db_v2.js:962", "[db] 已插入", words.length, "个单词");
+        });
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:967", "[db] clearAndInsertWords 失败:", error);
+        throw error;
+      }
+    }
+    /**
+     * 获取所有单词（别名，兼容旧代码）
+     */
+    async getAllWords() {
+      return this.getWords();
+    }
+    /**
+     * 获取最后添加的单词
+     */
+    async getLastWord() {
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        return Promise.resolve(words.length ? parseWord(words[0]) : null);
+      }
+      try {
+        const data = await this.adapter.query("SELECT * FROM words ORDER BY create_time DESC LIMIT 1");
+        return Promise.resolve(data && data.length ? parseWord(data[0]) : null);
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:994", "[db] getLastWord 失败:", error);
+        return Promise.resolve(null);
+      }
+    }
+    /**
+     * 增加单词查看次数
+     */
+    async incrementViewCount(id) {
+      if (!id)
+        return Promise.resolve();
+      await this.init();
+      if (this.isH5) {
+        const words = getH5Words();
+        const idx = words.findIndex((w2) => w2.id === id);
+        if (idx !== -1) {
+          words[idx].view_count = (words[idx].view_count || 0) + 1;
+          words[idx].update_time = (/* @__PURE__ */ new Date()).toISOString();
+          setH5Words(words);
+        }
+        return Promise.resolve();
+      }
+      try {
+        const word = await this.getWordById(id);
+        if (!word)
+          return Promise.resolve();
+        const newViewCount = (word.view_count || 0) + 1;
+        await this.updateWord(id, { view_count: newViewCount });
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:1026", "[db] incrementViewCount 失败:", error);
+        return Promise.resolve();
+      }
+    }
+    /**
+     * 取消已掌握标记（将单词从已掌握表移回主表）
+     */
+    async unmasterWord(id) {
+      if (!id)
+        return Promise.reject("无效 id");
+      await this.init();
+      if (this.isH5) {
+        const masteredWords = getH5MasteredWords();
+        const idx = masteredWords.findIndex((w2) => w2.id === id);
+        if (idx === -1)
+          return Promise.reject("未找到已掌握单词");
+        const word = masteredWords[idx];
+        word.is_mastered = 0;
+        word.mastered_at = null;
+        masteredWords.splice(idx, 1);
+        setH5MasteredWords(masteredWords);
+        const words = getH5Words();
+        words.unshift(word);
+        setH5Words(words);
+        return Promise.resolve();
+      }
+      try {
+        const word = await this.adapter.query("SELECT * FROM mastered_words WHERE id = ? LIMIT 1", [id]);
+        if (!word || !word.length)
+          return Promise.reject("未找到已掌握单词");
+        const wordData = parseWord(word[0]);
+        await this.adapter.transaction(async () => {
+          const sql = `INSERT INTO words (
+          id, english, chinese, tags, source_page, year, importance, error_rate, review_frequency,
+          repeat_count, view_count, difficulty_score, stability, retrievability, interval_days,
+          lapse_count, review_count, next_review_time, last_reviewed_at, examples, synonyms,
+          antonyms, create_time, update_time, is_mastered, mastered_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+          const params = [
+            wordData.id,
+            wordData.english,
+            wordData.chinese,
+            wordData.tags,
+            wordData.source_page,
+            wordData.year,
+            wordData.importance,
+            wordData.error_rate,
+            wordData.review_frequency,
+            wordData.repeat_count,
+            wordData.view_count,
+            wordData.difficulty_score,
+            wordData.stability,
+            wordData.retrievability,
+            wordData.interval_days,
+            wordData.lapse_count,
+            wordData.review_count,
+            wordData.next_review_time,
+            wordData.last_reviewed_at,
+            toJsonString(wordData.examples),
+            toJsonString(wordData.synonyms),
+            toJsonString(wordData.antonyms),
+            wordData.create_time,
+            (/* @__PURE__ */ new Date()).toISOString(),
+            0,
+            null
+          ];
+          await this.adapter.execute(sql, params);
+          await this.adapter.execute("DELETE FROM mastered_words WHERE id = ?", [id]);
+        });
+        return Promise.resolve();
+      } catch (error) {
+        formatAppLog("error", "at src/utils/db_v2.js:1091", "[db] unmasterWord 失败:", error);
+        throw error;
+      }
+    }
+    /**
+     * 获取复习洞察（用于复习页显示单词状态）
+     */
+    getReviewInsight(word) {
+      if (!word)
+        return {};
+      const insight = {
+        repeatCount: word.repeat_count || 0,
+        viewCount: word.view_count || 0,
+        errorRate: word.error_rate || 0,
+        reviewCount: word.review_count || 0,
+        lapseCount: word.lapse_count || 0,
+        stability: word.stability || 0.6,
+        retrievability: word.retrievability || 0.92,
+        nextReviewTime: word.next_review_time || null,
+        lastReviewedAt: word.last_reviewed_at || null
+      };
+      return insight;
+    }
+    /**
+     * 预览复习状态（用于复习页显示答题后的状态变化）
+     */
+    previewReviewState(word, isCorrect) {
+      if (!word)
+        return {};
+      const reviewState = scheduleReviewState(word, isCorrect);
+      const currentErrorRate = word.error_rate || 0;
+      const newErrorRate = isCorrect ? Math.max(0, currentErrorRate - 8) : Math.min(100, currentErrorRate + 18);
+      return {
+        ...reviewState,
+        error_rate: newErrorRate
+      };
+    }
+    /**
+     * 获取内存使用情况（用于调试）
+     */
+    getMemoryStats() {
+      if (typeof performance !== "undefined" && performance.memory) {
+        return {
+          usedJSHeapSize: performance.memory.usedJSHeapSize,
+          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
+        };
+      }
+      return null;
+    }
+  }
+  const db = new DatabaseManager();
+  const PREGEN_DB_NAME = "pregen_db";
+  const PREGEN_DB_PATH = "_doc/pregen_data.db";
+  const PREGEN_DB_SOURCE = "_www/static/pregen_data.db";
+  let pregenDbOpen = false;
+  let _ensureOpenPromise = null;
+  const _pregenCache = /* @__PURE__ */ new Map();
+  const PREGEN_CACHE_MAX = 300;
+  function setPregenCache(key, value) {
+    if (_pregenCache.size >= PREGEN_CACHE_MAX) {
+      const keys = _pregenCache.keys();
+      for (let i2 = 0; i2 < 30; i2++) {
+        const k = keys.next().value;
+        if (k !== void 0)
+          _pregenCache.delete(k);
+      }
+    }
+    _pregenCache.set(key, value);
+  }
+  function isApp$1() {
+    return typeof plus !== "undefined" && plus.sqlite;
+  }
+  function copyPregenDbToDoc() {
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        formatAppLog("error", "at src/utils/pregenVocab.js:38", "[pregenVocab] 复制超时");
+        resolve(false);
+      }, 15e3);
+      const cleanup = (res) => {
+        clearTimeout(timer);
+        resolve(res);
+      };
+      if (typeof plus === "undefined" || !plus.io)
+        return cleanup(false);
+      plus.io.resolveLocalFileSystemURL(PREGEN_DB_SOURCE, (entry) => {
+        plus.io.resolveLocalFileSystemURL("_doc/", (dir) => {
+          entry.copyTo(
+            dir,
+            "pregen_data.db",
+            () => {
+              formatAppLog("log", "at src/utils/pregenVocab.js:46", "[pregenVocab] copyTo 完成");
+              cleanup(true);
+            },
+            (err) => {
+              formatAppLog("error", "at src/utils/pregenVocab.js:47", "[pregenVocab] copyTo 失败", err);
+              cleanup(false);
+            }
+          );
+        }, (e2) => {
+          formatAppLog("error", "at src/utils/pregenVocab.js:49", "[pregenVocab] 解析 _doc 失败", e2);
+          cleanup(false);
+        });
+      }, (e2) => {
+        formatAppLog("error", "at src/utils/pregenVocab.js:50", "[pregenVocab] 解析源文件失败", e2);
+        cleanup(false);
+      });
+    });
+  }
+  function ensureOpen() {
+    if (pregenDbOpen)
+      return Promise.resolve(true);
+    if (_ensureOpenPromise)
+      return _ensureOpenPromise;
+    if (!isApp$1())
+      return Promise.resolve(false);
+    _ensureOpenPromise = copyPregenDbToDoc().then((copied) => {
+      if (!copied)
+        return false;
+      return new Promise((resolve) => {
+        try {
+          if (plus.sqlite.isOpenDatabase({ name: PREGEN_DB_NAME, path: PREGEN_DB_PATH })) {
+            pregenDbOpen = true;
+            _ensureOpenPromise = null;
+            return resolve(true);
+          }
+        } catch (_2) {
+        }
+        plus.sqlite.openDatabase({
+          name: PREGEN_DB_NAME,
+          path: PREGEN_DB_PATH,
+          success: () => {
+            pregenDbOpen = true;
+            formatAppLog("log", "at src/utils/pregenVocab.js:75", "[pregenVocab] pregen_data.db 已打开");
+            plus.sqlite.executeSql({
+              name: PREGEN_DB_NAME,
+              sql: "CREATE UNIQUE INDEX IF NOT EXISTS idx_english ON vocab(english)",
+              success: () => {
+                _ensureOpenPromise = null;
+                resolve(true);
+              },
+              fail: () => {
+                _ensureOpenPromise = null;
+                resolve(true);
+              }
+            });
+          },
+          fail: (e2) => {
+            formatAppLog("error", "at src/utils/pregenVocab.js:84", "[pregenVocab] openDatabase 失败", e2);
+            _ensureOpenPromise = null;
+            resolve(false);
+          }
+        });
+      });
+    }).catch(() => {
+      _ensureOpenPromise = null;
+      return false;
+    });
+    return _ensureOpenPromise;
+  }
+  function parsePregenRow(r2) {
+    let examples = [], synonyms = [], antonyms = [];
+    try {
+      if (r2.examples)
+        examples = JSON.parse(r2.examples);
+    } catch (_2) {
+    }
+    try {
+      if (r2.synonyms)
+        synonyms = JSON.parse(r2.synonyms);
+    } catch (_2) {
+    }
+    try {
+      if (r2.antonyms)
+        antonyms = JSON.parse(r2.antonyms);
+    } catch (_2) {
+    }
+    return {
+      chinese: (r2.chinese || "").trim(),
+      examples: Array.isArray(examples) ? examples : [],
+      synonyms: Array.isArray(synonyms) ? synonyms : [],
+      antonyms: Array.isArray(antonyms) ? antonyms : []
+    };
+  }
+  function sqlLiteralStr$1(value) {
+    if (value === null || value === void 0)
+      return "NULL";
+    return `'${String(value).replace(/'/g, "''")}'`;
+  }
+  function getPregenWord(english) {
+    if (!english || typeof english !== "string")
+      return Promise.resolve(null);
+    const key = english.trim().toLowerCase();
+    if (!key)
+      return Promise.resolve(null);
+    if (!isApp$1())
+      return Promise.resolve(null);
+    if (_pregenCache.has(key))
+      return Promise.resolve(_pregenCache.get(key));
+    return ensureOpen().then((ok) => {
+      if (!ok)
+        return null;
+      return new Promise((resolve) => {
+        const sql = `SELECT * FROM vocab WHERE english = ${sqlLiteralStr$1(key)} LIMIT 1`;
+        try {
+          plus.sqlite.selectSql({
+            name: PREGEN_DB_NAME,
+            sql,
+            success: (rows) => {
+              try {
+                if (!rows || rows.length === 0) {
+                  setPregenCache(key, null);
+                  resolve(null);
+                  return;
+                }
+                const result = parsePregenRow(rows[0]);
+                setPregenCache(key, result);
+                resolve(result);
+              } catch (err) {
+                formatAppLog("error", "at src/utils/pregenVocab.js:145", "getPregenWord 解析结果异常", err);
+                resolve(null);
+              }
+            },
+            fail: (e2) => {
+              formatAppLog("error", "at src/utils/pregenVocab.js:150", "pregen selectSql 失败", e2);
+              resolve(null);
+            }
+          });
+        } catch (err) {
+          formatAppLog("error", "at src/utils/pregenVocab.js:155", "getPregenWord selectSql 调用异常", err);
+          resolve(null);
+        }
+      });
+    });
+  }
+  function getPregenWordsBatch(englishList) {
+    if (!Array.isArray(englishList) || englishList.length === 0)
+      return Promise.resolve({});
+    const keys = [...new Set(englishList.map((w2) => (w2 || "").trim().toLowerCase()).filter(Boolean))];
+    if (keys.length === 0)
+      return Promise.resolve({});
+    if (!isApp$1())
+      return Promise.resolve({});
+    return ensureOpen().then((ok) => {
+      if (!ok)
+        return {};
+      return new Promise((resolve) => {
+        const safeKeys = keys.map((k) => sqlLiteralStr$1(k));
+        const inClause = safeKeys.slice(0, 500).join(",");
+        const sql = `SELECT * FROM vocab WHERE english IN (${inClause})`;
+        plus.sqlite.selectSql({
+          name: PREGEN_DB_NAME,
+          sql,
+          success: (rows) => {
+            const out = {};
+            if (!rows || !rows.length) {
+              resolve(out);
+              return;
+            }
+            for (const r2 of rows) {
+              const english = (r2.english || "").trim().toLowerCase();
+              if (!english)
+                continue;
+              out[english] = parsePregenRow(r2);
+            }
+            resolve(out);
+          },
+          fail: () => resolve({})
+        });
+      });
+    });
+  }
+  function loadPregenVocab() {
+    return Promise.resolve(null);
+  }
+  async function getPregenVocabCache(englishList) {
+    if (Array.isArray(englishList) && englishList.length > 0) {
+      return getPregenWordsBatch(englishList);
+    }
+    return {};
+  }
+  const pregenVocab = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    getPregenVocabCache,
+    getPregenWord,
+    getPregenWordsBatch,
+    loadPregenVocab
+  }, Symbol.toStringTag, { value: "Module" }));
+  const MASTER_DB_NAME = "master_db";
+  const MASTER_DB_PATH = "_doc/vocal_master.db";
+  const MASTER_DB_SOURCE = "_www/static/vocal_master.db";
+  const MASTER_DB_VERSION = 4;
+  const MASTER_DB_VERSION_KEY = "vocal_master_db_version";
+  let masterDbOpen = false;
+  let initPromise = null;
+  let repairPromise = null;
+  function isApp() {
+    return typeof plus !== "undefined" && plus.sqlite;
+  }
+  function normalizeRow(r2) {
+    if (!r2 || typeof r2 !== "object")
+      return r2;
+    const out = {};
+    for (const k of Object.keys(r2))
+      out[k.toLowerCase()] = r2[k];
+    return out;
+  }
+  function checkDocDbExists() {
+    return new Promise((resolve) => {
+      if (typeof plus === "undefined" || !plus.io) {
+        resolve(false);
+        return;
+      }
+      plus.io.resolveLocalFileSystemURL(MASTER_DB_PATH, () => resolve(true), () => resolve(false));
+    });
+  }
+  function getStoredDbVersion() {
+    try {
+      return Number(uni.getStorageSync(MASTER_DB_VERSION_KEY) || 0);
+    } catch (_2) {
+      return 0;
+    }
+  }
+  function setStoredDbVersion(version) {
+    try {
+      uni.setStorageSync(MASTER_DB_VERSION_KEY, Number(version) || 0);
+    } catch (_2) {
+    }
+  }
+  function rawSelectSqlRows(sql) {
+    return new Promise((resolve) => {
+      plus.sqlite.selectSql({
+        name: MASTER_DB_NAME,
+        sql,
+        success: (rows) => resolve(rows || []),
+        fail: (e2) => {
+          formatAppLog("error", "at src/utils/masterDb.js:62", "[masterDb] selectSql 失败", e2);
+          resolve({ __error: e2, __rows: [] });
+        }
+      });
+    });
+  }
+  function isMissingExamTableError(err) {
+    const msg = String(err && (err.message || err.errMsg) || "").toLowerCase();
+    return Number(err && err.code) === -1404 && (msg.includes("no such table: word_exam_stats") || msg.includes("no such table: word_exam_sentences") || msg.includes("no such table: word_exam_"));
+  }
+  async function validateMasterSchema() {
+    if (!isApp())
+      return false;
+    const rows = await rawSelectSqlRows(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('vocab_master','word_exam_stats','word_exam_sentences')"
+    );
+    if (!Array.isArray(rows))
+      return false;
+    const names = rows.map((row) => String((normalizeRow(row) || {}).name || "").trim());
+    return names.includes("vocab_master") && names.includes("word_exam_stats") && names.includes("word_exam_sentences");
+  }
+  async function repairMasterDbFromStatic() {
+    if (repairPromise)
+      return repairPromise;
+    repairPromise = (async () => {
+      formatAppLog("warn", "at src/utils/masterDb.js:92", "[masterDb] 检测到主库缺表，开始强制重建 _doc 主库副本");
+      masterDbOpen = false;
+      initPromise = null;
+      await closeMasterDbIfOpen();
+      const copied = await copyMasterDbToDoc(true);
+      if (!copied) {
+        formatAppLog("error", "at src/utils/masterDb.js:98", "[masterDb] 强制重拷贝主库失败");
+        return false;
+      }
+      masterDbOpen = false;
+      initPromise = null;
+      const reopened = await initMasterDb();
+      if (!reopened)
+        return false;
+      const schemaOk = await validateMasterSchema();
+      if (!schemaOk) {
+        formatAppLog("error", "at src/utils/masterDb.js:107", "[masterDb] 重建后仍缺少必要数据表");
+        return false;
+      }
+      formatAppLog("log", "at src/utils/masterDb.js:110", "[masterDb] 主库缺表自愈完成");
+      return true;
+    })().finally(() => {
+      repairPromise = null;
+    });
+    return repairPromise;
+  }
+  function closeMasterDbIfOpen() {
+    return new Promise((resolve) => {
+      try {
+        const isOpen = plus.sqlite.isOpenDatabase({
+          name: MASTER_DB_NAME,
+          path: MASTER_DB_PATH
+        });
+        if (!isOpen) {
+          masterDbOpen = false;
+          resolve(true);
+          return;
+        }
+        plus.sqlite.closeDatabase({
+          name: MASTER_DB_NAME,
+          success: () => {
+            masterDbOpen = false;
+            resolve(true);
+          },
+          fail: () => {
+            masterDbOpen = false;
+            resolve(false);
+          }
+        });
+      } catch (_2) {
+        masterDbOpen = false;
+        resolve(false);
+      }
+    });
+  }
+  function removeDocDbFile() {
+    return new Promise((resolve) => {
+      if (typeof plus === "undefined" || !plus.io) {
+        resolve(false);
+        return;
+      }
+      plus.io.resolveLocalFileSystemURL(
+        MASTER_DB_PATH,
+        (entry) => {
+          entry.remove(() => resolve(true), () => resolve(false));
+        },
+        () => resolve(true)
+      );
+    });
+  }
+  function copyMasterDbToDoc(forceReplace = false) {
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        formatAppLog("error", "at src/utils/masterDb.js:168", "[masterDb] 复制操作超时，强制退出");
+        resolve(false);
+      }, 15e3);
+      const cleanup = (res) => {
+        clearTimeout(timer);
+        resolve(res);
+      };
+      if (typeof plus === "undefined" || !plus.io)
+        return cleanup(false);
+      formatAppLog("log", "at src/utils/masterDb.js:179", "[masterDb] 准备从:", MASTER_DB_SOURCE);
+      const doCopy = () => {
+        plus.io.resolveLocalFileSystemURL(MASTER_DB_SOURCE, (entry) => {
+          plus.io.resolveLocalFileSystemURL("_doc/", (dir) => {
+            entry.copyTo(dir, "vocal_master.db", () => {
+              formatAppLog("log", "at src/utils/masterDb.js:184", "[masterDb] 原生 copyTo 物理完成！");
+              cleanup(true);
+            }, (err) => {
+              formatAppLog("error", "at src/utils/masterDb.js:187", "[masterDb] copyTo 失败:", err);
+              cleanup(false);
+            });
+          }, (e2) => {
+            formatAppLog("error", "at src/utils/masterDb.js:191", "[masterDb] 解析 _doc 失败", e2);
+            cleanup(false);
+          });
+        }, (e2) => {
+          formatAppLog("error", "at src/utils/masterDb.js:195", "[masterDb] 解析源文件失败，请确认 MASTER_DB_SOURCE 路径正确:", e2);
+          cleanup(false);
+        });
+      };
+      if (!forceReplace) {
+        doCopy();
+        return;
+      }
+      closeMasterDbIfOpen().then(() => removeDocDbFile()).then(() => doCopy()).catch(() => cleanup(false));
+    });
+  }
+  function initMasterDb() {
+    if (masterDbOpen) {
+      formatAppLog("log", "at src/utils/masterDb.js:217", "[masterDb] 主库已打开，直接返回");
+      return Promise.resolve(true);
+    }
+    if (initPromise) {
+      formatAppLog("log", "at src/utils/masterDb.js:221", "[masterDb] 初始化进行中，等待同一 Promise（避免重复复制）");
+      return initPromise;
+    }
+    if (!isApp())
+      return Promise.resolve(false);
+    formatAppLog("log", "at src/utils/masterDb.js:226", "[masterDb] 首次初始化：复制并打开主库（仅此一次）");
+    const initWork = checkDocDbExists().then((exists) => {
+      const shouldForceReplace = getStoredDbVersion() !== MASTER_DB_VERSION;
+      if (exists) {
+        if (!shouldForceReplace) {
+          formatAppLog("log", "at src/utils/masterDb.js:231", "[masterDb] _doc 下已存在 vocal_master.db 且版本匹配，跳过复制");
+          return true;
+        }
+        formatAppLog("log", "at src/utils/masterDb.js:234", "[masterDb] 检测到主库版本变更，开始刷新 _doc/vocal_master.db");
+        return copyMasterDbToDoc(true).then((copied) => {
+          if (copied)
+            formatAppLog("log", "at src/utils/masterDb.js:236", "[masterDb] 主库刷新完成");
+          else
+            formatAppLog("warn", "at src/utils/masterDb.js:237", "[masterDb] 主库刷新失败");
+          return copied;
+        });
+      }
+      formatAppLog("log", "at src/utils/masterDb.js:241", "[masterDb] 目标文件不存在，开始从 static 复制 22MB...");
+      return copyMasterDbToDoc().then((copied) => {
+        if (copied)
+          formatAppLog("log", "at src/utils/masterDb.js:243", "[masterDb] 复制完成");
+        else
+          formatAppLog("warn", "at src/utils/masterDb.js:244", "[masterDb] 复制未成功");
+        return copied;
+      });
+    }).then((ready) => {
+      if (!ready)
+        return false;
+      return new Promise((resolve) => {
+        const isOpen = plus.sqlite.isOpenDatabase({
+          name: MASTER_DB_NAME,
+          path: MASTER_DB_PATH
+        });
+        if (isOpen) {
+          formatAppLog("log", "at src/utils/masterDb.js:255", "[masterDb] 检测到数据库已在打开状态，直接进入查询阶段");
+          masterDbOpen = true;
+          return resolve(true);
+        }
+        plus.sqlite.openDatabase({
+          name: MASTER_DB_NAME,
+          path: MASTER_DB_PATH,
+          success: async () => {
+            masterDbOpen = true;
+            formatAppLog("log", "at src/utils/masterDb.js:265", "[masterDb] 数据库真正打开成功！name=", MASTER_DB_NAME, "path=", MASTER_DB_PATH);
+            formatAppLog("log", "at src/utils/masterDb.js:266", "[masterDb] 库已就绪，开始执行挂起的查询");
+            plus.sqlite.executeSql({
+              name: MASTER_DB_NAME,
+              sql: "CREATE UNIQUE INDEX IF NOT EXISTS idx_word ON vocab_master(english)",
+              success: async () => {
+                formatAppLog("log", "at src/utils/masterDb.js:271", "[masterDb] idx_word 索引已确保");
+                setStoredDbVersion(MASTER_DB_VERSION);
+                const schemaOk = await validateMasterSchema();
+                if (!schemaOk) {
+                  const repaired = await repairMasterDbFromStatic();
+                  resolve(repaired);
+                  return;
+                }
+                resolve(true);
+              },
+              fail: async (e2) => {
+                formatAppLog("warn", "at src/utils/masterDb.js:282", "[masterDb] 创建索引失败(可忽略)", e2);
+                setStoredDbVersion(MASTER_DB_VERSION);
+                const schemaOk = await validateMasterSchema();
+                if (!schemaOk) {
+                  const repaired = await repairMasterDbFromStatic();
+                  resolve(repaired);
+                  return;
+                }
+                resolve(true);
+              }
+            });
+          },
+          fail: (e2) => {
+            const code = e2 && e2.code;
+            const msg = e2 && (e2.message || e2.errMsg) || "";
+            if (code === -1402 || typeof msg === "string" && msg.includes("Already Open")) {
+              formatAppLog("log", "at src/utils/masterDb.js:298", "[masterDb] 忽略 -1402 错误（库已打开），继续执行");
+              masterDbOpen = true;
+              setStoredDbVersion(MASTER_DB_VERSION);
+              return resolve(true);
+            }
+            formatAppLog("error", "at src/utils/masterDb.js:303", "[masterDb] openDatabase 失败", e2);
+            initPromise = null;
+            if (typeof uni !== "undefined" && uni.showModal) {
+              uni.showModal({ title: "主库打开失败", content: msg || JSON.stringify(e2), showCancel: false });
+            }
+            resolve(false);
+          }
+        });
+      });
+    }).catch((e2) => {
+      formatAppLog("error", "at src/utils/masterDb.js:313", "[masterDb] initMasterDb 异常", e2);
+      initPromise = null;
+      return false;
+    });
+    const timeoutMs = 3e4;
+    const timeoutPromise = new Promise((_2, reject) => {
+      setTimeout(() => {
+        if (!masterDbOpen) {
+          formatAppLog("error", "at src/utils/masterDb.js:322", "[masterDb] 初始化超时", timeoutMs, "ms");
+          initPromise = null;
+          if (typeof uni !== "undefined" && uni.showModal) {
+            uni.showModal({
+              title: "主库初始化超时",
+              content: timeoutMs / 1e3 + " 秒内未完成复制或打开，请检查 static 下是否有 vocal_master.db，或稍后重试。",
+              showCancel: false
+            });
+          }
+          reject(new Error("主库初始化超时"));
+        }
+      }, timeoutMs);
+    });
+    initPromise = Promise.race([initWork, timeoutPromise]).then((v2) => v2, () => false);
+    return initPromise;
+  }
+  function ensureMasterOpen() {
+    return initMasterDb();
+  }
+  function safeSqlValue(value) {
+    if (value === null || value === void 0)
+      return "";
+    if (typeof value === "number")
+      return Number.isFinite(value) ? String(value) : "";
+    if (typeof value === "boolean")
+      return value ? "1" : "0";
+    return String(value).replace(/'/g, "''");
+  }
+  function sqlLiteralStr(value) {
+    if (value === null || value === void 0)
+      return "NULL";
+    return `'${safeSqlValue(String(value))}'`;
+  }
+  function selectSqlRows(sql) {
+    return rawSelectSqlRows(sql).then(async (result) => {
+      if (Array.isArray(result))
+        return result;
+      const err = result && result.__error;
+      if (isMissingExamTableError(err)) {
+        const repaired = await repairMasterDbFromStatic();
+        if (repaired) {
+          const retry = await rawSelectSqlRows(sql);
+          return Array.isArray(retry) ? retry : [];
+        }
+      }
+      return [];
+    });
+  }
+  function parseJsonSafe(raw, fallback) {
+    try {
+      const data = typeof raw === "string" ? JSON.parse(raw || "") : raw;
+      return data == null ? fallback : data;
+    } catch (_2) {
+      return fallback;
+    }
+  }
+  function normalizeDefType(rawType) {
+    const value = String(rawType || "").trim().toLowerCase();
+    if (!value)
+      return "normal";
+    if ([
+      "freq",
+      "important",
+      "important_meaning",
+      "importantmeaning",
+      "重点",
+      "重点义",
+      "重要",
+      "重要义",
+      "重要意思",
+      "常考",
+      "高频"
+    ].includes(value)) {
+      return "freq";
+    }
+    if ([
+      "rare",
+      "rare_meaning",
+      "raremeaning",
+      "僻义",
+      "熟词僻义",
+      "熟词生义",
+      "生义"
+    ].includes(value)) {
+      return "rare";
+    }
+    return "normal";
+  }
+  function normalizeDefs(defs) {
+    if (!Array.isArray(defs))
+      return [];
+    return defs.map((item) => {
+      if (!item || typeof item !== "object")
+        return null;
+      const pos = String(item.pos || "").trim();
+      const trans = String(item.trans || "").trim();
+      if (!trans)
+        return null;
+      return {
+        ...item,
+        pos,
+        trans,
+        type: normalizeDefType(item.type)
+      };
+    }).filter(Boolean);
+  }
+  function buildChineseFromDefs(defs, fallback = "") {
+    if (!Array.isArray(defs) || defs.length === 0)
+      return fallback || "";
+    const parts = [];
+    for (const d2 of defs) {
+      if (!d2 || typeof d2 !== "object")
+        continue;
+      const pos = String(d2.pos || "").trim();
+      const trans = String(d2.trans || "").trim();
+      if (!trans)
+        continue;
+      parts.push(pos ? `${pos} ${trans}` : trans);
+      if (parts.length >= 4)
+        break;
+    }
+    return parts.length ? parts.join("；") : fallback || "";
+  }
+  function parseCoreRow(row) {
+    const nr2 = normalizeRow(row || {});
+    const data = parseJsonSafe(nr2.data_json, {}) || {};
+    const defs = normalizeDefs(data.defs);
+    return {
+      english: (nr2.english || "").trim().toLowerCase(),
+      chinese: buildChineseFromDefs(defs, (nr2.chinese || "").trim()),
+      examples: Array.isArray(data.examples) ? data.examples : [],
+      synonyms: Array.isArray(data.synonyms) ? data.synonyms : [],
+      antonyms: Array.isArray(data.antonyms) ? data.antonyms : [],
+      defs,
+      exam_tip: typeof data.exam_tip === "string" ? data.exam_tip : "",
+      sentiment: data.sentiment === "pos" || data.sentiment === "neg" || data.sentiment === "neu" ? data.sentiment : "neu",
+      data_json: {
+        ...data,
+        defs
+      }
+    };
+  }
+  function parseExamStatsRow(row) {
+    if (!row)
+      return null;
+    const nr2 = normalizeRow(row);
+    const years = parseJsonSafe(nr2.years_json, []);
+    const byYear = parseJsonSafe(nr2.by_year_json, {});
+    const bySection = parseJsonSafe(nr2.by_section_json, {});
+    const positions = parseJsonSafe(nr2.positions_json, []);
+    const tags = parseJsonSafe(nr2.tags_json, []);
+    return {
+      total_count: Number(nr2.total_count) || 0,
+      years: Array.isArray(years) ? years : [],
+      by_year: byYear && typeof byYear === "object" ? byYear : {},
+      by_section: bySection && typeof bySection === "object" ? bySection : {},
+      positions: Array.isArray(positions) ? positions : [],
+      importance: nr2.importance != null ? Number(nr2.importance) || 0 : 0,
+      tags: Array.isArray(tags) ? tags : []
+    };
+  }
+  function parseExamSentenceRows(rows) {
+    if (!Array.isArray(rows) || rows.length === 0)
+      return [];
+    return rows.map((row) => {
+      const nr2 = normalizeRow(row);
+      return {
+        year: nr2.year || "",
+        section: nr2.section || "",
+        exam_type: nr2.exam_type || "",
+        sentence: nr2.sentence || ""
+      };
+    }).filter((item) => (item.sentence || "").trim());
+  }
+  async function getWordFullDetail(word) {
+    if (!word || typeof word !== "string")
+      return null;
+    const english = word.trim().toLowerCase();
+    if (!english)
+      return null;
+    if (!isApp())
+      return null;
+    if (wordDetailCache.has(english))
+      return wordDetailCache.get(english);
+    formatAppLog("log", "at src/utils/masterDb.js:516", "[masterDb] 收到查询请求:", english);
+    try {
+      await initMasterDb();
+      const isOpen = plus.sqlite.isOpenDatabase && plus.sqlite.isOpenDatabase({ name: MASTER_DB_NAME, path: MASTER_DB_PATH });
+      if (!isOpen) {
+        formatAppLog("error", "at src/utils/masterDb.js:521", "[masterDb] 主库未打开");
+        return null;
+      }
+      const safe = sqlLiteralStr(english);
+      const [coreRows, statsRows, sentenceRows] = await Promise.all([
+        selectSqlRows(`SELECT english, chinese, data_json FROM vocab_master WHERE english = ${safe} LIMIT 1`),
+        selectSqlRows(`SELECT * FROM word_exam_stats WHERE english = ${safe} LIMIT 1`),
+        selectSqlRows(`SELECT year, section, exam_type, sentence FROM word_exam_sentences WHERE english = ${safe} ORDER BY year, id`)
+      ]);
+      formatAppLog("log", "at src/utils/masterDb.js:530", "[masterDb] 查询结果返回！core=", coreRows.length, "stats=", statsRows.length, "sentences=", sentenceRows.length);
+      if ((!coreRows || coreRows.length === 0) && (!statsRows || statsRows.length === 0) && (!sentenceRows || sentenceRows.length === 0)) {
+        return null;
+      }
+      const core = coreRows && coreRows.length ? parseCoreRow(coreRows[0]) : parseCoreRow({ english, chinese: "", data_json: "{}" });
+      const result = {
+        chinese: core.chinese,
+        examples: core.examples,
+        synonyms: core.synonyms,
+        antonyms: core.antonyms,
+        examStats: statsRows && statsRows.length ? parseExamStatsRow(statsRows[0]) : null,
+        examSentences: parseExamSentenceRows(sentenceRows),
+        defs: core.defs,
+        exam_tip: core.exam_tip,
+        sentiment: core.sentiment,
+        data_json: core.data_json
+      };
+      setDetailCache(english, result);
+      return result;
+    } catch (err) {
+      formatAppLog("error", "at src/utils/masterDb.js:550", "[masterDb] 流程中断:", err);
+      return null;
+    }
+  }
+  async function getWordExamData(word) {
+    if (!word || typeof word !== "string")
+      return { examStats: null, examSentences: [] };
+    const english = word.trim().toLowerCase();
+    if (!english || !isApp())
+      return { examStats: null, examSentences: [] };
+    try {
+      await initMasterDb();
+      const isOpen = plus.sqlite.isOpenDatabase && plus.sqlite.isOpenDatabase({ name: MASTER_DB_NAME, path: MASTER_DB_PATH });
+      if (!isOpen)
+        return { examStats: null, examSentences: [] };
+      const safe = sqlLiteralStr(english);
+      const [statsRows, sentenceRows] = await Promise.all([
+        selectSqlRows(`SELECT * FROM word_exam_stats WHERE english = ${safe} LIMIT 1`),
+        selectSqlRows(`SELECT year, section, exam_type, sentence FROM word_exam_sentences WHERE english = ${safe} ORDER BY year, id`)
+      ]);
+      return {
+        examStats: statsRows && statsRows.length ? parseExamStatsRow(statsRows[0]) : null,
+        examSentences: parseExamSentenceRows(sentenceRows)
+      };
+    } catch (err) {
+      formatAppLog("error", "at src/utils/masterDb.js:573", "[masterDb] getWordExamData 失败", err);
+      return { examStats: null, examSentences: [] };
+    }
+  }
+  async function getWordExamStatsBatch(englishList) {
+    if (!Array.isArray(englishList) || englishList.length === 0 || !isApp())
+      return {};
+    const keys = [...new Set(englishList.map((w2) => (typeof w2 === "string" ? w2 : w2 && w2.english || "").trim().toLowerCase()).filter(Boolean))];
+    if (keys.length === 0)
+      return {};
+    try {
+      const ok = await ensureMasterOpen();
+      if (!ok)
+        return {};
+      const safeKeys = keys.slice(0, 500).map((k) => sqlLiteralStr(k));
+      const rows = await selectSqlRows(
+        `SELECT english, total_count, importance, tags_json FROM word_exam_stats WHERE english IN (${safeKeys.join(",")})`
+      );
+      const out = {};
+      for (const row of rows) {
+        const nr2 = normalizeRow(row);
+        const english = (nr2.english || "").trim().toLowerCase();
+        if (!english)
+          continue;
+        const tags = parseJsonSafe(nr2.tags_json, []);
+        out[english] = {
+          examCount: Number(nr2.total_count) || 0,
+          importance: nr2.importance != null ? Number(nr2.importance) || 0 : 0,
+          tags: Array.isArray(tags) ? tags.join(",") : ""
+        };
+      }
+      return out;
+    } catch (err) {
+      formatAppLog("error", "at src/utils/masterDb.js:603", "[masterDb] getWordExamStatsBatch 失败", err);
+      return {};
+    }
+  }
+  function getWordBriefBatch(englishList) {
+    if (!Array.isArray(englishList) || englishList.length === 0)
+      return Promise.resolve({});
+    const keys = [...new Set(englishList.map((w2) => (typeof w2 === "string" ? w2 : w2 && w2.english || "").trim().toLowerCase()).filter(Boolean))];
+    if (keys.length === 0)
+      return Promise.resolve({});
+    if (!isApp())
+      return Promise.resolve({});
+    return ensureMasterOpen().then((ok) => {
+      if (!ok)
+        return {};
+      return new Promise((resolve) => {
+        try {
+          const safeKeys = keys.slice(0, 500).map((k) => sqlLiteralStr(k));
+          const sql = `
+          SELECT
+            v.english,
+            v.chinese,
+            v.data_json,
+            s.total_count,
+            s.importance,
+            s.tags_json
+          FROM vocab_master v
+          LEFT JOIN word_exam_stats s ON v.english = s.english
+          WHERE v.english IN (${safeKeys.join(",")})
+        `;
+          plus.sqlite.selectSql({
+            name: MASTER_DB_NAME,
+            sql,
+            success: (rows) => {
+              const out = {};
+              if (rows && rows.length) {
+                for (const r2 of rows) {
+                  const nr2 = normalizeRow(r2);
+                  const en2 = (nr2.english || "").trim().toLowerCase();
+                  if (!en2)
+                    continue;
+                  const core = parseCoreRow(nr2);
+                  const tags = parseJsonSafe(nr2.tags_json, []);
+                  out[en2] = {
+                    chinese: core.chinese,
+                    examCount: Number(nr2.total_count) || 0,
+                    tags: Array.isArray(tags) ? tags.join(",") : "",
+                    importance: nr2.importance != null ? Number(nr2.importance) || 0 : 0
+                  };
+                }
+              }
+              formatAppLog("log", "at src/utils/masterDb.js:654", "[masterDb] getWordBriefBatch 成功, 条数=", rows ? rows.length : 0);
+              resolve(out);
+            },
+            fail: (e2) => {
+              formatAppLog("error", "at src/utils/masterDb.js:658", "[masterDb] getWordBriefBatch selectSql 失败", e2);
+              resolve({});
+            }
+          });
+        } catch (e2) {
+          resolve({});
+        }
+      });
+    });
+  }
+  let reviewWordListCache = null;
+  const wordDetailCache = /* @__PURE__ */ new Map();
+  const DETAIL_CACHE_MAX = 200;
+  function setDetailCache(key, value) {
+    if (wordDetailCache.size >= DETAIL_CACHE_MAX) {
+      const keys = wordDetailCache.keys();
+      for (let i2 = 0; i2 < 20; i2++) {
+        const k = keys.next().value;
+        if (k !== void 0)
+          wordDetailCache.delete(k);
+      }
+    }
+    wordDetailCache.set(key, value);
+  }
+  function getWordListForReview() {
+    if (reviewWordListCache && reviewWordListCache.length > 0)
+      return Promise.resolve(reviewWordListCache);
+    if (!isApp())
+      return Promise.resolve([]);
+    return ensureMasterOpen().then((ok) => {
+      if (!ok)
+        return [];
+      return new Promise((resolve) => {
+        plus.sqlite.selectSql({
+          name: MASTER_DB_NAME,
+          sql: "SELECT english, chinese FROM vocab_master LIMIT 5000",
+          success: (rows) => {
+            const list = [];
+            if (rows && rows.length) {
+              for (const r2 of rows) {
+                const w2 = (r2.english || "").trim();
+                if (w2)
+                  list.push({ word: w2, chinese: (r2.chinese || "").trim() });
+              }
+            }
+            reviewWordListCache = list;
+            resolve(list);
+          },
+          fail: () => resolve([])
+        });
+      });
+    });
+  }
+  const masterDb = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    ensureMasterOpen,
+    getWordBriefBatch,
+    getWordExamData,
+    getWordExamStatsBatch,
+    getWordFullDetail,
+    getWordListForReview
+  }, Symbol.toStringTag, { value: "Module" }));
+  const STORAGE_KEY = "currentWordbook";
+  const CLOUD_LIST_KEY = "cloudWordbooks";
+  const SELF_ID = "self";
+  const GUEST_DEFAULT_BOOK = "红宝书";
+  const LOGIN_DEFAULT_BOOK = SELF_ID;
+  const LOCAL_KEYS = ["红宝书", "红宝书补全版", "真题高频词", "真题所有词"];
+  function getCloudWordbooks() {
+    try {
+      const raw = uni.getStorageSync(CLOUD_LIST_KEY);
+      let list = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(list))
+        return [{ id: SELF_ID, name: "自用单词" }];
+      list = list.filter((o2, index, arr) => {
+        if (o2.name === "收藏单词本") {
+          return false;
+        }
+        if (o2.name === "收藏" && o2.id !== "favorite") {
+          return false;
+        }
+        if (o2.id === "mastered" || o2.id === "favorite") {
+          return arr.findIndex((item) => item.id === o2.id) === index;
+        }
+        return true;
+      });
+      const hasSelf = list.some((o2) => o2.id === SELF_ID);
+      if (!hasSelf) {
+        list = [{ id: SELF_ID, name: "自用单词" }, ...list];
+      }
+      const hasMastered = list.some((o2) => o2.id === "mastered");
+      if (!hasMastered) {
+        list = [...list, { id: "mastered", name: "已斯单词本" }];
+        uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(list));
+      }
+      const hasFavorite = list.some((o2) => o2.id === "favorite");
+      if (!hasFavorite) {
+        list = [...list, { id: "favorite", name: "收藏" }];
+        uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(list));
+      }
+      return list;
+    } catch (_2) {
+      return [{ id: SELF_ID, name: "自用单词" }, { id: "mastered", name: "已斯单词本" }, { id: "favorite", name: "收藏" }];
+    }
+  }
+  function setCloudWordbooks(list) {
+    list = list.filter((o2) => o2.name !== "收藏单词本" && !(o2.name === "收藏" && o2.id !== "favorite"));
+    let finalList = list.filter((o2) => o2.id !== "mastered" && o2.id !== "favorite");
+    const hasSelf = finalList.some((o2) => o2.id === SELF_ID);
+    if (!hasSelf) {
+      finalList = [{ id: SELF_ID, name: "自用单词" }, ...finalList];
+    }
+    finalList.push({ id: "mastered", name: "已斯单词本" });
+    finalList.push({ id: "favorite", name: "收藏" });
+    uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(finalList));
+  }
+  function addCloudWordbook(name) {
+    const id = "wb_" + Date.now() + "_" + Math.random().toString(36).slice(2, 9);
+    const list = getCloudWordbooks().filter((o2) => o2.id !== SELF_ID && o2.id !== "mastered" && o2.id !== "favorite");
+    list.push({ id, name: (name || "").trim() || "未命名" });
+    setCloudWordbooks([
+      { id: SELF_ID, name: "自用单词" },
+      ...list,
+      { id: "mastered", name: "已斯单词本" },
+      { id: "favorite", name: "收藏" }
+    ]);
+    return id;
+  }
+  function removeCloudWordbook(id) {
+    if (id === SELF_ID || id === "mastered" || id === "favorite")
+      return;
+    const list = getCloudWordbooks().filter((o2) => o2.id !== id);
+    setCloudWordbooks(list);
+    try {
+      uni.removeStorageSync("wordbook_words_" + id);
+    } catch (_2) {
+    }
+  }
+  function isLoggedIn() {
+    try {
+      return !!uni.getStorageSync("uid");
+    } catch (_2) {
+      return false;
+    }
+  }
+  function getDefaultWordbook() {
+    return isLoggedIn() ? LOGIN_DEFAULT_BOOK : GUEST_DEFAULT_BOOK;
+  }
+  function getCurrentWordbook() {
+    try {
+      let v2 = uni.getStorageSync(STORAGE_KEY);
+      if (v2 === "自用单词")
+        v2 = SELF_ID;
+      if (LOCAL_KEYS.includes(v2))
+        return v2;
+      if (v2 === SELF_ID)
+        return isLoggedIn() ? SELF_ID : GUEST_DEFAULT_BOOK;
+      const list = getCloudWordbooks();
+      if (list.some((o2) => o2.id === v2))
+        return isLoggedIn() ? v2 : GUEST_DEFAULT_BOOK;
+      return getDefaultWordbook();
+    } catch (_2) {
+      return getDefaultWordbook();
+    }
+  }
+  function setCurrentWordbook(idOrKey) {
+    uni.setStorageSync(STORAGE_KEY, idOrKey);
+  }
+  function isSelfWordbook() {
+    return getCurrentWordbook() === SELF_ID;
+  }
+  function isLocalWordbookKey(key) {
+    return LOCAL_KEYS.includes(key);
+  }
+  function getWordbookListForUI() {
+    const cloud = getCloudWordbooks();
+    const local = LOCAL_KEYS.map((key) => ({ id: key, name: key, isLocal: true, canDelete: false }));
+    return [
+      ...cloud.map((o2) => ({
+        ...o2,
+        isLocal: false,
+        canDelete: o2.id !== SELF_ID && o2.id !== "mastered" && o2.id !== "favorite"
+      })),
+      ...local
+    ];
+  }
+  const WORDS_PREFIX = "wordbook_words_";
+  function getWordbookWords(id) {
+    if (!id || id === SELF_ID)
+      return [];
+    try {
+      const raw = uni.getStorageSync(WORDS_PREFIX + id);
+      return raw ? JSON.parse(raw) : [];
+    } catch (_2) {
+      return [];
+    }
+  }
+  function setWordbookWords(id, words) {
+    if (!id || id === SELF_ID)
+      return;
+    uni.setStorageSync(WORDS_PREFIX + id, JSON.stringify(words || []));
+  }
+  function parseCsvToWordList(text) {
+    if (!text || typeof text !== "string")
+      return [];
+    const lines = text.trim().split(/\r?\n/);
+    const out = [];
+    for (let i2 = 1; i2 < lines.length; i2++) {
+      const line = lines[i2];
+      const parts = line.split(",");
+      if (parts.length >= 1 && parts[0].trim()) {
+        out.push({
+          english: parts[0].trim(),
+          exam_count: parseInt(parts[1], 10) || 0,
+          importance: parseInt(parts[2], 10) || 0
+        });
+      }
+    }
+    return out;
+  }
+  function loadCsvByPlusIo(fileName) {
+    return new Promise((resolve) => {
+      if (typeof plus === "undefined" || !plus.io) {
+        resolve(null);
+        return;
+      }
+      const paths = ["_www/static/wordbooks/" + fileName, "static/wordbooks/" + fileName];
+      let tried = 0;
+      const tryNext = () => {
+        if (tried >= paths.length) {
+          resolve(null);
+          return;
+        }
+        const path = paths[tried++];
+        plus.io.resolveLocalFileSystemURL(path, (entry) => {
+          entry.file((file) => {
+            const reader = new plus.io.FileReader();
+            reader.onloadend = (e2) => {
+              var _a;
+              return resolve(((_a = e2.target) == null ? void 0 : _a.result) ?? null);
+            };
+            reader.onerror = () => resolve(null);
+            reader.readAsText(file, "utf-8");
+          }, () => tryNext());
+        }, () => tryNext());
+      };
+      tryNext();
+    });
+  }
+  function loadLocalWordbook(key) {
+    const fileName = key + ".csv";
+    return new Promise((resolve) => {
+      const onText = (text) => {
+        if (text != null && typeof text !== "string")
+          text = String(text);
+        const list = parseCsvToWordList(text);
+        if (list.length === 0 && text != null) {
+          formatAppLog("warn", "at src/utils/wordbookSource.js:235", "[wordbookSource] CSV 解析后为空，key=", key, "textLen=", (text || "").length);
+        }
+        resolve(list);
+      };
+      if (typeof plus !== "undefined" && plus.io) {
+        loadCsvByPlusIo(fileName).then((text) => {
+          if (text != null)
+            return onText(text);
+          try {
+            const fileUrl = plus.io.convertLocalFileSystemURL("_www/static/wordbooks/" + fileName);
+            if (fileUrl) {
+              uni.request({
+                url: fileUrl,
+                method: "GET",
+                dataType: "text",
+                success: (res) => {
+                  if (res.statusCode === 200)
+                    onText(res.data);
+                  else
+                    onText(null);
+                },
+                fail: () => onText(null)
+              });
+              return;
+            }
+          } catch (_2) {
+          }
+          onText(null);
+        });
+        return;
+      }
+      uni.request({
+        url: "/static/wordbooks/" + encodeURIComponent(fileName),
+        method: "GET",
+        dataType: "text",
+        success: (res) => {
+          if (res.statusCode === 200)
+            onText(res.data);
+          else
+            onText(null);
+        },
+        fail: () => onText(null)
+      });
+    });
+  }
+  const wordbookSource = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    addCloudWordbook,
+    getCloudWordbooks,
+    getCurrentWordbook,
+    getWordbookListForUI,
+    getWordbookWords,
+    isLocalWordbookKey,
+    isSelfWordbook,
+    loadLocalWordbook,
+    removeCloudWordbook,
+    setCloudWordbooks,
+    setCurrentWordbook,
+    setWordbookWords
+  }, Symbol.toStringTag, { value: "Module" }));
+  const PROFILE_KEY = "learning_center_profiles_v1";
+  const MISTAKE_KEY = "learning_center_mistakes_v1";
+  const HISTORY_KEY = "learning_center_history_v1";
+  const EXTRA_KEY = "learning_center_extra_v1";
+  const safeRead = (key, fallback) => {
+    try {
+      const raw = uni.getStorageSync(key);
+      if (!raw)
+        return fallback;
+      if (typeof raw === "string") {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : fallback;
+      }
+      return raw && typeof raw === "object" ? raw : fallback;
+    } catch (_2) {
+      return fallback;
+    }
+  };
+  const safeWrite = (key, value) => {
+    try {
+      uni.setStorageSync(key, JSON.stringify(value));
+    } catch (_2) {
+    }
+  };
+  const normalizeWordKey = (word) => {
+    if (!word)
+      return "";
+    if (typeof word === "string")
+      return word.trim().toLowerCase();
+    return String(word.english || "").trim().toLowerCase();
+  };
+  const normalizeProfile = (profile = {}) => {
+    const key = normalizeWordKey(profile.english || profile.key || "");
+    const bookIds = Array.isArray(profile.bookIds) ? [...new Set(profile.bookIds.filter(Boolean))] : [];
+    const normalized = {
+      key,
+      english: String(profile.english || key || "").trim(),
+      chinese: String(profile.chinese || "").trim(),
+      importance: Number(profile.importance || 0) || 0,
+      mastery: Number(profile.mastery || 0) || 0,
+      seen_count: Math.max(0, Number(profile.seen_count || 0)),
+      correct_count: Math.max(0, Number(profile.correct_count || 0)),
+      wrong_count: Math.max(0, Number(profile.wrong_count || 0)),
+      consecutive_correct: Math.max(0, Number(profile.consecutive_correct || 0)),
+      first_learned_at: profile.first_learned_at || "",
+      first_day_stage: Math.max(0, Number(profile.first_day_stage || 0)),
+      first_day_due_at: profile.first_day_due_at || "",
+      bookIds,
+      last_book_id: profile.last_book_id || "",
+      source: profile.source || "",
+      created_at: profile.created_at || "",
+      updated_at: profile.updated_at || "",
+      ...normalizeReviewFields(profile)
+    };
+    normalized.mastery = normalized.mastery || calculateMastery(normalized);
+    return normalized;
+  };
+  let _profilesCache = null;
+  let _mistakesCache = null;
+  const getProfilesMap = () => {
+    if (_profilesCache)
+      return _profilesCache;
+    _profilesCache = safeRead(PROFILE_KEY, {});
+    return _profilesCache;
+  };
+  const setProfilesMap = (map) => {
+    _profilesCache = map || {};
+    safeWrite(PROFILE_KEY, _profilesCache);
+  };
+  const getMistakesMap = () => {
+    if (_mistakesCache)
+      return _mistakesCache;
+    _mistakesCache = safeRead(MISTAKE_KEY, {});
+    return _mistakesCache;
+  };
+  const setMistakesMap = (map) => {
+    _mistakesCache = map || {};
+    safeWrite(MISTAKE_KEY, _mistakesCache);
+  };
+  const getHistoryList = () => {
+    const list = safeRead(HISTORY_KEY, []);
+    return Array.isArray(list) ? list : [];
+  };
+  const setHistoryList = (list) => safeWrite(HISTORY_KEY, Array.isArray(list) ? list.slice(-400) : []);
+  const getExtraMap = () => safeRead(EXTRA_KEY, {});
+  const setExtraMap = (map) => safeWrite(EXTRA_KEY, map || {});
+  const getFirstDayNextDue = (profile, isCorrect, now = /* @__PURE__ */ new Date()) => {
+    const stage = Math.max(0, Number(profile.first_day_stage || 0));
+    if (!profile.first_learned_at) {
+      return {
+        first_day_stage: 1,
+        first_day_due_at: new Date(now.getTime() + 10 * 60 * 1e3).toISOString(),
+        first_learned_at: now.toISOString()
+      };
+    }
+    if (!isCorrect) {
+      return {
+        first_day_stage: stage || 1,
+        first_day_due_at: new Date(now.getTime() + 20 * 60 * 1e3).toISOString(),
+        first_learned_at: profile.first_learned_at
+      };
+    }
+    if (stage <= 1) {
+      return {
+        first_day_stage: 2,
+        first_day_due_at: new Date(now.getTime() + 6 * 60 * 60 * 1e3).toISOString(),
+        first_learned_at: profile.first_learned_at
+      };
+    }
+    if (stage === 2) {
+      return {
+        first_day_stage: 3,
+        first_day_due_at: new Date(now.getTime() + 24 * 60 * 60 * 1e3).toISOString(),
+        first_learned_at: profile.first_learned_at
+      };
+    }
+    return {
+      first_day_stage: 4,
+      first_day_due_at: "",
+      first_learned_at: profile.first_learned_at
+    };
+  };
+  const getWordProfile = (word) => {
+    const key = normalizeWordKey(word);
+    if (!key)
+      return null;
+    const map = getProfilesMap();
+    return map[key] ? normalizeProfile(map[key]) : null;
+  };
+  const saveWordProfile = (word, patch = {}) => {
+    const key = normalizeWordKey(word);
+    if (!key)
+      return null;
+    const profiles = getProfilesMap();
+    const prev = normalizeProfile(profiles[key] || { key, english: typeof word === "string" ? word : word.english });
+    const next = normalizeProfile({
+      ...prev,
+      ...typeof word === "object" ? word : {},
+      ...patch,
+      key,
+      english: typeof word === "string" ? word : word.english || prev.english,
+      updated_at: (/* @__PURE__ */ new Date()).toISOString(),
+      created_at: prev.created_at || (/* @__PURE__ */ new Date()).toISOString()
+    });
+    profiles[key] = next;
+    setProfilesMap(profiles);
+    return next;
+  };
+  const recordReviewOutcome = (word, isCorrect, options = {}) => {
+    const key = normalizeWordKey(word);
+    if (!key)
+      return null;
+    const now = /* @__PURE__ */ new Date();
+    const bookId = options.bookId || getCurrentWordbook() || "self";
+    const prev = getWordProfile(word) || normalizeProfile({
+      ...typeof word === "object" ? word : {},
+      english: typeof word === "string" ? word : word.english,
+      chinese: typeof word === "object" ? word.chinese : "",
+      importance: typeof word === "object" ? word.importance : 0,
+      created_at: now.toISOString()
+    });
+    const reviewState = scheduleReviewState({ ...prev, ...typeof word === "object" ? word : {} }, isCorrect, now);
+    const firstDayState = getFirstDayNextDue(prev, isCorrect, now);
+    const next = saveWordProfile(word, {
+      ...reviewState,
+      mastery: calculateMastery({ ...prev, ...reviewState }),
+      seen_count: prev.seen_count + 1,
+      correct_count: prev.correct_count + (isCorrect ? 1 : 0),
+      wrong_count: prev.wrong_count + (isCorrect ? 0 : 1),
+      consecutive_correct: isCorrect ? prev.consecutive_correct + 1 : 0,
+      chinese: typeof word === "object" && word.chinese ? word.chinese : prev.chinese,
+      importance: typeof word === "object" && word.importance != null ? Number(word.importance) || 0 : prev.importance,
+      bookIds: [.../* @__PURE__ */ new Set([...prev.bookIds || [], bookId])],
+      last_book_id: bookId,
+      source: options.source || "review",
+      first_learned_at: firstDayState.first_learned_at,
+      first_day_stage: firstDayState.first_day_stage,
+      first_day_due_at: firstDayState.first_day_due_at
+    });
+    const mistakes = getMistakesMap();
+    const oldMistake = mistakes[key] || {
+      key,
+      english: next.english,
+      chinese: next.chinese,
+      error_count: 0,
+      recover_count: 0,
+      active: false,
+      bookIds: [],
+      last_wrong_at: ""
+    };
+    if (isCorrect) {
+      oldMistake.recover_count = Math.min(2, Number(oldMistake.recover_count || 0) + 1);
+      if (oldMistake.recover_count >= 2)
+        oldMistake.active = false;
+    } else {
+      oldMistake.error_count = Number(oldMistake.error_count || 0) + 1;
+      oldMistake.recover_count = 0;
+      oldMistake.active = true;
+      oldMistake.last_wrong_at = now.toISOString();
+      oldMistake.chinese = next.chinese || oldMistake.chinese;
+    }
+    oldMistake.english = next.english;
+    oldMistake.bookIds = [.../* @__PURE__ */ new Set([...oldMistake.bookIds || [], bookId])];
+    oldMistake.updated_at = now.toISOString();
+    mistakes[key] = oldMistake;
+    setMistakesMap(mistakes);
+    return next;
+  };
+  const noteNewWordLearned = (word, options = {}) => {
+    const now = /* @__PURE__ */ new Date();
+    return saveWordProfile(word, {
+      bookIds: [options.bookId || getCurrentWordbook() || "self"],
+      source: options.source || "quick-add",
+      first_learned_at: now.toISOString(),
+      first_day_stage: 1,
+      first_day_due_at: new Date(now.getTime() + 10 * 60 * 1e3).toISOString(),
+      mastery: 8
+    });
+  };
+  const clearMistake = (word) => {
+    const key = normalizeWordKey(word);
+    if (!key)
+      return;
+    const mistakes = getMistakesMap();
+    if (!mistakes[key])
+      return;
+    mistakes[key] = {
+      ...mistakes[key],
+      active: false,
+      recover_count: 2,
+      updated_at: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    setMistakesMap(mistakes);
+  };
+  const getMistakeWords = (bookId = "", onlyActive = true) => {
+    const mistakes = Object.values(getMistakesMap() || {});
+    return mistakes.filter((item) => item && item.english).filter((item) => !onlyActive || !!item.active).filter((item) => !bookId || Array.isArray(item.bookIds) && item.bookIds.includes(bookId)).sort((a2, b2) => {
+      const diff = Number(b2.error_count || 0) - Number(a2.error_count || 0);
+      if (diff !== 0)
+        return diff;
+      return new Date(b2.last_wrong_at || 0) - new Date(a2.last_wrong_at || 0);
+    });
+  };
+  const getDueProfilesForWords = (words = [], bookId = "", now = /* @__PURE__ */ new Date()) => {
+    const nowMs = now.getTime();
+    return (Array.isArray(words) ? words : []).map((item) => {
+      const profile = getWordProfile(item);
+      if (!profile)
+        return null;
+      if (bookId && Array.isArray(profile.bookIds) && profile.bookIds.length && !profile.bookIds.includes(bookId))
+        return null;
+      const reviewDueMs = profile.next_review_time ? new Date(profile.next_review_time).getTime() : Infinity;
+      const firstDayDueMs = profile.first_day_due_at ? new Date(profile.first_day_due_at).getTime() : Infinity;
+      const dueMs = Math.min(reviewDueMs, firstDayDueMs);
+      if (!Number.isFinite(dueMs) || dueMs > nowMs)
+        return null;
+      return {
+        ...profile,
+        dueMs,
+        overdueMs: Math.max(0, nowMs - dueMs)
+      };
+    }).filter(Boolean).sort((a2, b2) => b2.overdueMs - a2.overdueMs);
+  };
+  const getLearningDashboard = (words = [], bookId = "", options = {}) => {
+    const now = options.now ? new Date(options.now) : /* @__PURE__ */ new Date();
+    const dueProfiles = getDueProfilesForWords(words, bookId, now);
+    const mistakes = getMistakeWords(bookId, true);
+    const profiles = (Array.isArray(words) ? words : []).map((item) => getWordProfile(item)).filter(Boolean);
+    const masteryBuckets = {
+      strong: 0,
+      normal: 0,
+      weak: 0,
+      danger: 0
+    };
+    profiles.forEach((item) => {
+      const mastery = Number(item.mastery || 0);
+      if (mastery >= 80)
+        masteryBuckets.strong++;
+      else if (mastery >= 60)
+        masteryBuckets.normal++;
+      else if (mastery >= 35)
+        masteryBuckets.weak++;
+      else
+        masteryBuckets.danger++;
+    });
+    const firstDayDue = dueProfiles.filter((item) => item.first_day_due_at && item.first_day_due_at === item.first_day_due_at && Number(item.first_day_stage || 0) > 0 && Number(item.first_day_stage || 0) < 4).length;
+    const overdueCount = dueProfiles.filter((item) => item.dueMs < now.getTime()).length;
+    return {
+      dueCount: dueProfiles.length,
+      overdueCount,
+      mistakeCount: mistakes.length,
+      firstDayDue,
+      masteryBuckets,
+      reviewedCount: profiles.length,
+      latestMistakes: mistakes.slice(0, 5)
+    };
+  };
+  const logStudySession = (session = {}) => {
+    const list = getHistoryList();
+    list.push({
+      id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      created_at: (/* @__PURE__ */ new Date()).toISOString(),
+      bookId: session.bookId || getCurrentWordbook() || "self",
+      mode: session.mode || "",
+      preset: session.preset || "default",
+      reviewedCount: Number(session.reviewedCount || 0),
+      correctCount: Number(session.correctCount || 0),
+      wrongCount: Number(session.wrongCount || 0),
+      masteryBefore: Number(session.masteryBefore || 0),
+      masteryAfter: Number(session.masteryAfter || 0),
+      newCount: Number(session.newCount || 0),
+      oldCount: Number(session.oldCount || 0),
+      mistakeCount: Number(session.mistakeCount || 0)
+    });
+    setHistoryList(list);
+  };
+  const getDayKey = (dateLike) => {
+    const date = new Date(dateLike);
+    const y2 = date.getFullYear();
+    const m2 = `${date.getMonth() + 1}`.padStart(2, "0");
+    const d2 = `${date.getDate()}`.padStart(2, "0");
+    return `${y2}-${m2}-${d2}`;
+  };
+  const getStudyStats = (words = [], bookId = "") => {
+    const history = getHistoryList().filter((item) => !bookId || item.bookId === bookId);
+    const dashboard = getLearningDashboard(words, bookId);
+    const recentMap = {};
+    history.forEach((item) => {
+      const key = getDayKey(item.created_at);
+      if (!recentMap[key]) {
+        recentMap[key] = { day: key, reviewedCount: 0, correctCount: 0, wrongCount: 0 };
+      }
+      recentMap[key].reviewedCount += Number(item.reviewedCount || 0);
+      recentMap[key].correctCount += Number(item.correctCount || 0);
+      recentMap[key].wrongCount += Number(item.wrongCount || 0);
+    });
+    const trend = Object.values(recentMap).sort((a2, b2) => a2.day.localeCompare(b2.day)).slice(-7);
+    let streak = 0;
+    let cursor = /* @__PURE__ */ new Date();
+    while (true) {
+      const key = getDayKey(cursor);
+      if (!recentMap[key])
+        break;
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return {
+      ...dashboard,
+      totalSessions: history.length,
+      totalReviewed: history.reduce((sum, item) => sum + Number(item.reviewedCount || 0), 0),
+      totalCorrect: history.reduce((sum, item) => sum + Number(item.correctCount || 0), 0),
+      totalWrong: history.reduce((sum, item) => sum + Number(item.wrongCount || 0), 0),
+      streak,
+      trend
+    };
+  };
+  const getLatestSession = (bookId = "") => {
+    const history = getHistoryList().filter((item) => !bookId || item.bookId === bookId).sort((a2, b2) => new Date(b2.created_at) - new Date(a2.created_at));
+    return history[0] || null;
+  };
+  const getWordExtra = (word) => {
+    const key = normalizeWordKey(word);
+    if (!key)
+      return {};
+    const extras = getExtraMap();
+    return extras[key] || {};
+  };
+  const saveWordExtra = (word, patch = {}) => {
+    const key = normalizeWordKey(word);
+    if (!key)
+      return {};
+    const extras = getExtraMap();
+    const prev = extras[key] || {};
+    const next = {
+      ...prev,
+      ...patch,
+      updated_at: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    extras[key] = next;
+    setExtraMap(extras);
+    return next;
+  };
+  const LogLevel = {
+    DEBUG: 0,
+    INFO: 1,
+    WARN: 2,
+    ERROR: 3
+  };
+  class Logger {
+    constructor(minLevel = LogLevel.INFO, maxLogs = 500) {
+      this.minLevel = minLevel;
+      this.maxLogs = maxLogs;
+      this.logs = [];
+      this.listeners = [];
+    }
+    /**
+     * 添加日志监听器
+     */
+    addListener(callback) {
+      if (!this.listeners.includes(callback)) {
+        this.listeners.push(callback);
+      }
+      if (this.listeners.length > 100) {
+        formatAppLog("warn", "at src/utils/errorHandler.js:37", "[Logger] 监听器数量过多（>100），可能存在内存泄漏");
+      }
+    }
+    /**
+     * 移除日志监听器
+     */
+    removeListener(callback) {
+      this.listeners = this.listeners.filter((l2) => l2 !== callback);
+    }
+    /**
+     * 记录日志
+     */
+    log(level, tag, message, data = null) {
+      if (level < this.minLevel)
+        return;
+      const timestamp = (/* @__PURE__ */ new Date()).toISOString();
+      const logEntry = {
+        timestamp,
+        level,
+        tag,
+        message,
+        data
+      };
+      this.logs.push(logEntry);
+      if (this.logs.length > this.maxLogs) {
+        this.logs.shift();
+      }
+      this.listeners.forEach((listener) => {
+        try {
+          listener(logEntry);
+        } catch (e2) {
+          formatAppLog("error", "at src/utils/errorHandler.js:75", "[Logger] 监听器执行失败:", e2);
+        }
+      });
+      this.printToConsole(level, tag, message, data);
+    }
+    /**
+     * 输出到控制台
+     */
+    printToConsole(level, tag, message, data) {
+      const levelName = Object.keys(LogLevel).find((k) => LogLevel[k] === level) || "UNKNOWN";
+      const prefix = `[${levelName}] [${tag}]`;
+      if (data !== null && data !== void 0) {
+        formatAppLog("log", "at src/utils/errorHandler.js:91", `${prefix} ${message}`, data);
+      } else {
+        formatAppLog("log", "at src/utils/errorHandler.js:93", `${prefix} ${message}`);
+      }
+    }
+    /**
+     * 调试日志
+     */
+    debug(tag, message, data) {
+      this.log(LogLevel.DEBUG, tag, message, data);
+    }
+    /**
+     * 信息日志
+     */
+    info(tag, message, data) {
+      this.log(LogLevel.INFO, tag, message, data);
+    }
+    /**
+     * 警告日志
+     */
+    warn(tag, message, data) {
+      this.log(LogLevel.WARN, tag, message, data);
+    }
+    /**
+     * 错误日志
+     */
+    error(tag, message, data) {
+      this.log(LogLevel.ERROR, tag, message, data);
+    }
+    /**
+     * 获取所有日志
+     */
+    getLogs(level = null) {
+      if (level === null)
+        return [...this.logs];
+      return this.logs.filter((log) => log.level >= level);
+    }
+    /**
+     * 清空日志
+     */
+    clear() {
+      this.logs = [];
+    }
+    /**
+     * 导出日志为 JSON
+     */
+    exportAsJson() {
+      return JSON.stringify(this.logs, null, 2);
+    }
+    /**
+     * 导出日志为 CSV
+     */
+    exportAsCsv() {
+      const headers = ["Timestamp", "Level", "Tag", "Message", "Data"];
+      const rows = this.logs.map((log) => [
+        log.timestamp,
+        Object.keys(LogLevel).find((k) => LogLevel[k] === log.level),
+        log.tag,
+        log.message,
+        typeof log.data === "object" ? JSON.stringify(log.data) : log.data
+      ]);
+      const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+      return csv;
+    }
+  }
+  class ErrorHandler {
+    constructor(logger2) {
+      this.logger = logger2;
+      this.errorHandlers = [];
+    }
+    /**
+     * 添加错误处理器
+     */
+    addHandler(handler) {
+      this.errorHandlers.push(handler);
+    }
+    /**
+     * 处理错误
+     */
+    handle(error, context = {}) {
+      const errorInfo = {
+        message: error.message || String(error),
+        stack: error.stack || "",
+        type: error.constructor.name,
+        context,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString()
+      };
+      this.logger.error("ErrorHandler", `${errorInfo.type}: ${errorInfo.message}`, errorInfo);
+      this.errorHandlers.forEach((handler) => {
+        try {
+          handler(errorInfo);
+        } catch (e2) {
+          this.logger.error("ErrorHandler", "错误处理器执行失败", e2);
+        }
+      });
+      return errorInfo;
+    }
+    /**
+     * 处理 Promise 拒绝
+     */
+    handleRejection(reason, context = {}) {
+      const error = reason instanceof Error ? reason : new Error(String(reason));
+      return this.handle(error, { ...context, type: "UnhandledRejection" });
+    }
+    /**
+     * 处理异常
+     */
+    handleException(error, context = {}) {
+      return this.handle(error, { ...context, type: "UncaughtException" });
+    }
+  }
+  class GlobalErrorManager {
+    constructor() {
+      this.logger = new Logger(LogLevel.DEBUG);
+      this.errorHandler = new ErrorHandler(this.logger);
+      this.setupGlobalHandlers();
+    }
+    /**
+     * 设置全局错误处理
+     */
+    setupGlobalHandlers() {
+      if (typeof window !== "undefined") {
+        window.addEventListener("unhandledrejection", (event) => {
+          this.errorHandler.handleRejection(event.reason, { source: "unhandledrejection" });
+        });
+        window.addEventListener("error", (event) => {
+          this.errorHandler.handleException(event.error, { source: "error" });
+        });
+      }
+      if (typeof uni !== "undefined" && uni.onError) {
+        uni.onError((error) => {
+          this.errorHandler.handleException(error, { source: "uni.onError" });
+        });
+      }
+    }
+    /**
+     * 获取日志器
+     */
+    getLogger() {
+      return this.logger;
+    }
+    /**
+     * 获取错误处理器
+     */
+    getErrorHandler() {
+      return this.errorHandler;
+    }
+    /**
+     * 记录性能指标
+     */
+    logPerformance(tag, duration, metadata = {}) {
+      this.logger.info(tag, `性能指标: ${duration}ms`, { duration, ...metadata });
+    }
+    /**
+     * 记录用户操作
+     */
+    logUserAction(action, data = {}) {
+      this.logger.info("UserAction", action, data);
+    }
+    /**
+     * 记录数据库操作
+     */
+    logDatabaseOperation(operation, duration, success = true, error = null) {
+      if (success) {
+        this.logger.info("Database", `${operation} 成功 (${duration}ms)`);
+      } else {
+        this.logger.error("Database", `${operation} 失败 (${duration}ms)`, error);
+      }
+    }
+    /**
+     * 获取诊断信息
+     */
+    getDiagnostics() {
+      return {
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        logs: this.logger.getLogs(),
+        logCount: this.logger.logs.length,
+        memoryUsage: this.getMemoryUsage()
+      };
+    }
+    /**
+     * 获取内存使用情况
+     */
+    getMemoryUsage() {
+      if (typeof performance !== "undefined" && performance.memory) {
+        return {
+          usedJSHeapSize: performance.memory.usedJSHeapSize,
+          totalJSHeapSize: performance.memory.totalJSHeapSize,
+          jsHeapSizeLimit: performance.memory.jsHeapSizeLimit
+        };
+      }
+      return null;
+    }
+    /**
+     * 导出诊断信息
+     */
+    exportDiagnostics(format = "json") {
+      const diagnostics = this.getDiagnostics();
+      if (format === "json") {
+        return JSON.stringify(diagnostics, null, 2);
+      } else if (format === "csv") {
+        return this.logger.exportAsCsv();
+      }
+      return diagnostics;
+    }
+  }
+  const globalErrorManager = new GlobalErrorManager();
+  const logger = globalErrorManager.getLogger();
+  const errorHandler = globalErrorManager.getErrorHandler();
+  class LRUCache {
+    constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
+      this.maxSize = maxSize;
+      this.ttlMs = ttlMs;
+      this.cache = /* @__PURE__ */ new Map();
+      this.timestamps = /* @__PURE__ */ new Map();
+    }
+    /**
+     * 获取缓存值
+     * @param {string} key
+     * @returns {*}
+     */
+    get(key) {
+      if (!this.cache.has(key))
+        return void 0;
+      const timestamp = this.timestamps.get(key);
+      if (timestamp && Date.now() - timestamp > this.ttlMs) {
+        this.cache.delete(key);
+        this.timestamps.delete(key);
+        return void 0;
+      }
+      const value = this.cache.get(key);
+      this.cache.delete(key);
+      this.cache.set(key, value);
+      return value;
+    }
+    /**
+     * 设置缓存值
+     * @param {string} key
+     * @param {*} value
+     */
+    set(key, value) {
+      if (this.cache.has(key)) {
+        this.cache.delete(key);
+      }
+      if (this.cache.size >= this.maxSize) {
+        const firstKey = this.cache.keys().next().value;
+        this.cache.delete(firstKey);
+        this.timestamps.delete(firstKey);
+      }
+      this.cache.set(key, value);
+      this.timestamps.set(key, Date.now());
+    }
+    /**
+     * 检查是否存在
+     * @param {string} key
+     * @returns {boolean}
+     */
+    has(key) {
+      return this.get(key) !== void 0;
+    }
+    /**
+     * 删除缓存
+     * @param {string} key
+     */
+    delete(key) {
+      this.cache.delete(key);
+      this.timestamps.delete(key);
+    }
+    /**
+     * 清空所有缓存
+     */
+    clear() {
+      this.cache.clear();
+      this.timestamps.clear();
+    }
+    /**
+     * 获取缓存大小
+     * @returns {number}
+     */
+    size() {
+      return this.cache.size;
+    }
+    /**
+     * 清理过期项
+     */
+    cleanup() {
+      const now = Date.now();
+      for (const [key, timestamp] of this.timestamps.entries()) {
+        if (now - timestamp > this.ttlMs) {
+          this.cache.delete(key);
+          this.timestamps.delete(key);
+        }
+      }
+    }
+  }
+  class MemoryCache {
+    constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
+      this.lru = new LRUCache(maxSize, ttlMs);
+    }
+    get(key, fallback = null) {
+      const value = this.lru.get(key);
+      return value !== void 0 ? value : fallback;
+    }
+    set(key, value) {
+      this.lru.set(key, value);
+    }
+    has(key) {
+      return this.lru.has(key);
+    }
+    delete(key) {
+      this.lru.delete(key);
+    }
+    clear() {
+      this.lru.clear();
+    }
+    size() {
+      return this.lru.size();
+    }
+    cleanup() {
+      this.lru.cleanup();
+    }
+  }
+  const CACHE_TTL_MS = 5 * 60 * 1e3;
+  const profilesMemCache = new MemoryCache(500, CACHE_TTL_MS);
+  const mistakesMemCache = new MemoryCache(200, CACHE_TTL_MS);
+  const cleanupExpiredCaches = () => {
+    profilesMemCache.cleanup();
+    mistakesMemCache.cleanup();
+  };
+  const MASTERED_WORDBOOK_WORDS_KEY = "mastered_wordbook_words_global_v1";
+  const getGlobalMasteredWords = () => {
+    try {
+      const raw = uni.getStorageSync(MASTERED_WORDBOOK_WORDS_KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      return new Set(data);
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/masteredWordbookWords.js:19", "getGlobalMasteredWords 失败:", e2);
+      return /* @__PURE__ */ new Set();
+    }
+  };
+  const addGlobalMasteredWord = (english) => {
+    try {
+      const raw = uni.getStorageSync(MASTERED_WORDBOOK_WORDS_KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      if (!data.includes(english)) {
+        data.push(english);
+      }
+      uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(data));
+      formatAppLog("log", "at src/utils/masteredWordbookWords.js:36", "addGlobalMasteredWord: 成功标记", english);
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/masteredWordbookWords.js:38", "addGlobalMasteredWord 失败:", e2);
+    }
+  };
+  const removeGlobalMasteredWord = (english) => {
+    try {
+      const raw = uni.getStorageSync(MASTERED_WORDBOOK_WORDS_KEY);
+      const data = raw ? JSON.parse(raw) : [];
+      const filtered = data.filter((w2) => w2 !== english);
+      uni.setStorageSync(MASTERED_WORDBOOK_WORDS_KEY, JSON.stringify(filtered));
+      formatAppLog("log", "at src/utils/masteredWordbookWords.js:52", "removeGlobalMasteredWord: 成功取消", english);
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/masteredWordbookWords.js:54", "removeGlobalMasteredWord 失败:", e2);
+    }
+  };
+  const isGlobalMasteredWord = (english) => {
+    const masteredSet = getGlobalMasteredWords();
+    return masteredSet.has(english);
+  };
+  const getMasteredWordbookWords = (wordbookId) => {
+    return getGlobalMasteredWords();
+  };
+  const addMasteredWordbookWord = (wordbookId, english) => {
+    addGlobalMasteredWord(english);
+  };
+  const removeMasteredWordbookWord = (wordbookId, english) => {
+    removeGlobalMasteredWord(english);
+  };
+  const isWordbookWordMastered = (wordbookId, english) => {
+    return isGlobalMasteredWord(english);
+  };
+  const masteredWordbookWords = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty({
+    __proto__: null,
+    addGlobalMasteredWord,
+    addMasteredWordbookWord,
+    getGlobalMasteredWords,
+    getMasteredWordbookWords,
+    isGlobalMasteredWord,
+    isWordbookWordMastered,
+    removeGlobalMasteredWord,
+    removeMasteredWordbookWord
+  }, Symbol.toStringTag, { value: "Module" }));
+  const ENRICH_CHUNK = 200;
+  const FIRST_SCREEN_COUNT = 120;
+  const HOT_TOP_COUNT = 20;
+  const PAGE_SIZE = 50;
+  const SHOW_CHINESE_KEY = "index_show_chinese_v1";
+  const _sfc_main$b = {
+    __name: "index",
+    setup(__props, { expose: __expose }) {
+      __expose();
+      let loadWordsInProgress = false;
+      let allExternalWords = [];
+      let plusReadyHandler = null;
+      let favoriteWordsSet = /* @__PURE__ */ new Set();
+      let masteredWordsSet = /* @__PURE__ */ new Set();
+      const mapSortByToDb = (sortBy2) => {
+        const map = { create_time: "create_time", alphabetical: "english", importance: "importance", repeat_count: "repeat_count", view_count: "view_count", exam_count: "create_time" };
+        return map[sortBy2] || "create_time";
+      };
+      const getFilters = () => ({
+        search: searchText.value || void 0,
+        tag: filterType.value === "tag" ? filterValue.value : void 0,
+        year: filterType.value === "year" ? filterValue.value : void 0,
+        page: filterType.value === "page" ? filterValue.value : void 0
+      });
+      function normalizeListWord(w2) {
+        if (masteredWordsSet.has((w2.english || "").trim().toLowerCase())) {
+          return null;
+        }
+        return {
+          ...w2,
+          id: w2.id || null,
+          english: (w2.english || "").trim(),
+          chinese: (w2.chinese || "").trim(),
+          repeat_count: w2.repeat_count ?? 1,
+          tags: (w2.tags || "").trim() ? String(w2.tags) : "",
+          source_page: w2.source_page || "",
+          year: w2.year || "",
+          importance: Number(w2.importance) || 0,
+          view_count: Number(w2.view_count) || 0,
+          exam_count: w2.exam_count != null ? Number(w2.exam_count) || 0 : void 0,
+          create_time: w2.create_time || "",
+          is_favorite: favoriteWordsSet.has((w2.english || "").trim().toLowerCase())
+        };
+      }
+      async function updateFavoriteWordsSet() {
+        try {
+          const { getWordbookWords: getWordbookWords2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
+          const favoriteWords = getWordbookWords2("favorite") || [];
+          favoriteWordsSet = new Set(favoriteWords.map((w2) => (w2.english || "").trim().toLowerCase()));
+          formatAppLog("log", "at pages/index/index.vue:227", "📍 收藏单词集合已更新，共", favoriteWordsSet.size, "个");
+        } catch (e2) {
+          formatAppLog("warn", "at pages/index/index.vue:229", "⚠️ 更新收藏单词集合失败:", e2);
+        }
+      }
+      async function updateMasteredWordsSet() {
+        try {
+          const { getWordbookWords: getWordbookWords2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
+          const masteredWords = getWordbookWords2("mastered") || [];
+          masteredWordsSet = new Set(masteredWords.map((w2) => (w2.english || "").trim().toLowerCase()));
+          formatAppLog("log", "at pages/index/index.vue:239", "🎯 已斩单词集合已更新，共", masteredWordsSet.size, "个");
+        } catch (e2) {
+          formatAppLog("warn", "at pages/index/index.vue:241", "⚠️ 更新已斩单词集合失败:", e2);
+        }
+      }
+      function getExamCountForSort(word) {
+        if (!word)
+          return 0;
+        if (word.exam_count != null)
+          return Number(word.exam_count) || 0;
+        return 0;
+      }
+      function sortExternalWords(list) {
+        const arr = [...list];
+        const order = sortOrder.value === "asc" ? 1 : -1;
+        const type = sortBy.value;
+        arr.sort((a2, b2) => {
+          if (type === "alphabetical")
+            return (a2.english || "").localeCompare(b2.english || "") * order;
+          if (type === "importance")
+            return ((Number(a2.importance) || 0) - (Number(b2.importance) || 0)) * order;
+          if (type === "repeat_count")
+            return ((Number(a2.repeat_count) || 0) - (Number(b2.repeat_count) || 0)) * order;
+          if (type === "view_count")
+            return ((Number(a2.view_count) || 0) - (Number(b2.view_count) || 0)) * order;
+          if (type === "exam_count")
+            return (getExamCountForSort(a2) - getExamCountForSort(b2)) * order;
+          return (new Date(a2.create_time || 0) - new Date(b2.create_time || 0)) * order;
+        });
+        return arr;
+      }
+      function filterExternalWords(list) {
+        let out = [...list];
+        getCurrentWordbook();
+        const masteredSet = getMasteredWordbookWords();
+        out = out.filter((w2) => {
+          const english = (w2.english || "").trim().toLowerCase();
+          return !masteredSet.has(english);
+        });
+        const q2 = (searchText.value || "").trim().toLowerCase();
+        if (q2) {
+          out = out.filter(
+            (w2) => (w2.english || "").toLowerCase().includes(q2) || (w2.chinese || "").toLowerCase().includes(q2)
+          );
+        }
+        if (filterType.value === "tag" && (filterValue.value || "").trim()) {
+          const tag = String(filterValue.value).trim();
+          out = out.filter((w2) => (w2.tags || "").split(/[,，\s]+/).map((t2) => t2.trim()).includes(tag));
+        }
+        if (filterType.value === "year" && filterValue.value !== "" && filterValue.value !== void 0) {
+          out = out.filter((w2) => String(w2.year || "") === String(filterValue.value));
+        }
+        if (filterType.value === "page" && filterValue.value !== "" && filterValue.value !== void 0) {
+          out = out.filter((w2) => String(w2.source_page || "") === String(filterValue.value));
+        }
+        return out;
+      }
+      function prepareExternalWords(raw) {
+        const normalized = (raw || []).map(normalizeListWord).filter(Boolean);
+        return sortExternalWords(filterExternalWords(normalized));
+      }
+      function enrichOneWord(w2, cache, dictLookup) {
+        const key = (w2.english || "").trim().toLowerCase();
+        if (!key)
+          return;
+        const info = dictLookup && dictLookup[key];
+        const isObj = info && typeof info === "object" && !Array.isArray(info);
+        if (!(w2.chinese || "").trim()) {
+          if (isObj && (info.chinese || "").trim())
+            w2.chinese = info.chinese.trim();
+          else if (cache && cache[key] && cache[key].chinese)
+            w2.chinese = cache[key].chinese;
+          else if (info && typeof info === "string")
+            w2.chinese = info;
+        }
+        if (info && isObj && typeof info.examCount === "number")
+          w2.exam_count = info.examCount;
+        if (isObj && (info.tags || "").trim())
+          w2.tags = String(info.tags).trim();
+        if (isObj && typeof info.importance === "number")
+          w2.importance = info.importance;
+      }
+      const searchText = vue.ref("");
+      const displayLimit = vue.ref(200);
+      const showFilter = vue.ref(false);
+      const showLearningCenter = vue.ref(false);
+      const words = vue.ref([]);
+      const refreshing = vue.ref(false);
+      const sortBy = vue.ref("create_time");
+      const filterType = vue.ref("none");
+      const filterValue = vue.ref("");
+      const showChinese = vue.ref(true);
+      const learningSnapshot = vue.ref({ dueCount: 0, mistakeCount: 0, firstDayDue: 0, overdueCount: 0 });
+      const latestSession = vue.ref(null);
+      const sortOptions = ["create_time", "alphabetical", "importance", "repeat_count", "view_count", "exam_count"];
+      const sortLabels = ["按录入时间", "按首字母", "按重要程度", "按学习次数", "按查看次数", "按真题频次"];
+      const sortOrderOptions = ["asc", "desc"];
+      const sortOrderLabels = ["顺序", "倒序"];
+      const sortOrder = vue.ref("desc");
+      const showChineseLabels = ["显示释义", "隐藏释义"];
+      const hasMoreSelfWords = vue.ref(true);
+      const allExternalWordsLength = vue.ref(0);
+      const filterOptions = ["none", "tag", "year", "page"];
+      const filterLabels = ["无筛选", "按标签", "按真题年份", "按纸质页码"];
+      const PRESET_TAGS = ["高频", "阅读词汇", "完形词汇", "翻译词汇", "新题型词汇", "写作词汇", "作文词", "口语词", "学术词"];
+      const tagOptions = vue.computed(() => {
+        const fromWords = /* @__PURE__ */ new Set();
+        (words.value || []).forEach((w2) => {
+          const t2 = (w2.tags || "").split(/[,，\s]+/).filter(Boolean);
+          t2.forEach((x2) => fromWords.add(x2));
+        });
+        return [...PRESET_TAGS, ...Array.from(fromWords).filter((t2) => !PRESET_TAGS.includes(t2))];
+      });
+      const currentSortLabel = vue.computed(() => {
+        const index = sortOptions.indexOf(sortBy.value);
+        return index >= 0 ? sortLabels[index] : "按录入时间";
+      });
+      const currentFilterLabel = vue.computed(() => {
+        const index = filterOptions.indexOf(filterType.value);
+        return index >= 0 ? filterLabels[index] : "无筛选";
+      });
+      const currentBookLabel = vue.computed(() => getCurrentWordbook() || "当前词书");
+      const latestAccuracyText = vue.computed(() => {
+        const value = latestSession.value && latestSession.value.reviewedCount ? `${Math.round(Number(latestSession.value.correctCount || 0) / Math.max(1, Number(latestSession.value.reviewedCount || 0)) * 100)}%` : "--";
+        return value;
+      });
+      const loadLearningSnapshot = async () => {
+        try {
+          const book = getCurrentWordbook();
+          let pool = [];
+          if (book === "self") {
+            pool = await db.getAllWords();
+          } else if (isLocalWordbookKey(book)) {
+            pool = await loadLocalWordbook(book);
+          } else {
+            pool = getWordbookWords(book) || [];
+          }
+          learningSnapshot.value = getLearningDashboard(pool, book);
+          latestSession.value = getLatestSession(book);
+        } catch (_2) {
+          learningSnapshot.value = { dueCount: 0, mistakeCount: 0, firstDayDue: 0, overdueCount: 0 };
+          latestSession.value = null;
+        }
+      };
+      const onListRefresh = async () => {
+        refreshing.value = true;
+        await loadWords();
+        if (isSelfWordbook())
+          await syncIncompleteWordsWithStats();
+        await loadLearningSnapshot();
+        refreshing.value = false;
+      };
+      function applyEnrichedToRef(list, wordsRef) {
+        if (!list || list.length === 0 || !wordsRef || !Array.isArray(wordsRef.value))
+          return;
+        const dict = {};
+        for (const item of list) {
+          const key = (item && item.english || "").trim().toLowerCase();
+          if (key)
+            dict[key] = item;
+        }
+        wordsRef.value = wordsRef.value.map((w2) => {
+          const key = (w2 && w2.english || "").trim().toLowerCase();
+          const hit = key ? dict[key] : null;
+          if (!hit)
+            return w2;
+          return {
+            ...w2,
+            chinese: hit.chinese !== void 0 && hit.chinese !== null ? hit.chinese : w2.chinese,
+            tags: hit.tags !== void 0 && hit.tags !== null ? hit.tags : w2.tags,
+            exam_count: hit.exam_count !== void 0 && hit.exam_count !== null ? hit.exam_count : w2.exam_count,
+            importance: hit.importance !== void 0 && hit.importance !== null ? hit.importance : w2.importance
+          };
+        });
+      }
+      function buildChineseFromDefs2(defs) {
+        if (!Array.isArray(defs) || defs.length === 0)
+          return "";
+        const parts = [];
+        for (const d2 of defs) {
+          if (!d2 || typeof d2 !== "object")
+            continue;
+          const pos = String(d2.pos || "").trim();
+          const trans = String(d2.trans || "").trim();
+          if (!trans)
+            continue;
+          parts.push(pos ? `${pos} ${trans}` : trans);
+          if (parts.length >= 4)
+            break;
+        }
+        return parts.join("；");
+      }
+      async function fallbackEnrichByFullDetail(list, bookAtLoad, wordsRef) {
+        if (!Array.isArray(list) || list.length === 0 || !wordsRef || !Array.isArray(wordsRef.value))
+          return;
+        const missing = list.filter((w2) => {
+          const noChinese = !(w2.chinese || "").trim();
+          const noTags = !(w2.tags || "").trim();
+          return (w2.english || "").trim() && (noChinese || noTags);
+        }).slice(0, 60);
+        if (missing.length === 0)
+          return;
+        const updates = {};
+        await Promise.all(missing.map(async (w2) => {
+          try {
+            const detail = await getWordFullDetail(w2.english);
+            const key = (w2.english || "").trim().toLowerCase();
+            if (!key)
+              return;
+            let chinese = "";
+            let tags = "";
+            let examCount = void 0;
+            if (detail) {
+              chinese = (detail.chinese || "").trim();
+              if (!chinese)
+                chinese = buildChineseFromDefs2(detail.defs);
+              tags = detail.examStats && Array.isArray(detail.examStats.tags) ? detail.examStats.tags.join(",") : "";
+              examCount = detail.examStats && typeof detail.examStats.total_count === "number" ? detail.examStats.total_count : void 0;
+            }
+            if (!chinese) {
+              try {
+                const pre = await getPregenWord(w2.english);
+                if (pre && (pre.chinese || "").trim())
+                  chinese = pre.chinese.trim();
+              } catch (_2) {
+              }
+            }
+            updates[key] = {
+              chinese,
+              tags: tags || "",
+              exam_count: examCount
+            };
+          } catch (_2) {
+          }
+        }));
+        if (getCurrentWordbook() !== bookAtLoad)
+          return;
+        if (Object.keys(updates).length === 0)
+          return;
+        wordsRef.value = wordsRef.value.map((w2) => {
+          const key = (w2.english || "").trim().toLowerCase();
+          const u2 = key ? updates[key] : null;
+          if (!u2)
+            return w2;
+          return {
+            ...w2,
+            chinese: (u2.chinese || "").trim() || w2.chinese,
+            tags: (u2.tags || "").trim() || w2.tags,
+            exam_count: u2.exam_count != null ? u2.exam_count : w2.exam_count
+          };
+        });
+      }
+      function countMissingChineseForList(list, wordsRef) {
+        if (!Array.isArray(list) || !Array.isArray(wordsRef == null ? void 0 : wordsRef.value))
+          return 0;
+        const set = new Set(list.map((w2) => ((w2 == null ? void 0 : w2.english) || "").trim().toLowerCase()).filter(Boolean));
+        let n2 = 0;
+        for (const w2 of wordsRef.value) {
+          const key = ((w2 == null ? void 0 : w2.english) || "").trim().toLowerCase();
+          if (!key || !set.has(key))
+            continue;
+          if (!(w2.chinese || "").trim())
+            n2++;
+        }
+        return n2;
+      }
+      async function retryEnrichUntilReady(list, bookAtLoad, wordsRef) {
+        const MAX_RETRY = 8;
+        const INTERVAL_MS = 800;
+        await new Promise((r2) => setTimeout(r2, 600));
+        for (let i2 = 0; i2 < MAX_RETRY; i2++) {
+          if (getCurrentWordbook() !== bookAtLoad)
+            return;
+          const missing = countMissingChineseForList(list, wordsRef);
+          if (missing <= 0)
+            return;
+          await new Promise((r2) => setTimeout(r2, INTERVAL_MS));
+          try {
+            const englishList = list.map((w2) => (w2.english || "").trim().toLowerCase()).filter(Boolean);
+            const dictLookup = await getWordBriefBatch(englishList).catch(() => ({}));
+            for (const item of list)
+              enrichOneWord(item, {}, dictLookup || {});
+            applyEnrichedToRef(list, wordsRef);
+          } catch (_2) {
+          }
+          await fallbackEnrichByFullDetail(list, bookAtLoad, wordsRef);
+        }
+      }
+      const enrichWordbookListInBackground = async (list, bookAtLoad, wordsRef) => {
+        if (!list || list.length === 0 || !wordsRef)
+          return;
+        try {
+          const englishList = list.map((w2) => (w2.english || "").trim().toLowerCase()).filter(Boolean);
+          if (getCurrentWordbook() !== bookAtLoad)
+            return;
+          const hotList = list.slice(0, Math.min(HOT_TOP_COUNT, list.length));
+          const hotKeys = hotList.map((w2) => (w2.english || "").trim().toLowerCase()).filter(Boolean);
+          let hotLookup = {};
+          try {
+            hotLookup = await getWordBriefBatch(hotKeys);
+            if ((!hotLookup || Object.keys(hotLookup).length === 0) && getCurrentWordbook() === bookAtLoad) {
+              await new Promise((r2) => setTimeout(r2, 120));
+              hotLookup = await getWordBriefBatch(hotKeys);
+            }
+          } catch (_2) {
+          }
+          if (getCurrentWordbook() !== bookAtLoad)
+            return;
+          for (let i2 = 0; i2 < hotList.length; i2++)
+            enrichOneWord(hotList[i2], null, hotLookup || {});
+          applyEnrichedToRef(list, wordsRef);
+          const restList = list.slice(hotList.length);
+          const restKeys = restList.map((w2) => (w2.english || "").trim().toLowerCase()).filter(Boolean);
+          let restLookup = {};
+          if (restKeys.length) {
+            try {
+              restLookup = await getWordBriefBatch(restKeys);
+            } catch (_2) {
+            }
+          }
+          if (getCurrentWordbook() !== bookAtLoad)
+            return;
+          for (let i2 = 0; i2 < restList.length; i2++) {
+            enrichOneWord(restList[i2], null, restLookup || {});
+            if ((i2 + 1) % ENRICH_CHUNK === 0) {
+              applyEnrichedToRef(list, wordsRef);
+              await new Promise((r2) => setTimeout(r2, 0));
+            }
+          }
+          applyEnrichedToRef(list, wordsRef);
+          await fallbackEnrichByFullDetail(list, bookAtLoad, wordsRef);
+          retryEnrichUntilReady(list, bookAtLoad, wordsRef);
+        } catch (_2) {
+        }
+      };
+      const reEnrichCurrentWordbook = async () => {
+        const book = getCurrentWordbook();
+        if (!words.value || words.value.length === 0)
+          return;
+        await enrichWordbookListInBackground(words.value, book, words);
+      };
+      const syncIncompleteWordsWithStats = async () => {
+        try {
+          const list = words.value || [];
+          const englishList = list.map((w2) => (w2.english || "").trim()).filter(Boolean);
+          const statsMap = await getWordExamStatsBatch(englishList).catch(() => ({}));
+          for (const w2 of list) {
+            const info = statsMap[(w2.english || "").trim().toLowerCase()];
+            if (!info)
+              continue;
+            const updates = {};
+            if (typeof info.importance === "number" && info.importance !== (Number(w2.importance) || 0))
+              updates.importance = info.importance;
+            if ((info.tags || "").trim() && !(w2.tags || "").trim())
+              updates.tags = info.tags;
+            if (Object.keys(updates).length)
+              await db.updateWord(w2.id, updates);
+          }
+        } catch (_2) {
+        }
+      };
+      const loadWords = async () => {
+        if (loadWordsInProgress)
+          return;
+        loadWordsInProgress = true;
+        try {
+          await updateFavoriteWordsSet();
+          await updateMasteredWordsSet();
+          const book = getCurrentWordbook();
+          if (book === "self") {
+            const list = await db.getWordsForList(PAGE_SIZE, 0, mapSortByToDb(sortBy.value), sortOrder.value, getFilters());
+            words.value = list.map(normalizeListWord).filter(Boolean);
+            hasMoreSelfWords.value = list.length >= PAGE_SIZE;
+            allExternalWords = [];
+            allExternalWordsLength.value = 0;
+            enrichWordbookListInBackground(words.value, book, words);
+            formatAppLog("log", "at pages/index/index.vue:613", "极速加载：自用分页成功，数量:", words.value.length);
+            await loadLearningSnapshot();
+            return;
+          }
+          let raw = [];
+          if (isLocalWordbookKey(book)) {
+            raw = await loadLocalWordbook(book);
+          } else {
+            raw = getWordbookWords(book) || [];
+          }
+          allExternalWords = prepareExternalWords(raw);
+          allExternalWordsLength.value = allExternalWords.length;
+          words.value = allExternalWords.slice(0, PAGE_SIZE);
+          displayLimit.value = PAGE_SIZE;
+          formatAppLog("log", "at pages/index/index.vue:630", "极速加载：外部单词本首屏成功，响应式数量:", words.value.length, "全量:", allExternalWords.length);
+          enrichWordbookListInBackground(words.value, book, words);
+          await loadLearningSnapshot();
+        } catch (error) {
+          formatAppLog("error", "at pages/index/index.vue:635", "加载失败:", error);
+          words.value = [];
+        } finally {
+          loadWordsInProgress = false;
+        }
+      };
+      onLoad(() => {
+        formatAppLog("log", "at pages/index/index.vue:643", "首页 onLoad - 开始加载");
+        try {
+          const v2 = uni.getStorageSync(SHOW_CHINESE_KEY);
+          if (v2 === false || v2 === "false" || v2 === 0 || v2 === "0")
+            showChinese.value = false;
+        } catch (_2) {
+        }
+        loadWords().catch((error) => {
+          formatAppLog("error", "at pages/index/index.vue:651", "首页加载单词失败:", error);
+          uni.showToast({
+            title: "加载失败，请重试",
+            icon: "error"
+          });
+        });
+        try {
+          if (typeof plus !== "undefined" && typeof document !== "undefined") {
+            plusReadyHandler = () => {
+              reEnrichCurrentWordbook();
+            };
+            document.addEventListener("plusready", plusReadyHandler, false);
+          }
+        } catch (_2) {
+        }
+        uni.$on("refreshWordList", () => loadWords());
+        uni.$on("wordEnriched", () => loadWords());
+        uni.$on("wordbookChanged", () => {
+          words.value = [];
+          loadWords();
+        });
+      });
+      onShow(() => {
+        if (words.value.length === 0)
+          loadWords();
+        else {
+          setTimeout(() => reEnrichCurrentWordbook(), 350);
+        }
+        loadLearningSnapshot();
+      });
+      onUnload(() => {
+        uni.$off("refreshWordList");
+        uni.$off("wordEnriched");
+        uni.$off("wordbookChanged");
+        try {
+          if (plusReadyHandler && typeof document !== "undefined") {
+            document.removeEventListener("plusready", plusReadyHandler, false);
+          }
+        } catch (_2) {
+        }
+        plusReadyHandler = null;
+        try {
+          cleanupExpiredCaches();
+        } catch (error) {
+          logger.warn("Index", "清理缓存失败", error);
+        }
+      });
+      let searchDebounceTimer = null;
+      let filterDebounceTimer = null;
+      vue.watch(searchText, () => {
+        if (searchDebounceTimer)
+          clearTimeout(searchDebounceTimer);
+        searchDebounceTimer = setTimeout(() => {
+          loadWords();
+        }, 300);
+      });
+      vue.watch(filterValue, () => {
+        if (filterDebounceTimer)
+          clearTimeout(filterDebounceTimer);
+        filterDebounceTimer = setTimeout(() => {
+          if (filterType.value === "none")
+            return;
+          loadWords();
+        }, 220);
+      });
+      const filteredWords = vue.computed(() => {
+        if (isSelfWordbook())
+          return [...words.value];
+        return [...words.value];
+      });
+      const visibleWords = vue.computed(() => {
+        if (isSelfWordbook())
+          return words.value;
+        return words.value;
+      });
+      const hasMoreWords = vue.computed(() => {
+        if (isSelfWordbook())
+          return hasMoreSelfWords.value;
+        return words.value.length < allExternalWordsLength.value;
+      });
+      const loadMoreSelfWords = async () => {
+        if (!hasMoreSelfWords.value || !isSelfWordbook())
+          return;
+        const next = await db.getWordsForList(PAGE_SIZE, words.value.length, mapSortByToDb(sortBy.value), sortOrder.value, getFilters());
+        const normalizedNext = next.map(normalizeListWord).filter(Boolean);
+        words.value = [...words.value, ...normalizedNext];
+        enrichWordbookListInBackground(normalizedNext, getCurrentWordbook(), words);
+        hasMoreSelfWords.value = next.length >= PAGE_SIZE;
+      };
+      const onScrollToLower = () => {
+        if (!hasMoreWords.value)
+          return;
+        if (isSelfWordbook()) {
+          loadMoreSelfWords();
+          return;
+        }
+        const currentLen = words.value.length;
+        if (currentLen < allExternalWords.length) {
+          const nextBatch = allExternalWords.slice(currentLen, currentLen + PAGE_SIZE);
+          words.value = [...words.value, ...nextBatch];
+          enrichWordbookListInBackground(nextBatch, getCurrentWordbook(), words);
+        }
+      };
+      const onSortChange = (e2) => {
+        const index = e2.detail.value;
+        sortBy.value = sortOptions[index];
+        loadWords();
+      };
+      const onSortOrderChange = (e2) => {
+        const index = e2.detail.value;
+        sortOrder.value = sortOrderOptions[index] || "desc";
+        loadWords();
+      };
+      const onFilterChange = (e2) => {
+        const index = e2.detail.value;
+        filterType.value = filterOptions[index];
+        loadWords();
+      };
+      const onShowChineseChange = (e2) => {
+        var _a;
+        const idx = Number(((_a = e2 == null ? void 0 : e2.detail) == null ? void 0 : _a.value) ?? 0);
+        showChinese.value = idx === 0;
+        try {
+          uni.setStorageSync(SHOW_CHINESE_KEY, showChinese.value);
+        } catch (_2) {
+        }
+      };
+      const onTagChange = (e2) => {
+        const idx = e2.detail.value;
+        const list = tagOptions.value;
+        filterValue.value = list[idx] || "";
+        loadWords();
+      };
+      const clearFilter = () => {
+        filterType.value = "none";
+        filterValue.value = "";
+        loadWords();
+      };
+      const goToDetail = (word) => {
+        if (word.id) {
+          uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${word.id}` });
+        } else {
+          uni.navigateTo({ url: `/pages/word-detail/word-detail?english=${encodeURIComponent(word.english)}&fromWordbook=1` });
+        }
+      };
+      const goToReview = () => {
+        uni.navigateTo({
+          url: `/pages/review/review`
+        });
+      };
+      const goToReviewPreset = (preset) => {
+        uni.navigateTo({
+          url: `/pages/review/review?preset=${encodeURIComponent(preset || "default")}`
+        });
+      };
+      const goToQuickAdd = () => {
+        uni.navigateTo({
+          url: `/pages/quick-add/quick-add`
+        });
+      };
+      const goToMy = () => {
+        uni.navigateTo({
+          url: `/pages/my/my`
+        });
+      };
+      const goToStats = () => {
+        uni.navigateTo({ url: "/pages/stats/stats" });
+      };
+      const goToMistakes = () => {
+        uni.navigateTo({ url: "/pages/mistakes/mistakes" });
+      };
+      const masterWord = async (word) => {
+        if (!word || !word.english)
+          return;
+        try {
+          const bookId = getCurrentWordbook();
+          if (bookId && bookId !== "self") {
+            const { getWordbookWords: getWordbookWords2, setWordbookWords: setWordbookWords2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
+            const masteredWords = getWordbookWords2("mastered") || [];
+            const exists = masteredWords.some((w2) => (w2.english || "").trim().toLowerCase() === (word.english || "").trim().toLowerCase());
+            if (!exists) {
+              masteredWords.push({
+                english: word.english,
+                chinese: word.chinese || "",
+                mastered_at: (/* @__PURE__ */ new Date()).toISOString()
+              });
+              setWordbookWords2("mastered", masteredWords);
+            }
+            uni.showToast({ title: "已斩掉", icon: "success" });
+          } else {
+            await db.deleteWord(word.english);
+            uni.showToast({ title: "已删除", icon: "success" });
+          }
+          uni.$emit("refreshWordList");
+        } catch (e2) {
+          formatAppLog("error", "at pages/index/index.vue:868", "斩掉单词失败:", e2);
+          uni.showToast({ title: "操作失败", icon: "none" });
+        }
+      };
+      const uploadMasteredWordsToCloud = async () => {
+        try {
+          const uid = uni.getStorageSync("uid");
+          if (!uid)
+            return;
+          const { getGlobalMasteredWords: getGlobalMasteredWords2 } = await __vitePreload(() => Promise.resolve().then(() => masteredWordbookWords), false ? "__VITE_PRELOAD__" : void 0);
+          const masteredSet = getGlobalMasteredWords2();
+          const masteredList = Array.from(masteredSet);
+          await _r.callFunction({
+            name: "word-sync",
+            data: {
+              action: "backup-mastered",
+              uid,
+              mastered: masteredList
+            }
+          });
+          formatAppLog("log", "at pages/index/index.vue:892", "✅ 已斯单词列表已上传到云端");
+        } catch (e2) {
+          formatAppLog("warn", "at pages/index/index.vue:894", "⚠️ 上传已斯单词列表失败:", e2);
+        }
+      };
+      const uploadProgressToCloud = async () => {
+        try {
+          const uid = uni.getStorageSync("uid");
+          if (!uid)
+            return;
+          const words2 = await db.getAllWords();
+          const progressData = words2.map((w2) => ({
+            english: w2.english,
+            repeat_count: w2.repeat_count || 1,
+            view_count: w2.view_count || 0,
+            error_rate: w2.error_rate || 0,
+            review_frequency: w2.review_frequency || 0,
+            importance: w2.importance || 3,
+            is_favorite: w2.is_favorite || false,
+            update_time: w2.update_time || (/* @__PURE__ */ new Date()).toISOString()
+          }));
+          await _r.callFunction({
+            name: "word-sync",
+            data: {
+              action: "backup-progress",
+              uid,
+              progress: progressData
+            }
+          });
+          formatAppLog("log", "at pages/index/index.vue:925", "✅ 个人单词本已上传到云端");
+        } catch (e2) {
+          formatAppLog("warn", "at pages/index/index.vue:927", "⚠️ 上传个人单词本失败:", e2);
+        }
+      };
+      const isFavorited = (word) => {
+        return word && word.is_favorite === true;
+      };
+      const toggleFavorite = async (word) => {
+        if (!word || !word.english) {
+          formatAppLog("log", "at pages/index/index.vue:939", "❌ 收藏失败：单词为空");
+          return;
+        }
+        try {
+          const isFav = word.is_favorite === true;
+          formatAppLog("log", "at pages/index/index.vue:945", "🔍 切换收藏:", word.english, "当前状态:", isFav);
+          const { getCloudWordbooks: getCloudWordbooks2, setWordbookWords: setWordbookWords2, getWordbookWords: getWordbookWords2, addCloudWordbook: addCloudWordbook2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
+          let wordbooks = getCloudWordbooks2();
+          let favoriteWordbook = wordbooks.find((wb) => wb.name === "收藏");
+          if (!favoriteWordbook) {
+            formatAppLog("log", "at pages/index/index.vue:955", "📍 创建收藏单词本");
+            const id = addCloudWordbook2("收藏");
+            favoriteWordbook = { id, name: "收藏" };
+          }
+          let wordbookWords = getWordbookWords2(favoriteWordbook.id) || [];
+          const englishSet = new Set(wordbookWords.map((w2) => w2.english.toLowerCase()));
+          if (isFav) {
+            formatAppLog("log", "at pages/index/index.vue:966", "📍 取消收藏:", word.english);
+            wordbookWords = wordbookWords.filter((w2) => w2.english.toLowerCase() !== word.english.toLowerCase());
+            setWordbookWords2(favoriteWordbook.id, wordbookWords);
+            word.is_favorite = false;
+            favoriteWordsSet.delete(word.english.toLowerCase());
+            uni.showToast({ title: "已取消收藏", icon: "success" });
+          } else {
+            formatAppLog("log", "at pages/index/index.vue:974", "📍 添加收藏:", word.english);
+            if (!englishSet.has(word.english.toLowerCase())) {
+              wordbookWords.push({
+                english: word.english,
+                chinese: word.chinese || "",
+                source_page: word.source_page || "",
+                year: word.year || "",
+                tags: word.tags || "",
+                importance: word.importance || 0
+              });
+              setWordbookWords2(favoriteWordbook.id, wordbookWords);
+            }
+            word.is_favorite = true;
+            favoriteWordsSet.add(word.english.toLowerCase());
+            uni.showToast({ title: "已收藏", icon: "success" });
+          }
+          formatAppLog("log", "at pages/index/index.vue:991", "✅ 收藏操作完成");
+        } catch (e2) {
+          formatAppLog("error", "at pages/index/index.vue:993", "❌ 切换收藏失败:", e2);
+          formatAppLog("error", "at pages/index/index.vue:994", "❌ 错误堆栈:", e2.stack);
+          uni.showToast({ title: "操作失败: " + e2.message, icon: "none" });
+        }
+      };
+      const getExamCount = (word) => {
+        if (!word || !word.english)
+          return 0;
+        if (word.exam_count != null)
+          return Number(word.exam_count) || 0;
+        return 0;
+      };
+      const onSearchInput = (e2) => {
+        searchText.value = e2.detail.value || "";
+      };
+      const onSearchConfirm = () => {
+        loadWords();
+      };
+      const __returned__ = { ENRICH_CHUNK, FIRST_SCREEN_COUNT, HOT_TOP_COUNT, PAGE_SIZE, get loadWordsInProgress() {
+        return loadWordsInProgress;
+      }, set loadWordsInProgress(v2) {
+        loadWordsInProgress = v2;
+      }, get allExternalWords() {
+        return allExternalWords;
+      }, set allExternalWords(v2) {
+        allExternalWords = v2;
+      }, get plusReadyHandler() {
+        return plusReadyHandler;
+      }, set plusReadyHandler(v2) {
+        plusReadyHandler = v2;
+      }, get favoriteWordsSet() {
+        return favoriteWordsSet;
+      }, set favoriteWordsSet(v2) {
+        favoriteWordsSet = v2;
+      }, get masteredWordsSet() {
+        return masteredWordsSet;
+      }, set masteredWordsSet(v2) {
+        masteredWordsSet = v2;
+      }, mapSortByToDb, getFilters, normalizeListWord, updateFavoriteWordsSet, updateMasteredWordsSet, getExamCountForSort, sortExternalWords, filterExternalWords, prepareExternalWords, enrichOneWord, searchText, displayLimit, showFilter, showLearningCenter, words, refreshing, sortBy, filterType, filterValue, SHOW_CHINESE_KEY, showChinese, learningSnapshot, latestSession, sortOptions, sortLabels, sortOrderOptions, sortOrderLabels, sortOrder, showChineseLabels, hasMoreSelfWords, allExternalWordsLength, filterOptions, filterLabels, PRESET_TAGS, tagOptions, currentSortLabel, currentFilterLabel, currentBookLabel, latestAccuracyText, loadLearningSnapshot, onListRefresh, applyEnrichedToRef, buildChineseFromDefs: buildChineseFromDefs2, fallbackEnrichByFullDetail, countMissingChineseForList, retryEnrichUntilReady, enrichWordbookListInBackground, reEnrichCurrentWordbook, syncIncompleteWordsWithStats, loadWords, get searchDebounceTimer() {
+        return searchDebounceTimer;
+      }, set searchDebounceTimer(v2) {
+        searchDebounceTimer = v2;
+      }, get filterDebounceTimer() {
+        return filterDebounceTimer;
+      }, set filterDebounceTimer(v2) {
+        filterDebounceTimer = v2;
+      }, filteredWords, visibleWords, hasMoreWords, loadMoreSelfWords, onScrollToLower, onSortChange, onSortOrderChange, onFilterChange, onShowChineseChange, onTagChange, clearFilter, goToDetail, goToReview, goToReviewPreset, goToQuickAdd, goToMy, goToStats, goToMistakes, masterWord, uploadMasteredWordsToCloud, uploadProgressToCloud, isFavorited, toggleFavorite, getExamCount, onSearchInput, onSearchConfirm, ref: vue.ref, computed: vue.computed, watch: vue.watch, VocalColorBlockSelector, get onLoad() {
+        return onLoad;
+      }, get onUnload() {
+        return onUnload;
+      }, get onShow() {
+        return onShow;
+      }, get onReady() {
+        return onReady;
+      }, get db() {
+        return db;
+      }, get pregenVocab() {
+        return pregenVocab;
+      }, get masterDb() {
+        return masterDb;
+      }, get getCurrentWordbook() {
+        return getCurrentWordbook;
+      }, get isSelfWordbook() {
+        return isSelfWordbook;
+      }, get isLocalWordbookKey() {
+        return isLocalWordbookKey;
+      }, get loadLocalWordbook() {
+        return loadLocalWordbook;
+      }, get getWordbookWords() {
+        return getWordbookWords;
+      }, get getLearningDashboard() {
+        return getLearningDashboard;
+      }, get getLatestSession() {
+        return getLatestSession;
+      }, get logger() {
+        return logger;
+      }, get errorHandler() {
+        return errorHandler;
+      }, get cleanupExpiredCaches() {
+        return cleanupExpiredCaches;
+      }, get getMasteredWordbookWords() {
+        return getMasteredWordbookWords;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$b(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
+      vue.createElementVNode("view", { class: "status-bar" }),
+      vue.createElementVNode("view", { class: "toolbar-row" }, [
+        vue.createElementVNode(
+          "view",
+          {
+            class: "toolbar-btn",
+            onClick: _cache[0] || (_cache[0] = ($event) => $setup.showFilter = !$setup.showFilter)
+          },
+          " 筛选排序 " + vue.toDisplayString($setup.showFilter ? "▲" : "▼"),
+          1
+          /* TEXT */
+        ),
+        vue.createElementVNode(
+          "view",
+          {
+            class: "toolbar-btn",
+            onClick: _cache[1] || (_cache[1] = ($event) => $setup.showLearningCenter = !$setup.showLearningCenter)
+          },
+          " 学习中心 " + vue.toDisplayString($setup.showLearningCenter ? "▲" : "▼"),
+          1
+          /* TEXT */
+        )
+      ]),
+      vue.createElementVNode("view", { class: "search-bar" }, [
+        vue.createElementVNode("view", { class: "search-input-wrapper" }, [
+          vue.withDirectives(vue.createElementVNode(
+            "input",
+            {
+              type: "text",
+              placeholder: "搜索单词",
+              "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.searchText = $event),
+              class: "search-input",
+              onInput: $setup.onSearchInput,
+              onConfirm: $setup.onSearchConfirm
+            },
+            null,
+            544
+            /* NEED_HYDRATION, NEED_PATCH */
+          ), [
+            [vue.vModelText, $setup.searchText]
+          ])
+        ])
+      ]),
+      $setup.showFilter ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "card filter-card"
+      }, [
+        vue.createElementVNode("view", { class: "filter-header" }, [
+          vue.createElementVNode("view", { class: "card-title" }, "筛选与排序"),
+          vue.createElementVNode("view", {
+            class: "filter-close",
+            onClick: _cache[3] || (_cache[3] = ($event) => $setup.showFilter = false)
+          }, "✕")
+        ]),
+        vue.createElementVNode("view", { class: "filter-row" }, [
+          vue.createVNode($setup["VocalColorBlockSelector"], {
+            range: $setup.sortLabels,
+            value: $setup.sortOptions.indexOf($setup.sortBy.value),
+            onChange: $setup.onSortChange
+          }, {
+            default: vue.withCtx(() => [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-btn" },
+                vue.toDisplayString($setup.currentSortLabel) + " ▼",
+                1
+                /* TEXT */
+              )
+            ]),
+            _: 1
+            /* STABLE */
+          }, 8, ["value"]),
+          vue.createVNode($setup["VocalColorBlockSelector"], {
+            range: $setup.sortOrderLabels,
+            value: $setup.sortOrderOptions.indexOf($setup.sortOrder),
+            onChange: $setup.onSortOrderChange
+          }, {
+            default: vue.withCtx(() => [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-btn" },
+                vue.toDisplayString($setup.sortOrder === "asc" ? "顺序" : "倒序") + " ▼",
+                1
+                /* TEXT */
+              )
+            ]),
+            _: 1
+            /* STABLE */
+          }, 8, ["value"]),
+          vue.createVNode($setup["VocalColorBlockSelector"], {
+            range: $setup.filterLabels,
+            value: $setup.filterOptions.indexOf($setup.filterType.value),
+            onChange: $setup.onFilterChange
+          }, {
+            default: vue.withCtx(() => [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-btn" },
+                vue.toDisplayString($setup.currentFilterLabel) + " ▼",
+                1
+                /* TEXT */
+              )
+            ]),
+            _: 1
+            /* STABLE */
+          }, 8, ["value"]),
+          vue.createVNode($setup["VocalColorBlockSelector"], {
+            range: $setup.showChineseLabels,
+            value: $setup.showChinese ? 0 : 1,
+            onChange: $setup.onShowChineseChange
+          }, {
+            default: vue.withCtx(() => [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-btn" },
+                vue.toDisplayString($setup.showChinese ? "显示释义" : "隐藏释义") + " ▼",
+                1
+                /* TEXT */
+              )
+            ]),
+            _: 1
+            /* STABLE */
+          }, 8, ["value"])
+        ]),
+        $setup.filterType.value === "tag" ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "filter-row"
+        }, [
+          vue.createVNode($setup["VocalColorBlockSelector"], {
+            range: $setup.tagOptions,
+            value: $setup.tagOptions.indexOf($setup.filterValue),
+            onChange: $setup.onTagChange
+          }, {
+            default: vue.withCtx(() => [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-btn" },
+                vue.toDisplayString($setup.filterValue || "选择标签") + " ▼",
+                1
+                /* TEXT */
+              )
+            ]),
+            _: 1
+            /* STABLE */
+          }, 8, ["range", "value"]),
+          vue.createElementVNode("button", {
+            class: "clear-btn",
+            onClick: $setup.clearFilter
+          }, "清除")
+        ])) : $setup.filterType.value !== "none" ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 1,
+          class: "filter-row"
+        }, [
+          vue.withDirectives(vue.createElementVNode(
+            "input",
+            {
+              class: "filter-input",
+              type: "number",
+              "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => $setup.filterValue = $event),
+              placeholder: "输入筛选值"
+            },
+            null,
+            512
+            /* NEED_PATCH */
+          ), [
+            [
+              vue.vModelText,
+              $setup.filterValue,
+              void 0,
+              { number: true }
+            ]
+          ]),
+          vue.createElementVNode("button", {
+            class: "clear-btn",
+            onClick: $setup.clearFilter
+          }, "清除")
+        ])) : vue.createCommentVNode("v-if", true)
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.showLearningCenter ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "card lc-panel"
+      }, [
+        vue.createElementVNode("view", { class: "learning-summary-grid" }, [
+          vue.createElementVNode("view", {
+            class: "learning-summary-item",
+            onClick: _cache[5] || (_cache[5] = ($event) => $setup.goToReviewPreset("due"))
+          }, [
+            vue.createElementVNode(
+              "text",
+              { class: "learning-summary-value" },
+              vue.toDisplayString($setup.learningSnapshot.dueCount),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("text", { class: "learning-summary-label" }, "今日到期")
+          ]),
+          vue.createElementVNode("view", {
+            class: "learning-summary-item",
+            onClick: _cache[6] || (_cache[6] = ($event) => $setup.goToReviewPreset("wrong"))
+          }, [
+            vue.createElementVNode(
+              "text",
+              { class: "learning-summary-value" },
+              vue.toDisplayString($setup.learningSnapshot.mistakeCount),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("text", { class: "learning-summary-label" }, "错词待练")
+          ]),
+          vue.createElementVNode("view", {
+            class: "learning-summary-item",
+            onClick: _cache[7] || (_cache[7] = ($event) => $setup.goToReviewPreset("firstday"))
+          }, [
+            vue.createElementVNode(
+              "text",
+              { class: "learning-summary-value" },
+              vue.toDisplayString($setup.learningSnapshot.firstDayDue),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("text", { class: "learning-summary-label" }, "首日巩固")
+          ]),
+          vue.createElementVNode("view", {
+            class: "learning-summary-item",
+            onClick: $setup.goToStats
+          }, [
+            vue.createElementVNode(
+              "text",
+              { class: "learning-summary-value" },
+              vue.toDisplayString($setup.latestAccuracyText),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("text", { class: "learning-summary-label" }, "最近正确率")
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "learning-actions" }, [
+          vue.createElementVNode("button", {
+            class: "learning-action-btn",
+            onClick: _cache[8] || (_cache[8] = ($event) => $setup.goToReviewPreset("due"))
+          }, "到期复习"),
+          vue.createElementVNode("button", {
+            class: "learning-action-btn secondary",
+            onClick: $setup.goToMistakes
+          }, "错词本"),
+          vue.createElementVNode("button", {
+            class: "learning-action-btn secondary",
+            onClick: $setup.goToStats
+          }, "学习统计")
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      vue.createElementVNode("scroll-view", {
+        class: "word-list",
+        "scroll-y": "",
+        "refresher-enabled": true,
+        "refresher-triggered": $setup.refreshing,
+        "refresher-background": "#FFF0F3",
+        "refresher-default-style": "none",
+        onRefresherrefresh: $setup.onListRefresh,
+        onScrolltolower: $setup.onScrollToLower,
+        style: { "background-color": "#FFF0F3" }
+      }, [
+        $setup.refreshing ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "custom-refresher"
+        }, [
+          vue.createElementVNode("view", { class: "refresher-spinner" })
+        ])) : vue.createCommentVNode("v-if", true),
+        $setup.filteredWords.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 1,
+          class: "empty-state"
+        }, [
+          vue.createElementVNode(
+            "view",
+            { class: "empty-text" },
+            vue.toDisplayString($setup.searchText || $setup.filterType !== "none" && ($setup.filterValue !== "" && $setup.filterValue !== void 0) ? "未找到匹配的单词" : "还没有单词，开始添加吧"),
+            1
+            /* TEXT */
+          ),
+          !$setup.searchText && ($setup.filterType === "none" || ($setup.filterValue === "" || $setup.filterValue === void 0)) ? (vue.openBlock(), vue.createElementBlock("button", {
+            key: 0,
+            class: "empty-btn",
+            onClick: $setup.goToQuickAdd
+          }, "添加单词")) : vue.createCommentVNode("v-if", true)
+        ])) : vue.createCommentVNode("v-if", true),
+        (vue.openBlock(true), vue.createElementBlock(
+          vue.Fragment,
+          null,
+          vue.renderList($setup.visibleWords, (word) => {
+            return vue.openBlock(), vue.createElementBlock("view", {
+              class: "word-item",
+              key: word.id || "wb-" + word.english
+            }, [
+              vue.createElementVNode("view", {
+                class: "word-content",
+                onClick: ($event) => $setup.goToDetail(word)
+              }, [
+                vue.createElementVNode("view", { class: "word-english" }, [
+                  vue.createTextVNode(
+                    vue.toDisplayString(word.english) + " ",
+                    1
+                    /* TEXT */
+                  ),
+                  vue.createElementVNode(
+                    "span",
+                    { class: "repeat-count" },
+                    "学习" + vue.toDisplayString(word.repeat_count || 0) + "次",
+                    1
+                    /* TEXT */
+                  )
+                ]),
+                $setup.showChinese ? (vue.openBlock(), vue.createElementBlock(
+                  "view",
+                  {
+                    key: 0,
+                    class: "word-chinese"
+                  },
+                  vue.toDisplayString(word.chinese || "—"),
+                  1
+                  /* TEXT */
+                )) : vue.createCommentVNode("v-if", true),
+                word.source_page || word.year || $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock("view", {
+                  key: 1,
+                  class: "word-source"
+                }, [
+                  word.source_page || word.year ? (vue.openBlock(), vue.createElementBlock(
+                    vue.Fragment,
+                    { key: 0 },
+                    [
+                      vue.createTextVNode(
+                        "页码 " + vue.toDisplayString(word.source_page || "-") + " · 年份 " + vue.toDisplayString(word.year || "-"),
+                        1
+                        /* TEXT */
+                      )
+                    ],
+                    64
+                    /* STABLE_FRAGMENT */
+                  )) : vue.createCommentVNode("v-if", true),
+                  $setup.getExamCount(word) ? (vue.openBlock(), vue.createElementBlock(
+                    "text",
+                    {
+                      key: 1,
+                      class: "word-exam-count"
+                    },
+                    "真题 " + vue.toDisplayString($setup.getExamCount(word)) + "次",
+                    1
+                    /* TEXT */
+                  )) : vue.createCommentVNode("v-if", true)
+                ])) : vue.createCommentVNode("v-if", true),
+                word.tags ? (vue.openBlock(), vue.createElementBlock("view", {
+                  key: 2,
+                  class: "word-tags"
+                }, [
+                  (vue.openBlock(true), vue.createElementBlock(
+                    vue.Fragment,
+                    null,
+                    vue.renderList((word.tags || "").split(/[,，\s]+/).filter(Boolean), (t2, i2) => {
+                      return vue.openBlock(), vue.createElementBlock(
+                        "text",
+                        {
+                          key: i2,
+                          class: "tag-chip"
+                        },
+                        vue.toDisplayString(t2),
+                        1
+                        /* TEXT */
+                      );
+                    }),
+                    128
+                    /* KEYED_FRAGMENT */
+                  ))
+                ])) : vue.createCommentVNode("v-if", true),
+                vue.createElementVNode("view", { class: "word-importance" }, [
+                  (vue.openBlock(), vue.createElementBlock(
+                    vue.Fragment,
+                    null,
+                    vue.renderList(5, (star) => {
+                      return vue.createElementVNode(
+                        "span",
+                        {
+                          key: star,
+                          class: vue.normalizeClass(["star", { active: (word.importance || 0) >= star }])
+                        },
+                        "★",
+                        2
+                        /* CLASS */
+                      );
+                    }),
+                    64
+                    /* STABLE_FRAGMENT */
+                  ))
+                ])
+              ], 8, ["onClick"]),
+              vue.createElementVNode("view", {
+                class: "word-action-btn",
+                onClick: vue.withModifiers(($event) => $setup.masterWord(word), ["stop"])
+              }, "斩", 8, ["onClick"]),
+              vue.createElementVNode("view", {
+                class: "word-favorite-btn",
+                onClick: vue.withModifiers(($event) => $setup.toggleFavorite(word), ["stop"])
+              }, [
+                word.is_favorite ? (vue.openBlock(), vue.createElementBlock("view", {
+                  key: 0,
+                  class: "favorite-icon-filled"
+                })) : (vue.openBlock(), vue.createElementBlock("view", {
+                  key: 1,
+                  class: "favorite-icon-empty"
+                }))
+              ], 8, ["onClick"])
+            ]);
+          }),
+          128
+          /* KEYED_FRAGMENT */
+        )),
+        $setup.hasMoreWords ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 2,
+          class: "load-more",
+          onClick: $setup.onScrollToLower
+        }, "加载更多")) : vue.createCommentVNode("v-if", true)
+      ], 40, ["refresher-triggered"]),
+      vue.createElementVNode("view", { class: "footer" }, [
+        vue.createElementVNode("button", { onClick: $setup.goToQuickAdd }, "添加"),
+        vue.createElementVNode("button", { onClick: $setup.goToReview }, "复习"),
+        vue.createElementVNode("button", { onClick: $setup.goToMy }, "我的")
+      ])
+    ]);
+  }
+  const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["render", _sfc_render$b], ["__scopeId", "data-v-1cf27b2a"], ["__file", "E:/vocal/wordbook_new/pages/index/index.vue"]]);
+  const config = {
+    // DeepSeek API Key，修改此处即可全局生效
+    deepseekApiKey: "sk-c8ae8c792aa04c15960a0f5c7a38442c",
+    // 请替换为你的新 API Key
+    // 设为 false 时关闭所有 AI 请求（仅用于测试，避免误触发 API）
+    aiServiceEnabled: true
+  };
+  class AIService {
+    constructor() {
+      this.apiKey = config.deepseekApiKey;
+      this.apiUrl = "https://api.deepseek.com/v1/chat/completions";
+    }
+    async callAPI(prompt, model = "deepseek-chat") {
+      formatAppLog("log", "at src/utils/aiService.js:14", "开始调用 API:", {
+        model,
+        prompt: prompt.substring(0, 50) + "...",
+        url: this.apiUrl
+      });
+      return new Promise((resolve, reject) => {
+        uni.request({
+          url: this.apiUrl,
+          method: "POST",
+          header: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${this.apiKey}`
+          },
+          data: {
+            model,
+            messages: [
+              {
+                role: "system",
+                content: "你是一个英语学习助手，帮助用户学习英语单词。"
+              },
+              {
+                role: "user",
+                content: prompt
+              }
+            ],
+            temperature: 0.6,
+            // R1 建议设为 0.6 以获得更稳定的推理
+            stream: false
+          },
+          success: (response) => {
+            var _a;
+            formatAppLog("log", "at src/utils/aiService.js:44", "API 响应状态:", response.statusCode);
+            formatAppLog("log", "at src/utils/aiService.js:45", "API 响应数据:", response.data);
+            if (response.statusCode === 200) {
+              const data = response.data;
+              if (data && data.choices && data.choices[0] && data.choices[0].message) {
+                formatAppLog("log", "at src/utils/aiService.js:50", "API 调用成功，返回内容:", data.choices[0].message.content.substring(0, 100) + "...");
+                resolve(data.choices[0].message.content);
+              } else {
+                formatAppLog("error", "at src/utils/aiService.js:53", "API 响应格式错误:", data);
+                resolve("错误: API 响应格式错误");
+              }
+            } else {
+              formatAppLog("error", "at src/utils/aiService.js:57", "API 报错:", response.data);
+              resolve(`错误: ${((_a = response.data.error) == null ? void 0 : _a.message) || "未知错误"} (状态码: ${response.statusCode})`);
+            }
+          },
+          fail: (error) => {
+            formatAppLog("error", "at src/utils/aiService.js:62", "网络请求失败:", error);
+            resolve("网络请求失败，请检查网络连接或API密钥");
+          }
+        });
+      });
+    }
+    async analyzeWord(word) {
+      const prompt = `请分析以下英语单词的语义，并推荐合适的标签（如"高频"、"作文词"、"口语词"、"学术词"等）：
+
+单词：${word}
+
+分析要求：
+1. 简要解释单词的基本含义
+2. 分析单词的使用场景和适用范围
+3. 推荐2-3个合适的标签
+4. 输出格式清晰，便于程序解析`;
+      return await this.callAPI(prompt);
+    }
+    async generateExample(word, existingWords = []) {
+      const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
+      const prompt = `请为以下英语单词生成一个例句，要求：
+
+单词：${word}
+${existingWordsStr}
+
+例句要求：
+1. 高级例句，包含高级单词
+2. 句子不能过于冗长，结构清晰
+3. 句子中包含2-3个考研词库中较难的单词
+4. 例句要像考研的作文题和翻译题，贴近考研考纲
+5. 尽量包含单词本中已有的其他单词，形成反复记忆的效果
+6. 上下文合理，能够展示单词的正确用法
+7. 提供中文翻译`;
+      return await this.callAPI(prompt);
+    }
+    async generateMultipleExamples(word, existingWords = [], count = 3, examStatsText = "") {
+      const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
+      const examBlock = examStatsText ? `
+
+【该词在考研真题中的统计，供生成例句时参考】
+${examStatsText}
+` : "";
+      const prompt = `请为以下英语单词生成${count}个不同的例句，要求：
+
+单词：${word}
+${existingWordsStr}${examBlock}
+
+例句要求：
+1. 高级例句，包含高级单词
+2. 句子不能过于冗长，结构清晰
+3. 每个句子中包含2-3个考研词库中较难的单词
+4. 例句要像考研的作文题和翻译题，贴近考研考纲
+5. 尽量包含单词本中已有的其他单词，形成反复记忆的效果
+6. 上下文合理，能够展示单词的正确用法
+7. 每个例句都要提供中文翻译
+8. 确保每个例句的场景和结构都不同
+9. 重要单词标记规则：
+   - 目标单词必须用 ** 标记
+   - 每个例句中至少标记2-3个其他考研核心词汇
+   - 标记格式：**单词**，如 "**important**"
+10. 例句要生动形象，贴近现实生活场景，内容有趣，容易记忆
+11. 可以加入具体的场景描述，让例句更有画面感
+12. 输出格式：每个例句一组，英文例句和中文翻译各占一行，不要使用任何分隔符
+
+示例输出：
+英文：在一个阳光明媚的周末，**significant** number of families gathered in the park, enjoying the **vibrant** flowers and **tranquil** atmosphere.
+中文：在一个阳光明媚的周末，**大量**家庭聚集在公园里，欣赏着**鲜艳**的花朵和**宁静**的氛围。`;
+      const result = await this.callAPI(prompt);
+      const examples = [];
+      const lines = result.split("\n").filter((line) => line.trim() !== "");
+      for (let i2 = 0; i2 < lines.length; i2 += 2) {
+        let english = lines[i2].trim();
+        let chinese = lines[i2 + 1] ? lines[i2 + 1].trim() : "";
+        english = english.replace(/^英文：?/, "").trim();
+        english = english.replace(/^English：?/, "").trim();
+        english = english.replace(/^:/, "").trim();
+        chinese = chinese.replace(/^中文：?/, "").trim();
+        chinese = chinese.replace(/^Chinese：?/, "").trim();
+        chinese = chinese.replace(/^:/, "").trim();
+        if (english) {
+          examples.push({
+            english,
+            chinese
+          });
+        }
+        if (examples.length >= count) {
+          break;
+        }
+      }
+      if (examples.length === 0) {
+        for (let line of lines) {
+          let parts = line.split("｜");
+          if (parts.length !== 2) {
+            parts = line.split("|");
+          }
+          if (parts.length === 2) {
+            let english = parts[0].trim();
+            let chinese = parts[1].trim();
+            english = english.replace(/^英文：?/, "").trim();
+            english = english.replace(/^English：?/, "").trim();
+            english = english.replace(/^:/, "").trim();
+            chinese = chinese.replace(/^中文：?/, "").trim();
+            chinese = chinese.replace(/^Chinese：?/, "").trim();
+            chinese = chinese.replace(/^:/, "").trim();
+            examples.push({
+              english,
+              chinese
+            });
+          }
+          if (examples.length >= count) {
+            break;
+          }
+        }
+      }
+      if (examples.length === 0) {
+        for (let i2 = 0; i2 < count; i2++) {
+          examples.push({
+            english: `Example ${i2 + 1}: This is a sentence with ${word}.`,
+            chinese: `例句 ${i2 + 1}：这是一个包含 ${word} 的句子。`
+          });
+        }
+      }
+      return examples;
+    }
+    async generateReviewSuggestion(words) {
+      if (words.length === 0) {
+        return "单词本中暂无单词，建议开始添加单词进行学习。";
+      }
+      const wordStats = words.map((word) => {
+        return {
+          word: word.english,
+          errorRate: word.error_rate || 0,
+          reviewFreq: word.review_frequency || 0,
+          viewCount: word.view_count || 0,
+          importance: word.importance || 3
+        };
+      });
+      const prompt = `请根据以下单词的学习数据，生成一段个性化的学习报告和建议：
+
+单词学习数据：
+${wordStats.map((w2) => `${w2.word} - 错误率: ${w2.errorRate}%, 复习频率: ${w2.reviewFreq}, 查看次数: ${w2.viewCount}, 重要性: ${w2.importance}星`).join("\n")}
+
+报告要求：
+1. 分析用户的学习情况
+2. 指出需要重点关注的单词
+3. 提供具体的学习建议
+4. 给出合理的复习计划
+5. 语言亲切自然，有针对性`;
+      return await this.callAPI(prompt);
+    }
+    async generateAntonyms(word, count = 3) {
+      var _a, _b, _c, _d;
+      const prompt = `请为以下英语单词生成${count}个反义词，并为每个反义词生成一个例句。
+
+单词：${word}
+
+要求：
+1. 选择${count}个最常见、最实用的反义词
+2. 每个反义词需要包含：英文、中文释义、一个英文例句（带中文翻译）
+3. 例句要像考研英语风格，包含高级词汇
+4. 每个例句中用 ** 标记目标反义词和2-3个其他考研核心词汇
+5. 输出格式：每组反义词包含4行：反义词、中文、英文例句、中文翻译
+
+示例输出：
+反义词：minor
+中文：次要的，不重要的
+例句：The **minor** issue was **overlooked** in the **initial** report.
+中文翻译：这一**次要**问题在**最初**的报告中**被忽视**了。`;
+      const result = await this.callAPI(prompt);
+      const antonyms = [];
+      const lines = (result || "").split(/\r?\n/).filter((line) => line.trim());
+      for (let i2 = 0; i2 < lines.length; i2 += 4) {
+        let antonym = ((_a = lines[i2]) == null ? void 0 : _a.replace(/^反义词：?/, "").trim()) || "";
+        let chinese = ((_b = lines[i2 + 1]) == null ? void 0 : _b.replace(/^中文：?/, "").trim()) || "";
+        let example = ((_c = lines[i2 + 2]) == null ? void 0 : _c.replace(/^例句：?/, "").trim()) || "";
+        let exampleChinese = ((_d = lines[i2 + 3]) == null ? void 0 : _d.replace(/^中文翻译：?/, "").trim()) || "";
+        if (antonym && chinese) {
+          antonyms.push({
+            antonym,
+            chinese,
+            example: example || "",
+            exampleChinese: exampleChinese || ""
+          });
+        }
+        if (antonyms.length >= count)
+          break;
+      }
+      if (antonyms.length === 0) {
+        for (let i2 = 0; i2 < count; i2++) {
+          antonyms.push({
+            antonym: `antonym${i2 + 1}`,
+            chinese: "反义词",
+            example: "",
+            exampleChinese: ""
+          });
+        }
+      }
+      return antonyms;
+    }
+    async generateSynonyms(word, existingWords = [], count = 3) {
+      var _a, _b, _c, _d;
+      const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
+      const prompt = `请为以下英语单词生成${count}个近义词或同义词，并为每个近义词生成一个例句。
+
+单词：${word}
+${existingWordsStr}
+
+要求：
+1. 选择3个最常见、最实用的近义词或同义词
+2. 每个近义词需要包含：英文、中文释义、一个英文例句（带中文翻译）
+3. 例句要像考研英语风格，包含高级词汇
+4. 每个例句中用 **标记目标近义词和2-3个其他考研核心词汇
+5. 输出格式：每组近义词包含4行：近义词、中文、英文例句、中文翻译
+
+示例输出：
+近义词：significant
+中文：重要的，重大的
+例句：The **significant** discovery changed the **entire** scientific community's understanding of **ancient** civilizations.
+中文翻译：这一**重大**发现改变了**整个**科学界对**古代**文明的理解。`;
+      const result = await this.callAPI(prompt);
+      const synonyms = [];
+      const lines = result.split("\n").filter((line) => line.trim() !== "");
+      for (let i2 = 0; i2 < lines.length; i2 += 4) {
+        let synonym = ((_a = lines[i2]) == null ? void 0 : _a.replace(/^近义词：?/, "").trim()) || "";
+        let chinese = ((_b = lines[i2 + 1]) == null ? void 0 : _b.replace(/^中文：?/, "").trim()) || "";
+        let example = ((_c = lines[i2 + 2]) == null ? void 0 : _c.replace(/^例句：?/, "").trim()) || "";
+        let exampleChinese = ((_d = lines[i2 + 3]) == null ? void 0 : _d.replace(/^中文翻译：?/, "").trim()) || "";
+        if (synonym && chinese) {
+          synonyms.push({
+            synonym,
+            chinese,
+            example: example || "",
+            exampleChinese: exampleChinese || ""
+          });
+        }
+        if (synonyms.length >= count) {
+          break;
+        }
+      }
+      if (synonyms.length === 0) {
+        for (let i2 = 0; i2 < count; i2++) {
+          synonyms.push({
+            synonym: `synonym${i2 + 1}`,
+            chinese: `近义词${i2 + 1}`,
+            example: `Example with ${word}.`,
+            exampleChinese: `例句翻译${i2 + 1}`
+          });
+        }
+      }
+      return synonyms;
+    }
+    async generateExamplesAndSynonyms(word, existingWords = [], examStatsText = "") {
+      const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
+      const examBlock = examStatsText ? `
+
+【该词在考研真题中的统计，供生成例句时参考】
+${examStatsText}
+` : "";
+      const prompt = `请为以下英语单词生成3个不同的例句，同时提供3个常用近义词，每个近义词需包含例句。
+
+单词：${word}
+${existingWordsStr}${examBlock}
+
+=== 第一部分：例句要求 ===
+1. 高级例句，包含高级单词
+2. 句子不能过于冗长，结构清晰
+3. 每个句子中包含2-3个考研词库中较难的单词
+4. 例句要像考研的作文题和翻译题，贴近考研考纲
+5. 尽量包含单词本中已有的其他单词，形成反复记忆的效果
+6. 上下文合理，能够展示单词的正确用法
+7. 每个例句都要提供中文翻译
+8. 确保每个例句的场景和结构都不同
+9. 重要单词标记规则：
+   - 目标单词必须用 ** 标记
+   - 每个例句中至少标记2-3个其他考研核心词汇
+   - 标记格式：**单词**，如 "**important**"
+10. 例句要生动形象，贴近现实生活场景，内容有趣，容易记忆
+11. 可以加入具体的场景描述，让例句更有画面感
+
+=== 第二部分：近义词要求 ===
+请另外提供 3 个该单词的常用近义词。
+每个近义词需包含：
+- synonym: 近义词英文
+- chinese: 中文翻译
+- example: 该近义词的一个独立英文例句
+- exampleChinese: 该例句的中文翻译
+
+=== 数据返回格式 ===
+为了方便程序解析，请【严格】返回 JSON 格式，不要包含 Markdown 代码块。格式如下：
+{ 
+  "examples": [ 
+    {"english": "例句1英文", "chinese": "例句1中文"}, 
+    {"english": "例句2英文", "chinese": "例句2中文"}, 
+    {"english": "例句3英文", "chinese": "例句3中文"} 
+  ], 
+  "synonyms": [ 
+    {"synonym": "近义词1", "chinese": "翻译1", "example": "近义词1的例句", "exampleChinese": "近义词1例句的中文"}, 
+    {"synonym": "近义词2", "chinese": "翻译2", "example": "近义词2的例句", "exampleChinese": "近义词2例句的中文"}, 
+    {"synonym": "近义词3", "chinese": "翻译3", "example": "近义词3的例句", "exampleChinese": "近义词3例句的中文"} 
+  ] 
+}`;
+      const result = await this.callAPI(prompt);
+      formatAppLog("log", "at src/utils/aiService.js:301", "AI返回的原始内容:", result);
+      try {
+        let jsonStr = result;
+        const jsonMatch = result.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          jsonStr = jsonMatch[0];
+        }
+        let parsed;
+        try {
+          parsed = JSON.parse(jsonStr);
+        } catch (e1) {
+          jsonStr = jsonStr.replace(/"word":/g, '"synonym":').replace(/"translation":/g, '"chinese":');
+          try {
+            parsed = JSON.parse(jsonStr);
+          } catch (e2) {
+            formatAppLog("error", "at src/utils/aiService.js:321", "替换字段名后仍解析失败:", e2);
+            return { examples: [], synonyms: [] };
+          }
+        }
+        formatAppLog("log", "at src/utils/aiService.js:326", "解析后的JSON:", parsed);
+        const normalizedSynonyms = (parsed.synonyms || []).map((item) => ({
+          synonym: item.synonym || item.word || "",
+          chinese: item.chinese || item.translation || "",
+          example: item.example || "",
+          exampleChinese: item.exampleChinese || ""
+        }));
+        return {
+          examples: parsed.examples || [],
+          synonyms: normalizedSynonyms
+        };
+      } catch (e2) {
+        formatAppLog("error", "at src/utils/aiService.js:341", "解析JSON失败:", e2);
+      }
+      return {
+        examples: [],
+        synonyms: []
+      };
+    }
+    async generateSynonymContrast(word, synonyms = []) {
+      const synonymText = Array.isArray(synonyms) && synonyms.length ? synonyms.map((item) => `${item.synonym || ""}(${item.chinese || ""})`).filter(Boolean).join("、") : "暂无近义词";
+      const prompt = `请为英语单词 ${word} 生成一段简洁的近义词辨析说明。
+已知近义词：${synonymText}
+要求：
+1. 重点说明语气、正式度、常见搭配或适用语境差异
+2. 控制在 2-4 句
+3. 用中文输出，适合考研背单词场景`;
+      const result = await this.callAPI(prompt);
+      return String(result || "").trim();
+    }
+    async generateWordFamily(word) {
+      const prompt = `请为英语单词 ${word} 生成词族与搭配学习卡。严格返回 JSON，不要 Markdown。
+格式：{"derivatives":[{"word":"派生词","chinese":"中文","hint":"简短提示"}],"collocations":[{"phrase":"搭配","chinese":"中文"}],"memory_tip":"一句话记忆提示"}
+要求：
+1. derivatives 返回 3-5 个高价值派生词或同词根词
+2. collocations 返回 3-5 个常见搭配
+3. 内容偏考研英语高频场景`;
+      const result = await this.callAPI(prompt);
+      try {
+        const jsonMatch = String(result || "").match(/\{[\s\S]*\}/);
+        const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : result);
+        return {
+          derivatives: Array.isArray(parsed.derivatives) ? parsed.derivatives : [],
+          collocations: Array.isArray(parsed.collocations) ? parsed.collocations : [],
+          memory_tip: parsed.memory_tip || ""
+        };
+      } catch (_2) {
+        return { derivatives: [], collocations: [], memory_tip: "" };
+      }
+    }
+  }
+  const aiService = new AIService();
+  const SECTION_ORDER = ["完形", "阅读", "新题型", "翻译", "写作", "完整试卷"];
+  function formatWordStatsForPrompt(stats) {
+    if (!stats || typeof stats !== "object")
+      return "";
+    const total = stats.total_count || 0;
+    const by = stats.by_section || {};
+    const parts = SECTION_ORDER.filter((s2) => by[s2] > 0).map((s2) => `${s2}${by[s2]}次`);
+    const years = stats.years && stats.years.length ? stats.years : [];
+    const yearStr = years.length > 0 ? `，出现年份：${years.slice(0, 5).join("、")}${years.length > 5 ? "等" + years.length + "年" : ""}` : "";
+    return `该词在考研真题中的统计：总出现${total}次；按题型：${parts.join("、") || "无"}${yearStr}。生成例句时可参考其真题考查频率与题型分布。`;
+  }
+  const _sfc_main$a = {
+    __name: "word-detail",
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const word = vue.ref({
+        english: "",
+        chinese: "",
+        tags: "",
+        source_page: "",
+        year: "",
+        importance: 3,
+        // 默认三星
+        error_rate: 0,
+        review_frequency: 0,
+        repeat_count: 1,
+        examples: [],
+        synonyms: [],
+        antonyms: [],
+        defs: [],
+        exam_tip: "",
+        sentiment: "neu"
+      });
+      const POS_BREAK_REGEX = new RegExp("(?<!\\n)(vi[.\\．。]|vt[.\\．。]|adj[.\\．。]|adv[.\\．。]|prep[.\\．。]|conj[.\\．。]|pron[.\\．。]|num[.\\．。]|int[.\\．。]|aux[.\\．。]|art[.\\．。]|[nva][.\\．。])", "gi");
+      function addNewlineBeforePos(chineseText) {
+        if (!chineseText || typeof chineseText !== "string")
+          return chineseText;
+        const s2 = chineseText.replace(POS_BREAK_REGEX, "\n$1");
+        return s2.replace(/^\n/, "");
+      }
+      vue.watch(() => word.value.chinese, (newValue) => {
+        if (newValue) {
+          let processedValue = addNewlineBeforePos(newValue);
+          if (processedValue !== newValue) {
+            word.value.chinese = processedValue;
+          }
+        }
+      });
+      const example = vue.ref("");
+      const synonymLoading = vue.ref(false);
+      const synonymContrastLoading = vue.ref(false);
+      const antonymLoading = vue.ref(false);
+      const synonymContrastText = vue.ref("");
+      const wordFamilyLoading = vue.ref(false);
+      const wordFamily = vue.ref({ derivatives: [], collocations: [], memory_tip: "" });
+      const sameTagWords = vue.ref([]);
+      const wordId = vue.ref("");
+      const fromWordbookMode = vue.ref(false);
+      const examStats = vue.ref(null);
+      const examStatsTags = vue.ref([]);
+      const examStatsLoading = vue.ref(false);
+      const examSentences = vue.ref([]);
+      const examSentencesLoading = vue.ref(false);
+      const showAllExamSentences = vue.ref(false);
+      const detailHeavyLoading = vue.ref(false);
+      let examFallbackTimer = null;
+      function clearExamFallbackTimer() {
+        if (examFallbackTimer) {
+          clearTimeout(examFallbackTimer);
+          examFallbackTimer = null;
+        }
+      }
+      function scheduleExamDataFallback(english, currentWordId, delay = 180) {
+        clearExamFallbackTimer();
+        examFallbackTimer = setTimeout(() => {
+          examFallbackTimer = null;
+          loadExamDataLazy(english, currentWordId);
+        }, delay);
+      }
+      const SECTION_ORDER2 = ["完形", "阅读", "新题型", "翻译", "写作", "完整试卷", "未分类"];
+      const examStatsBySection = vue.computed(() => {
+        if (!examStats.value || !examStats.value.by_section)
+          return "-";
+        const by = examStats.value.by_section;
+        return SECTION_ORDER2.filter((s2) => (by[s2] || 0) > 0).map((s2) => `${s2}${by[s2]}次`).join("；") || "-";
+      });
+      const examStatsYears = vue.computed(() => {
+        if (!examStats.value || !Array.isArray(examStats.value.years) || !examStats.value.years.length)
+          return "";
+        return examStats.value.years.join("、");
+      });
+      const displayExamSentences = vue.computed(() => {
+        const list = examSentences.value || [];
+        if (showAllExamSentences.value)
+          return list;
+        return list.slice(0, 3);
+      });
+      const displayWordTags = vue.computed(() => {
+        const tags = (word.value.tags || "").split(/[,，\s]+/).map((item) => item.trim()).filter(Boolean);
+        return [...new Set(tags)];
+      });
+      const sentimentLabel = vue.computed(() => {
+        const map = { pos: "褒义色彩", neg: "贬义色彩", neu: "" };
+        return map[word.value.sentiment] || "";
+      });
+      const examQuizSelected = vue.ref(null);
+      const examQuizSentence = vue.computed(() => {
+        const sentence = displayExamSentences.value[0] && displayExamSentences.value[0].sentence || "";
+        if (!sentence || !word.value.english)
+          return sentence;
+        return sentence.replace(new RegExp(`\\b${escapeRegExp(word.value.english)}\\b`, "gi"), "____");
+      });
+      const examQuizAnswerIndex = vue.computed(() => {
+        const defs = Array.isArray(word.value.defs) ? word.value.defs : [];
+        const freqIndex = defs.findIndex((item) => getDefType(item) === "freq");
+        if (freqIndex >= 0)
+          return freqIndex;
+        const rareIndex = defs.findIndex((item) => getDefType(item) === "rare");
+        if (rareIndex >= 0)
+          return rareIndex;
+        return defs.length ? 0 : -1;
+      });
+      const examQuizAnswerText = vue.computed(() => {
+        const defs = Array.isArray(word.value.defs) ? word.value.defs : [];
+        const answer = defs[examQuizAnswerIndex.value];
+        if (!answer)
+          return "暂无可推荐义项";
+        return `${getDefTypeLabel(answer) || "推荐义项"} · ${answer.pos || ""} ${answer.trans || ""}`;
+      });
+      const loadExtraPanels = () => {
+        var _a, _b, _c;
+        const extra = getWordExtra(word.value.english);
+        synonymContrastText.value = extra.synonymContrastText || "";
+        wordFamily.value = {
+          derivatives: Array.isArray((_a = extra.wordFamily) == null ? void 0 : _a.derivatives) ? extra.wordFamily.derivatives : [],
+          collocations: Array.isArray((_b = extra.wordFamily) == null ? void 0 : _b.collocations) ? extra.wordFamily.collocations : [],
+          memory_tip: ((_c = extra.wordFamily) == null ? void 0 : _c.memory_tip) || ""
+        };
+      };
+      const loadWordFromMasterDb = async (english) => {
+        if (!english)
+          return;
+        word.value = {
+          english,
+          chinese: "加载中…",
+          tags: "",
+          source_page: "",
+          year: "",
+          importance: 0,
+          error_rate: 0,
+          review_frequency: 0,
+          repeat_count: 0,
+          examples: [],
+          synonyms: [],
+          antonyms: [],
+          defs: [],
+          exam_tip: "",
+          sentiment: "neu"
+        };
+        detailHeavyLoading.value = true;
+        examStatsLoading.value = true;
+        examSentencesLoading.value = true;
+        try {
+          const detail = await getWordFullDetail(english);
+          if (!detail || word.value.english !== english)
+            return;
+          const wordDefs = Array.isArray(detail.defs) ? detail.defs : [];
+          const examples = Array.isArray(detail.examples) ? detail.examples : [];
+          const synonyms = Array.isArray(detail.synonyms) ? detail.synonyms : [];
+          const antonyms = Array.isArray(detail.antonyms) ? detail.antonyms : [];
+          const examTip = detail.exam_tip || "";
+          const wordSentiment = detail.sentiment || "neu";
+          word.value = {
+            ...word.value,
+            chinese: detail.chinese || "",
+            examples,
+            synonyms,
+            antonyms,
+            importance: detail.examStats && detail.examStats.importance != null ? detail.examStats.importance : 0,
+            defs: wordDefs,
+            exam_tip: examTip,
+            sentiment: wordSentiment
+          };
+          if (detail.examStats) {
+            examStats.value = detail.examStats;
+            examStatsTags.value = Array.isArray(detail.examStats.tags) ? detail.examStats.tags : [];
+            if (examStatsTags.value.length > 0)
+              word.value = { ...word.value, tags: examStatsTags.value.join(",") };
+          }
+          examSentences.value = Array.isArray(detail.examSentences) ? detail.examSentences : [];
+        } catch (e2) {
+          formatAppLog("error", "at pages/word-detail/word-detail.vue:528", "[详情页-masterdb] 加载失败:", e2);
+          word.value.chinese = "";
+        } finally {
+          detailHeavyLoading.value = false;
+          examStatsLoading.value = false;
+          examSentencesLoading.value = false;
+        }
+      };
+      const normalizeDefType2 = (rawType) => {
+        const value = String(rawType || "").trim().toLowerCase();
+        if (!value)
+          return "normal";
+        if ([
+          "freq",
+          "important",
+          "important_meaning",
+          "importantmeaning",
+          "重点",
+          "重点义",
+          "重要",
+          "重要义",
+          "重要意思",
+          "常考",
+          "高频"
+        ].includes(value)) {
+          return "freq";
+        }
+        if ([
+          "rare",
+          "rare_meaning",
+          "raremeaning",
+          "僻义",
+          "熟词僻义",
+          "熟词生义",
+          "生义"
+        ].includes(value)) {
+          return "rare";
+        }
+        return "normal";
+      };
+      const getDefType = (item) => normalizeDefType2(item == null ? void 0 : item.type);
+      const getDefTypeLabel = (item) => {
+        const type = getDefType(item);
+        if (type === "freq")
+          return "重要义";
+        if (type === "rare")
+          return "熟词僻义";
+        return "";
+      };
+      const getLastWordInfo = async () => {
+        const lastWord = await db.getLastWord();
+        if (lastWord) {
+          word.value.source_page = lastWord.source_page || "";
+          word.value.year = lastWord.year || "";
+        }
+      };
+      function loadExamDataLazy(english, currentWordId) {
+        const isSelf = currentWordId != null;
+        const guard = () => {
+          var _a, _b;
+          return isSelf ? ((_a = word.value) == null ? void 0 : _a.id) !== currentWordId : ((_b = word.value) == null ? void 0 : _b.english) !== english;
+        };
+        examStatsLoading.value = true;
+        examSentencesLoading.value = true;
+        showAllExamSentences.value = false;
+        getWordExamData(english).then((data) => {
+          if (guard())
+            return;
+          const stats = (data == null ? void 0 : data.examStats) || null;
+          const list = (data == null ? void 0 : data.examSentences) || [];
+          if (guard())
+            return;
+          if (stats) {
+            examStats.value = stats;
+            examStatsTags.value = Array.isArray(stats.tags) ? stats.tags : [];
+            word.value = { ...word.value, importance: typeof stats.importance === "number" ? stats.importance : 0 };
+            if (examStatsTags.value.length > 0)
+              word.value = { ...word.value, tags: examStatsTags.value.join(",") };
+          } else {
+            examStats.value = null;
+            examStatsTags.value = [];
+            if (isSelf)
+              word.value = { ...word.value, importance: 0 };
+          }
+          examSentences.value = Array.isArray(list) ? list : [];
+        }).catch(() => {
+          examStats.value = null;
+          examSentences.value = [];
+        }).finally(() => {
+          examStatsLoading.value = false;
+          examSentencesLoading.value = false;
+        });
+      }
+      const loadWordFromWordbook = (english) => {
+        fromWordbookMode.value = true;
+        detailHeavyLoading.value = true;
+        showAllExamSentences.value = false;
+        examStatsLoading.value = true;
+        examSentencesLoading.value = true;
+        word.value = {
+          ...word.value,
+          english,
+          chinese: "加载中…",
+          importance: 0,
+          examples: [],
+          synonyms: [],
+          antonyms: [],
+          defs: [],
+          exam_tip: "",
+          sentiment: "neu"
+        };
+        loadExtraPanels();
+        getWordFullDetail(english).then((detail) => {
+          formatAppLog("log", "at pages/word-detail/word-detail.vue:643", "[详情页] getWordFullDetail 回调执行, detail=", detail ? "有数据" : "null");
+          detailHeavyLoading.value = false;
+          examStatsLoading.value = false;
+          examSentencesLoading.value = false;
+          if (word.value.english !== english)
+            return;
+          if (detail) {
+            let examples = Array.isArray(detail.examples) ? detail.examples : [];
+            let synonyms = Array.isArray(detail.synonyms) ? detail.synonyms : [];
+            let antonyms = Array.isArray(detail.antonyms) ? detail.antonyms : [];
+            let wordDefs = Array.isArray(detail.defs) && detail.defs.length ? detail.defs : [];
+            let examTip = typeof detail.exam_tip === "string" ? detail.exam_tip : "";
+            let wordSentiment = detail.sentiment === "pos" || detail.sentiment === "neg" || detail.sentiment === "neu" ? detail.sentiment : "neu";
+            if (!wordDefs.length && detail.data_json != null) {
+              try {
+                const rawData = typeof detail.data_json === "string" ? JSON.parse(detail.data_json || "{}") : detail.data_json || {};
+                if (Array.isArray(rawData.defs) && rawData.defs.length)
+                  wordDefs = rawData.defs;
+                if (!examTip && typeof rawData.exam_tip === "string")
+                  examTip = rawData.exam_tip;
+                if (wordSentiment === "neu" && (rawData.sentiment === "pos" || rawData.sentiment === "neg"))
+                  wordSentiment = rawData.sentiment;
+              } catch (_2) {
+              }
+            }
+            word.value = {
+              ...word.value,
+              chinese: detail.chinese || word.value.chinese,
+              examples,
+              synonyms,
+              antonyms,
+              importance: detail.examStats && detail.examStats.importance != null ? detail.examStats.importance : 0,
+              defs: wordDefs,
+              exam_tip: examTip,
+              sentiment: wordSentiment
+            };
+            if (word.value.chinese === "加载中…")
+              word.value = { ...word.value, chinese: detail.chinese || "" };
+            examStats.value = detail.examStats;
+            examSentences.value = Array.isArray(detail.examSentences) ? detail.examSentences : [];
+            examStatsTags.value = detail.examStats && Array.isArray(detail.examStats.tags) ? detail.examStats.tags : [];
+            if (examStatsTags.value.length > 0)
+              word.value = { ...word.value, tags: examStatsTags.value.join(",") };
+            formatAppLog("log", "at pages/word-detail/word-detail.vue:681", "[详情页] 已赋值 examples.length=", examples.length);
+            const needPregen = examples.length === 0 && synonyms.length === 0 && antonyms.length === 0;
+            if (needPregen) {
+              getPregenWord(english).then((pregen) => {
+                if (word.value.english !== english)
+                  return;
+                if (pregen && (Array.isArray(pregen.examples) && pregen.examples.length > 0 || Array.isArray(pregen.synonyms) && pregen.synonyms.length > 0 || Array.isArray(pregen.antonyms) && pregen.antonyms.length > 0)) {
+                  const ex = Array.isArray(pregen.examples) && pregen.examples.length > 0 ? pregen.examples : word.value.examples;
+                  const sy = Array.isArray(pregen.synonyms) && pregen.synonyms.length > 0 ? pregen.synonyms : word.value.synonyms;
+                  const an2 = Array.isArray(pregen.antonyms) && pregen.antonyms.length > 0 ? pregen.antonyms : word.value.antonyms;
+                  word.value = { ...word.value, examples: ex, synonyms: sy, antonyms: an2 };
+                  if (!word.value.chinese && pregen.chinese)
+                    word.value = { ...word.value, chinese: pregen.chinese };
+                  formatAppLog("log", "at pages/word-detail/word-detail.vue:693", "[详情页] 已从 pregen 补全 例句/近义/反义");
+                }
+              });
+            }
+          } else {
+            if (word.value.chinese === "加载中…")
+              word.value = { ...word.value, chinese: "" };
+            examStats.value = null;
+            examSentences.value = [];
+            getPregenWord(english).then((pregen) => {
+              if (word.value.english !== english || !pregen)
+                return;
+              const ex = Array.isArray(pregen.examples) ? pregen.examples : [];
+              const sy = Array.isArray(pregen.synonyms) ? pregen.synonyms : [];
+              const an2 = Array.isArray(pregen.antonyms) ? pregen.antonyms : [];
+              word.value = {
+                ...word.value,
+                chinese: (pregen.chinese || word.value.chinese || "").trim() || word.value.chinese,
+                examples: ex,
+                synonyms: sy,
+                antonyms: an2
+              };
+              if (ex.length || sy.length || an2.length)
+                formatAppLog("log", "at pages/word-detail/word-detail.vue:714", "[详情页] 已从 pregen 补全(主库无该词)");
+            });
+          }
+        }).catch((e2) => {
+          formatAppLog("error", "at pages/word-detail/word-detail.vue:718", "[详情页] getWordFullDetail catch", e2);
+          detailHeavyLoading.value = false;
+          examStatsLoading.value = false;
+          examSentencesLoading.value = false;
+          if (word.value.chinese === "加载中…")
+            word.value = { ...word.value, chinese: "" };
+        });
+      };
+      const loadWord = async () => {
+        const id = wordId.value;
+        const t0 = Date.now();
+        formatAppLog("log", "at pages/word-detail/word-detail.vue:729", "[详情-自用] 入口 id=", id, "t0=", t0);
+        clearExamFallbackTimer();
+        const tLight = Date.now();
+        const result = await db.getWordByIdLight(id);
+        formatAppLog("log", "at pages/word-detail/word-detail.vue:734", "[详情-自用] getWordByIdLight", Date.now() - tLight, "ms");
+        if (!result)
+          return;
+        if (result.chinese)
+          result.chinese = addNewlineBeforePos(result.chinese);
+        word.value = result;
+        loadExtraPanels();
+        db.incrementViewCount(id);
+        increaseRepeatCount();
+        const tSameTag = Date.now();
+        loadSameTagWords();
+        formatAppLog("log", "at pages/word-detail/word-detail.vue:745", "[详情-自用] loadSameTagWords 已触发(未await)", Date.now() - tSameTag, "ms");
+        const english = result.english;
+        showAllExamSentences.value = false;
+        examStatsLoading.value = true;
+        examSentencesLoading.value = true;
+        examStats.value = null;
+        examStatsTags.value = [];
+        examSentences.value = [];
+        const tHeavy = Date.now();
+        db.getWordByIdHeavy(id).then((heavy) => {
+          var _a;
+          formatAppLog("log", "at pages/word-detail/word-detail.vue:757", "[详情-自用] getWordByIdHeavy", Date.now() - tHeavy, "ms");
+          if (!heavy || ((_a = word.value) == null ? void 0 : _a.id) !== id)
+            return;
+          word.value = {
+            ...word.value,
+            examples: heavy.examples || [],
+            synonyms: heavy.synonyms || [],
+            antonyms: heavy.antonyms || []
+          };
+          formatAppLog("log", "at pages/word-detail/word-detail.vue:765", "[详情-自用] 重型字段补全完成", Date.now() - t0, "ms");
+        });
+        getWordFullDetail(english).then((detail) => {
+          var _a;
+          if (((_a = word.value) == null ? void 0 : _a.id) !== id)
+            return;
+          if (!detail) {
+            scheduleExamDataFallback(english, id);
+            return;
+          }
+          const needChinese = !(word.value.chinese || "").trim();
+          const needExamples = !Array.isArray(word.value.examples) || word.value.examples.length === 0;
+          const needSynonyms = !Array.isArray(word.value.synonyms) || word.value.synonyms.length === 0;
+          const needAntonyms = !Array.isArray(word.value.antonyms) || word.value.antonyms.length === 0;
+          const detailExamStats = detail.examStats && typeof detail.examStats === "object" ? detail.examStats : null;
+          const detailExamSentences = Array.isArray(detail.examSentences) ? detail.examSentences : [];
+          const detailDefs = Array.isArray(detail.defs) ? detail.defs : [];
+          const detailExamTip = typeof detail.exam_tip === "string" ? detail.exam_tip : "";
+          const detailSentiment = detail.sentiment === "pos" || detail.sentiment === "neg" || detail.sentiment === "neu" ? detail.sentiment : word.value.sentiment;
+          const hasExamStats = !!detailExamStats;
+          const hasExamSentences = detailExamSentences.length > 0;
+          if (!needChinese && !needExamples && !needSynonyms && !needAntonyms && hasExamStats && hasExamSentences) {
+            word.value = {
+              ...word.value,
+              chinese: (detail.chinese || "").trim() || word.value.chinese,
+              defs: detailDefs,
+              exam_tip: detailExamTip,
+              sentiment: detailSentiment
+            };
+            examStats.value = detailExamStats;
+            examSentences.value = detailExamSentences;
+            examStatsTags.value = Array.isArray(detailExamStats.tags) ? detailExamStats.tags : [];
+            examStatsLoading.value = false;
+            examSentencesLoading.value = false;
+            return;
+          }
+          word.value = {
+            ...word.value,
+            chinese: (detail.chinese || "").trim() || word.value.chinese,
+            examples: needExamples ? detail.examples || [] : word.value.examples,
+            synonyms: needSynonyms ? detail.synonyms || [] : word.value.synonyms,
+            antonyms: needAntonyms ? detail.antonyms || [] : word.value.antonyms,
+            defs: detailDefs.length ? detailDefs : word.value.defs,
+            exam_tip: detailExamTip || word.value.exam_tip,
+            sentiment: detailSentiment
+          };
+          if (hasExamStats) {
+            examStats.value = detailExamStats;
+            examStatsTags.value = Array.isArray(detailExamStats.tags) ? detailExamStats.tags : [];
+            word.value.importance = typeof detailExamStats.importance === "number" ? detailExamStats.importance : 0;
+            if (examStatsTags.value.length > 0)
+              word.value.tags = examStatsTags.value.join(",");
+          } else {
+            examStats.value = null;
+            examStatsTags.value = [];
+          }
+          if (hasExamSentences)
+            examSentences.value = detailExamSentences;
+          else
+            examSentences.value = [];
+          examStatsLoading.value = !hasExamStats;
+          examSentencesLoading.value = !hasExamSentences;
+          if (!hasExamStats || !hasExamSentences) {
+            scheduleExamDataFallback(english, id);
+          }
+        }).catch(() => {
+          scheduleExamDataFallback(english, id);
+        });
+        getPregenWord(english).then((pre) => {
+          var _a;
+          if (!pre || ((_a = word.value) == null ? void 0 : _a.id) !== id)
+            return;
+          const needChinese = !(word.value.chinese || "").trim();
+          const needExamples = !Array.isArray(word.value.examples) || word.value.examples.length === 0;
+          const needSynonyms = !Array.isArray(word.value.synonyms) || word.value.synonyms.length === 0;
+          const needAntonyms = !Array.isArray(word.value.antonyms) || word.value.antonyms.length === 0;
+          if (!needChinese && !needExamples && !needSynonyms && !needAntonyms)
+            return;
+          word.value = {
+            ...word.value,
+            chinese: needChinese ? (pre.chinese || "").trim() || word.value.chinese : word.value.chinese,
+            examples: needExamples ? pre.examples || [] : word.value.examples,
+            synonyms: needSynonyms ? pre.synonyms || [] : word.value.synonyms,
+            antonyms: needAntonyms ? pre.antonyms || [] : word.value.antonyms
+          };
+        }).catch(() => {
+        });
+      };
+      const retryLoadExamStats = async () => {
+        if (!word.value || !word.value.english)
+          return;
+        examStatsLoading.value = true;
+        examSentencesLoading.value = true;
+        try {
+          const data = await getWordExamData(word.value.english);
+          const stats = (data == null ? void 0 : data.examStats) || null;
+          if (stats) {
+            examStats.value = stats;
+            examStatsTags.value = Array.isArray(stats.tags) ? stats.tags : [];
+            word.value.importance = typeof stats.importance === "number" ? stats.importance : 0;
+            if (examStatsTags.value.length > 0) {
+              word.value.tags = examStatsTags.value.join(",");
+            }
+          } else {
+            examStats.value = null;
+            examStatsTags.value = [];
+            word.value.importance = 0;
+          }
+          examSentences.value = Array.isArray(data == null ? void 0 : data.examSentences) ? data.examSentences : [];
+        } catch (e2) {
+          examStats.value = null;
+          examStatsTags.value = [];
+          examSentences.value = [];
+        } finally {
+          examStatsLoading.value = false;
+          examSentencesLoading.value = false;
+        }
+      };
+      const loadSameTagWords = async () => {
+        const tags = (word.value.tags || "").split(/[,，\s]+/).map((t2) => t2.trim()).filter(Boolean);
+        if (tags.length === 0) {
+          sameTagWords.value = [];
+          return;
+        }
+        sameTagWords.value = await db.getWordsByTag(tags[0], wordId.value);
+      };
+      const goToWord = (id) => {
+        uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${id}` });
+      };
+      const selectExamQuiz = (idx) => {
+        examQuizSelected.value = idx;
+      };
+      const goBack = () => {
+        uni.navigateBack();
+      };
+      const applyTag = (tag) => {
+        const cur = (word.value.tags || "").trim();
+        const list = cur ? cur.split(/[,，\s]+/).map((t2) => t2.trim()).filter(Boolean) : [];
+        if (list.includes(tag))
+          return;
+        word.value.tags = list.concat(tag).join(",");
+      };
+      onLoad((options) => {
+        formatAppLog("log", "at pages/word-detail/word-detail.vue:908", "onLoad 获取到的参数:", options);
+        if (options && options.id) {
+          wordId.value = options.id;
+          loadWord();
+        } else if (options && options.english && options.source === "masterdb") {
+          wordId.value = "";
+          fromWordbookMode.value = true;
+          loadWordFromMasterDb(decodeURIComponent(options.english));
+        } else if (options && options.english && options.fromWordbook === "1") {
+          wordId.value = "";
+          loadWordFromWordbook(decodeURIComponent(options.english));
+        } else {
+          getLastWordInfo();
+        }
+      });
+      vue.onMounted(() => {
+        uni.$on("wordEnriched", onWordEnriched);
+      });
+      const onWordEnriched = (id) => {
+        if (id && wordId.value === id)
+          loadWord();
+      };
+      onUnload(() => {
+        uni.$off("wordEnriched", onWordEnriched);
+        clearExamFallbackTimer();
+        try {
+          cleanupExpiredCaches();
+        } catch (error) {
+          logger.warn("WordDetail", "清理缓存失败", error);
+        }
+      });
+      const save = async () => {
+        if (!word.value.english || !word.value.chinese) {
+          uni.showToast({
+            title: "请填写英文和中文",
+            duration: 2e3
+          });
+          return;
+        }
+        if (wordId.value) {
+          await db.updateWord(wordId.value, word.value);
+        } else {
+          await db.addWord(word.value);
+        }
+        uni.showToast({
+          title: wordId.value ? "更新成功" : "添加成功",
+          duration: 2e3
+        });
+        uni.navigateBack();
+      };
+      const cancel = () => {
+        uni.navigateBack();
+      };
+      const deleteWord = async () => {
+        uni.showModal({
+          title: "确认删除",
+          content: "确定要删除这个单词吗？",
+          success: async (res) => {
+            if (res.confirm) {
+              await db.deleteWord(wordId.value);
+              uni.showToast({
+                title: "删除成功",
+                duration: 2e3
+              });
+              uni.navigateBack();
+            }
+          }
+        });
+      };
+      const editWord = () => {
+        uni.showToast({
+          title: "编辑模式",
+          duration: 1e3
+        });
+      };
+      const generateExample = async () => {
+        if (!word.value.english) {
+          uni.showToast({
+            title: "请输入英文单词",
+            duration: 2e3
+          });
+          return;
+        }
+        try {
+          const pregen = await getPregenWord(word.value.english);
+          if (pregen && Array.isArray(pregen.examples) && pregen.examples.length > 0) {
+            word.value.examples = pregen.examples;
+            if (wordId.value) {
+              await db.updateWord(wordId.value, { examples: pregen.examples });
+            }
+            uni.showToast({ title: "已从本地词库加载例句", duration: 2e3 });
+            return;
+          }
+          const words = await db.getWordsForList(10, 0, "create_time", "desc", {});
+          const existingWords = words.filter((w2) => w2.english !== word.value.english).map((w2) => w2.english).slice(0, 10);
+          example.value = "生成中...";
+          let examText = "";
+          try {
+            const examData = await getWordExamData(word.value.english);
+            if (examData == null ? void 0 : examData.examStats)
+              examText = formatWordStatsForPrompt(examData.examStats);
+          } catch (_2) {
+          }
+          const examples = await aiService.generateMultipleExamples(word.value.english, existingWords, 3, examText);
+          word.value.examples = examples;
+          example.value = "";
+          if (wordId.value) {
+            await db.updateWord(wordId.value, { examples });
+            uni.showToast({
+              title: "例句已更新",
+              duration: 2e3
+            });
+          } else {
+            uni.showToast({
+              title: "例句已生成",
+              duration: 2e3
+            });
+          }
+        } catch (error) {
+          formatAppLog("error", "at pages/word-detail/word-detail.vue:1048", "生成例句失败:", error);
+          example.value = "生成例句失败，请重试";
+        }
+      };
+      const generateSynonyms = async () => {
+        if (!word.value.english) {
+          uni.showToast({
+            title: "请输入英文单词",
+            duration: 2e3
+          });
+          return;
+        }
+        try {
+          synonymLoading.value = true;
+          const pregen = await getPregenWord(word.value.english);
+          if (pregen && Array.isArray(pregen.synonyms) && pregen.synonyms.length > 0) {
+            word.value.synonyms = pregen.synonyms;
+            if (wordId.value) {
+              await db.updateWord(wordId.value, { synonyms: pregen.synonyms });
+            }
+            uni.showToast({ title: "已从本地词库加载近义词", duration: 2e3 });
+            return;
+          }
+          const words = await db.getWordsForList(10, 0, "create_time", "desc", {});
+          const existingWords = words.filter((w2) => w2.english !== word.value.english).map((w2) => w2.english).slice(0, 10);
+          const synonyms = await aiService.generateSynonyms(word.value.english, existingWords, 3);
+          word.value.synonyms = synonyms;
+          if (wordId.value) {
+            await db.updateWord(wordId.value, { synonyms });
+            uni.showToast({
+              title: "近义词已更新",
+              duration: 2e3
+            });
+          } else {
+            uni.showToast({
+              title: "近义词已生成",
+              duration: 2e3
+            });
+          }
+        } catch (error) {
+          formatAppLog("error", "at pages/word-detail/word-detail.vue:1097", "生成近义词失败:", error);
+          uni.showToast({
+            title: "生成近义词失败，请重试",
+            duration: 2e3
+          });
+        } finally {
+          synonymLoading.value = false;
+        }
+      };
+      const generateSynonymContrast = async () => {
+        if (!word.value.english)
+          return;
+        try {
+          synonymContrastLoading.value = true;
+          const text = await aiService.generateSynonymContrast(word.value.english, word.value.synonyms || []);
+          synonymContrastText.value = text || "";
+          saveWordExtra(word.value.english, { synonymContrastText: synonymContrastText.value });
+          if (synonymContrastText.value) {
+            uni.showToast({ title: "辨析已生成", icon: "none" });
+          }
+        } catch (_2) {
+          uni.showToast({ title: "生成辨析失败", icon: "none" });
+        } finally {
+          synonymContrastLoading.value = false;
+        }
+      };
+      const generateAntonyms = async () => {
+        if (!word.value.english) {
+          uni.showToast({ title: "请输入英文单词", duration: 2e3 });
+          return;
+        }
+        try {
+          antonymLoading.value = true;
+          const pregen = await getPregenWord(word.value.english);
+          if (pregen && Array.isArray(pregen.antonyms) && pregen.antonyms.length > 0) {
+            word.value.antonyms = pregen.antonyms;
+            if (wordId.value) {
+              await db.updateWord(wordId.value, { antonyms: pregen.antonyms });
+            }
+            uni.showToast({ title: "已从本地词库加载反义词", duration: 2e3 });
+            return;
+          }
+          const antonyms = await aiService.generateAntonyms(word.value.english, 3);
+          word.value.antonyms = antonyms;
+          if (wordId.value) {
+            await db.updateWord(wordId.value, { antonyms });
+            uni.showToast({ title: "反义词已更新", duration: 2e3 });
+          } else {
+            uni.showToast({ title: "反义词已生成", duration: 2e3 });
+          }
+        } catch (error) {
+          formatAppLog("error", "at pages/word-detail/word-detail.vue:1149", "生成反义词失败:", error);
+          uni.showToast({ title: "生成反义词失败", duration: 2e3 });
+        } finally {
+          antonymLoading.value = false;
+        }
+      };
+      const generateWordFamilyInfo = async () => {
+        if (!word.value.english)
+          return;
+        try {
+          wordFamilyLoading.value = true;
+          const result = await aiService.generateWordFamily(word.value.english);
+          wordFamily.value = {
+            derivatives: Array.isArray(result.derivatives) ? result.derivatives : [],
+            collocations: Array.isArray(result.collocations) ? result.collocations : [],
+            memory_tip: result.memory_tip || ""
+          };
+          saveWordExtra(word.value.english, { wordFamily: wordFamily.value });
+          uni.showToast({ title: "词族已生成", icon: "none" });
+        } catch (_2) {
+          uni.showToast({ title: "生成词族失败", icon: "none" });
+        } finally {
+          wordFamilyLoading.value = false;
+        }
+      };
+      const increaseRepeatCount = async () => {
+        word.value.repeat_count = (word.value.repeat_count || 0) + 1;
+        word.value.update_time = (/* @__PURE__ */ new Date()).toISOString();
+        if (wordId.value) {
+          await db.updateWord(wordId.value, {
+            repeat_count: word.value.repeat_count,
+            update_time: word.value.update_time
+          });
+        }
+      };
+      const decreaseRepeatCount = async () => {
+      };
+      const updateRepeatCount = async () => {
+      };
+      const markAsMastered = async () => {
+        if (!wordId.value) {
+          uni.showToast({ title: "请先保存单词", icon: "none" });
+          return;
+        }
+        word.value.is_mastered = 1;
+        word.value.mastered_at = (/* @__PURE__ */ new Date()).toISOString();
+        await db.updateWord(wordId.value, {
+          is_mastered: 1,
+          mastered_at: word.value.mastered_at
+        });
+        uni.showToast({ title: "已斩掉！该单词将在复习中隐藏", icon: "success" });
+      };
+      const unmarkAsMastered = async () => {
+        if (!wordId.value)
+          return;
+        word.value.is_mastered = 0;
+        word.value.mastered_at = null;
+        await db.updateWord(wordId.value, {
+          is_mastered: 0,
+          mastered_at: null
+        });
+        uni.showToast({ title: "已取消斩掉", icon: "none" });
+      };
+      const formatMasteredTime = (time) => {
+        if (!time)
+          return "";
+        const date = new Date(time);
+        const now = /* @__PURE__ */ new Date();
+        const diff = now - date;
+        const days = Math.floor(diff / (1e3 * 60 * 60 * 24));
+        if (days === 0)
+          return "今天";
+        if (days === 1)
+          return "昨天";
+        if (days < 7)
+          return `${days}天前`;
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        return `${month}月${day}日`;
+      };
+      const escapeRegExp = (s2) => String(s2 || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const formatHighlight = (text) => {
+        if (!text)
+          return "";
+        let formattedText = text.replace(/\*\*(.*?)\*\*/g, function(match, word2) {
+          return `<span style="color: #FF85A1; font-weight: bold;">${word2}</span>`;
+        });
+        if (word.value.english) {
+          const targetWord = word.value.english;
+          const targetRegex = new RegExp(`\\b(${escapeRegExp(targetWord)})\\b`, "gi");
+          formattedText = formattedText.replace(targetRegex, `<span style="color: #FF85A1; font-weight: bold;">$1</span>`);
+        }
+        return formattedText;
+      };
+      const __returned__ = { word, POS_BREAK_REGEX, addNewlineBeforePos, example, synonymLoading, synonymContrastLoading, antonymLoading, synonymContrastText, wordFamilyLoading, wordFamily, sameTagWords, wordId, fromWordbookMode, examStats, examStatsTags, examStatsLoading, examSentences, examSentencesLoading, showAllExamSentences, detailHeavyLoading, get examFallbackTimer() {
+        return examFallbackTimer;
+      }, set examFallbackTimer(v2) {
+        examFallbackTimer = v2;
+      }, clearExamFallbackTimer, scheduleExamDataFallback, SECTION_ORDER: SECTION_ORDER2, examStatsBySection, examStatsYears, displayExamSentences, displayWordTags, sentimentLabel, examQuizSelected, examQuizSentence, examQuizAnswerIndex, examQuizAnswerText, loadExtraPanels, loadWordFromMasterDb, normalizeDefType: normalizeDefType2, getDefType, getDefTypeLabel, getLastWordInfo, loadExamDataLazy, loadWordFromWordbook, loadWord, retryLoadExamStats, loadSameTagWords, goToWord, selectExamQuiz, goBack, applyTag, onWordEnriched, save, cancel, deleteWord, editWord, generateExample, generateSynonyms, generateSynonymContrast, generateAntonyms, generateWordFamilyInfo, increaseRepeatCount, decreaseRepeatCount, updateRepeatCount, markAsMastered, unmarkAsMastered, formatMasteredTime, escapeRegExp, formatHighlight, ref: vue.ref, onMounted: vue.onMounted, watch: vue.watch, computed: vue.computed, get onLoad() {
+        return onLoad;
+      }, get onUnload() {
+        return onUnload;
+      }, get db() {
+        return db;
+      }, get aiService() {
+        return aiService;
+      }, get formatWordStatsForPrompt() {
+        return formatWordStatsForPrompt;
+      }, get pregenVocab() {
+        return pregenVocab;
+      }, get masterDb() {
+        return masterDb;
+      }, get getWordExtra() {
+        return getWordExtra;
+      }, get saveWordExtra() {
+        return saveWordExtra;
+      }, get logger() {
+        return logger;
+      }, get errorHandler() {
+        return errorHandler;
+      }, get cleanupExpiredCaches() {
+        return cleanupExpiredCaches;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$a(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
+      vue.createElementVNode("view", { class: "custom-nav-bar" }, [
+        vue.createElementVNode("view", {
+          class: "nav-back-btn",
+          onClick: $setup.goBack
+        }, "‹")
+      ]),
+      $setup.wordId || $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "word-profile-card detail-card-shell"
+      }, [
+        vue.createElementVNode("view", { class: "word-input-wrap word-title-row" }, [
+          !$setup.fromWordbookMode ? vue.withDirectives((vue.openBlock(), vue.createElementBlock(
+            "input",
+            {
+              key: 0,
+              type: "text",
+              "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.word.english = $event),
+              placeholder: "请输入英文单词",
+              class: "word-input"
+            },
+            null,
+            512
+            /* NEED_PATCH */
+          )), [
+            [vue.vModelText, $setup.word.english]
+          ]) : (vue.openBlock(), vue.createElementBlock(
+            "text",
+            {
+              key: 1,
+              class: "word-input word-readonly"
+            },
+            vue.toDisplayString($setup.word.english),
+            1
+            /* TEXT */
+          ))
+        ]),
+        $setup.word.defs && $setup.word.defs.length ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "word-chinese-inline"
+        }, [
+          vue.createElementVNode("view", { class: "defs-list" }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.word.defs, (item, idx) => {
+                return vue.openBlock(), vue.createElementBlock(
+                  "view",
+                  {
+                    key: idx,
+                    class: vue.normalizeClass(["def-item", {
+                      "def-freq": $setup.getDefType(item) === "freq",
+                      "def-rare": $setup.getDefType(item) === "rare",
+                      "def-normal": $setup.getDefType(item) === "normal"
+                    }])
+                  },
+                  [
+                    vue.createElementVNode(
+                      "view",
+                      { class: "def-pos" },
+                      vue.toDisplayString(item.pos || ""),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "view",
+                      { class: "def-trans" },
+                      vue.toDisplayString(item.trans || ""),
+                      1
+                      /* TEXT */
+                    )
+                  ],
+                  2
+                  /* CLASS */
+                );
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])
+        ])) : (vue.openBlock(), vue.createElementBlock("view", {
+          key: 1,
+          class: "word-chinese-inline"
+        }, [
+          !$setup.fromWordbookMode ? vue.withDirectives((vue.openBlock(), vue.createElementBlock(
+            "textarea",
+            {
+              key: 0,
+              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.word.chinese = $event),
+              placeholder: "请输入中文释义（包含词性）",
+              rows: "3",
+              class: "word-chinese-textarea"
+            },
+            null,
+            512
+            /* NEED_PATCH */
+          )), [
+            [vue.vModelText, $setup.word.chinese]
+          ]) : (vue.openBlock(), vue.createElementBlock(
+            "text",
+            {
+              key: 1,
+              class: "word-chinese-textarea word-readonly"
+            },
+            vue.toDisplayString($setup.word.chinese || "—"),
+            1
+            /* TEXT */
+          ))
+        ])),
+        $setup.word.exam_tip ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 2,
+          class: "exam-tip-box"
+        }, [
+          vue.createElementVNode(
+            "view",
+            { class: "exam-tip-text" },
+            vue.toDisplayString($setup.word.exam_tip),
+            1
+            /* TEXT */
+          )
+        ])) : vue.createCommentVNode("v-if", true),
+        $setup.displayWordTags.length || $setup.sentimentLabel ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 3,
+          class: "word-tag-row"
+        }, [
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($setup.displayWordTags, (tag, idx) => {
+              return vue.openBlock(), vue.createElementBlock(
+                "text",
+                {
+                  key: `tag-${idx}`,
+                  class: "tag-chip-soft"
+                },
+                vue.toDisplayString(tag),
+                1
+                /* TEXT */
+              );
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          )),
+          $setup.sentimentLabel ? (vue.openBlock(), vue.createElementBlock(
+            "text",
+            {
+              key: 0,
+              class: "tag-chip-soft sentiment-chip"
+            },
+            vue.toDisplayString($setup.sentimentLabel),
+            1
+            /* TEXT */
+          )) : vue.createCommentVNode("v-if", true)
+        ])) : vue.createCommentVNode("v-if", true),
+        vue.createElementVNode("view", { class: "metadata-row" }, [
+          vue.createElementVNode("div", { class: "repeat-section" }, [
+            vue.createElementVNode("label", { class: "small-label" }, "学习次数"),
+            vue.createElementVNode("div", { class: "repeat-controls" }, [
+              vue.createElementVNode(
+                "span",
+                { class: "repeat-value" },
+                vue.toDisplayString($setup.word.repeat_count || 0),
+                1
+                /* TEXT */
+              )
+            ])
+          ]),
+          vue.createElementVNode("div", { class: "importance-section" }, [
+            vue.createElementVNode("label", { class: "small-label" }, "重要程度"),
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["star-rating", { readonly: $setup.fromWordbookMode }])
+              },
+              [
+                (vue.openBlock(), vue.createElementBlock(
+                  vue.Fragment,
+                  null,
+                  vue.renderList(5, (star) => {
+                    return vue.createElementVNode("span", {
+                      key: star,
+                      class: vue.normalizeClass(["importance-dot", { active: ($setup.word.importance || 0) >= star }]),
+                      onClick: ($event) => !$setup.fromWordbookMode && ($setup.word.importance = star)
+                    }, "★", 10, ["onClick"]);
+                  }),
+                  64
+                  /* STABLE_FRAGMENT */
+                ))
+              ],
+              2
+              /* CLASS */
+            )
+          ])
+        ]),
+        !$setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 4,
+          class: "master-action-row"
+        }, [
+          !$setup.word.is_mastered ? (vue.openBlock(), vue.createElementBlock("button", {
+            key: 0,
+            class: "btn-master",
+            onClick: $setup.markAsMastered
+          }, " ⚔️ 斩掉（已熟练） ")) : (vue.openBlock(), vue.createElementBlock("button", {
+            key: 1,
+            class: "btn-unmaster",
+            onClick: $setup.unmarkAsMastered
+          }, " ↩️ 取消斩掉 ")),
+          $setup.word.is_mastered && $setup.word.mastered_at ? (vue.openBlock(), vue.createElementBlock(
+            "text",
+            {
+              key: 2,
+              class: "mastered-time"
+            },
+            " 已于 " + vue.toDisplayString($setup.formatMasteredTime($setup.word.mastered_at)) + " 斩掉 ",
+            1
+            /* TEXT */
+          )) : vue.createCommentVNode("v-if", true)
+        ])) : vue.createCommentVNode("v-if", true)
+      ])) : (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "basic-info detail-card-shell"
+      }, [
+        vue.createElementVNode("view", { class: "form-item" }, [
+          vue.createElementVNode("label", null, "英文"),
+          vue.withDirectives(vue.createElementVNode(
+            "input",
+            {
+              type: "text",
+              "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.word.english = $event),
+              placeholder: "请输入英文单词"
+            },
+            null,
+            512
+            /* NEED_PATCH */
+          ), [
+            [vue.vModelText, $setup.word.english]
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "metadata-row" }, [
+          vue.createElementVNode("div", { class: "importance-section" }, [
+            vue.createElementVNode("label", { class: "small-label" }, "重要程度"),
+            vue.createElementVNode("view", { class: "star-rating" }, [
+              (vue.openBlock(), vue.createElementBlock(
+                vue.Fragment,
+                null,
+                vue.renderList(5, (star) => {
+                  return vue.createElementVNode("span", {
+                    key: star,
+                    class: vue.normalizeClass(["importance-dot", { active: $setup.word.importance >= star }]),
+                    onClick: ($event) => $setup.word.importance = star
+                  }, "★", 10, ["onClick"]);
+                }),
+                64
+                /* STABLE_FRAGMENT */
+              ))
+            ])
+          ])
+        ])
+      ])),
+      !$setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 2,
+        class: "page-year-section one-line"
+      }, [
+        vue.createElementVNode("text", { class: "source-caption-inline" }, "来源"),
+        vue.createElementVNode("view", { class: "page-info" }, [
+          vue.createElementVNode("text", { class: "page-year-label" }, "页码"),
+          vue.createElementVNode("view", { class: "page-year-input-wrap" }, [
+            vue.withDirectives(vue.createElementVNode(
+              "input",
+              {
+                type: "text",
+                "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => $setup.word.source_page = $event),
+                placeholder: "P.",
+                class: "page-year-input"
+              },
+              null,
+              512
+              /* NEED_PATCH */
+            ), [
+              [vue.vModelText, $setup.word.source_page]
+            ])
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "year-info" }, [
+          vue.createElementVNode("text", { class: "page-year-label" }, "年份"),
+          vue.createElementVNode("view", { class: "page-year-input-wrap" }, [
+            vue.withDirectives(vue.createElementVNode(
+              "input",
+              {
+                type: "text",
+                "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => $setup.word.year = $event),
+                placeholder: "如 2024",
+                class: "page-year-input"
+              },
+              null,
+              512
+              /* NEED_PATCH */
+            ), [
+              [vue.vModelText, $setup.word.year]
+            ])
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      vue.createElementVNode("view", { class: "form-item exam-stats-block" }, [
+        vue.createElementVNode("view", { class: "soft-card-title" }, "真题统计"),
+        vue.createElementVNode("view", { class: "exam-stats-content" }, [
+          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "detail-placeholder-block"
+          }, "加载中…")) : $setup.examStatsLoading ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "exam-stats-row exam-stats-muted"
+          }, "加载中…")) : $setup.examStats ? (vue.openBlock(), vue.createElementBlock(
+            vue.Fragment,
+            { key: 2 },
+            [
+              vue.createElementVNode("view", { class: "exam-stats-row exam-stats-row-primary" }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "exam-stats-num" },
+                  vue.toDisplayString($setup.examStats.total_count),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode("text", { class: "exam-stats-unit" }, "次")
+              ]),
+              $setup.examStatsYears ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 0,
+                class: "exam-stats-row exam-stats-years-row"
+              }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "exam-stats-years" },
+                  vue.toDisplayString($setup.examStatsYears),
+                  1
+                  /* TEXT */
+                )
+              ])) : vue.createCommentVNode("v-if", true),
+              vue.createElementVNode("view", { class: "exam-stats-row" }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "exam-stats-detail" },
+                  vue.toDisplayString($setup.examStatsBySection),
+                  1
+                  /* TEXT */
+                )
+              ])
+            ],
+            64
+            /* STABLE_FRAGMENT */
+          )) : (vue.openBlock(), vue.createElementBlock("view", {
+            key: 3,
+            class: "exam-stats-row exam-stats-muted"
+          }, [
+            vue.createTextVNode(" 该词暂无真题数据 "),
+            vue.createElementVNode("text", {
+              class: "exam-stats-retry",
+              onClick: $setup.retryLoadExamStats
+            }, "重试加载")
+          ]))
+        ])
+      ]),
+      vue.createElementVNode("view", { class: "form-item detail-section-plain exam-sentences-plain" }, [
+        vue.createElementVNode("view", { class: "soft-card-title" }, "真题出处"),
+        vue.createElementVNode("view", { class: "example-container" }, [
+          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "detail-placeholder-block"
+          }, "加载中…")) : $setup.examSentencesLoading ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "no-examples"
+          }, "加载中…")) : $setup.displayExamSentences.length > 0 ? (vue.openBlock(), vue.createElementBlock(
+            vue.Fragment,
+            { key: 2 },
+            [
+              vue.createElementVNode("view", { class: "examples-list" }, [
+                (vue.openBlock(true), vue.createElementBlock(
+                  vue.Fragment,
+                  null,
+                  vue.renderList($setup.displayExamSentences, (item, idx) => {
+                    return vue.openBlock(), vue.createElementBlock("view", {
+                      key: idx,
+                      class: "example-item"
+                    }, [
+                      vue.createElementVNode(
+                        "view",
+                        { class: "exam-sentence-meta" },
+                        vue.toDisplayString(item.year) + "年 · " + vue.toDisplayString(item.exam_type) + " · " + vue.toDisplayString(item.section),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.createElementVNode("p", { class: "example-english" }, [
+                        vue.createElementVNode("rich-text", {
+                          nodes: $setup.formatHighlight(item.sentence)
+                        }, null, 8, ["nodes"])
+                      ])
+                    ]);
+                  }),
+                  128
+                  /* KEYED_FRAGMENT */
+                ))
+              ]),
+              $setup.examSentences.length > 3 && !$setup.showAllExamSentences ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 0,
+                class: "center-action-row"
+              }, [
+                vue.createElementVNode(
+                  "button",
+                  {
+                    class: "btn-solid btn-inline-action btn-inline-standalone",
+                    onClick: _cache[5] || (_cache[5] = ($event) => $setup.showAllExamSentences = true)
+                  },
+                  " 查看全部 " + vue.toDisplayString($setup.examSentences.length) + " 条 ",
+                  1
+                  /* TEXT */
+                )
+              ])) : vue.createCommentVNode("v-if", true)
+            ],
+            64
+            /* STABLE_FRAGMENT */
+          )) : (vue.openBlock(), vue.createElementBlock("p", {
+            key: 3,
+            class: "no-examples"
+          }, "暂无真题句子"))
+        ])
+      ]),
+      $setup.displayExamSentences.length > 0 && $setup.word.defs && $setup.word.defs.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 3,
+        class: "form-item"
+      }, [
+        vue.createElementVNode("view", { class: "soft-card-title" }, "真题练一练"),
+        vue.createElementVNode("view", { class: "example-container" }, [
+          vue.createElementVNode("view", { class: "exam-train-card" }, [
+            vue.createElementVNode("p", { class: "example-english" }, [
+              vue.createElementVNode("rich-text", {
+                nodes: $setup.formatHighlight($setup.examQuizSentence)
+              }, null, 8, ["nodes"])
+            ]),
+            vue.createElementVNode("p", { class: "example-chinese exam-train-tip" }, "判断这句更接近哪个义项"),
+            vue.createElementVNode("view", { class: "exam-train-options" }, [
+              (vue.openBlock(true), vue.createElementBlock(
+                vue.Fragment,
+                null,
+                vue.renderList($setup.word.defs.slice(0, 4), (item, idx) => {
+                  return vue.openBlock(), vue.createElementBlock("view", {
+                    key: `quiz-${idx}`,
+                    class: vue.normalizeClass(["exam-train-option", { active: $setup.examQuizSelected === idx }]),
+                    onClick: ($event) => $setup.selectExamQuiz(idx)
+                  }, [
+                    vue.createElementVNode(
+                      "text",
+                      { class: "exam-train-option-label" },
+                      vue.toDisplayString($setup.getDefTypeLabel(item) || "常用义"),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "text",
+                      { class: "exam-train-option-text" },
+                      vue.toDisplayString(item.pos || "") + " " + vue.toDisplayString(item.trans || ""),
+                      1
+                      /* TEXT */
+                    )
+                  ], 10, ["onClick"]);
+                }),
+                128
+                /* KEYED_FRAGMENT */
+              ))
+            ]),
+            $setup.examQuizSelected !== null ? (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 0,
+                class: "exam-train-result"
+              },
+              " 推荐义项：" + vue.toDisplayString($setup.examQuizAnswerText),
+              1
+              /* TEXT */
+            )) : vue.createCommentVNode("v-if", true)
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      vue.createElementVNode("view", { class: "form-item" }, [
+        vue.createElementVNode("view", { class: "section-header" }, [
+          vue.createElementVNode("view", { class: "soft-card-title" }, "例句")
+        ]),
+        vue.createElementVNode("view", { class: "example-container" }, [
+          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "detail-placeholder-block"
+          }, "加载中…")) : $setup.word.examples && $setup.word.examples.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "examples-list"
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.word.examples, (item, index) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: index,
+                  class: "example-item"
+                }, [
+                  vue.createElementVNode("p", { class: "example-english" }, [
+                    vue.createElementVNode("rich-text", {
+                      nodes: $setup.formatHighlight(item.english)
+                    }, null, 8, ["nodes"])
+                  ]),
+                  vue.createElementVNode("p", { class: "example-chinese" }, [
+                    vue.createElementVNode("rich-text", {
+                      nodes: $setup.formatHighlight(item.chinese)
+                    }, null, 8, ["nodes"])
+                  ])
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])) : !$setup.fromWordbookMode && $setup.example ? (vue.openBlock(), vue.createElementBlock(
+            "p",
+            {
+              key: 2,
+              class: "example"
+            },
+            vue.toDisplayString($setup.example),
+            1
+            /* TEXT */
+          )) : (vue.openBlock(), vue.createElementBlock("p", {
+            key: 3,
+            class: "no-examples"
+          }, "暂无例句"))
+        ]),
+        vue.createElementVNode("view", { class: "center-action-row" }, [
+          vue.createElementVNode("button", {
+            onClick: $setup.generateExample,
+            class: "btn-solid btn-inline-action"
+          }, "重新生成")
+        ])
+      ]),
+      vue.createElementVNode("view", { class: "form-item" }, [
+        vue.createElementVNode("view", { class: "section-header" }, [
+          vue.createElementVNode("view", { class: "soft-card-title" }, "近义词")
+        ]),
+        vue.createElementVNode("view", { class: "example-container" }, [
+          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "detail-placeholder-block"
+          }, "加载中…")) : $setup.word.synonyms && $setup.word.synonyms.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "examples-list"
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.word.synonyms, (item, index) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: index,
+                  class: "example-item synonym-item"
+                }, [
+                  vue.createElementVNode("view", { class: "synonym-header" }, [
+                    vue.createElementVNode(
+                      "span",
+                      { class: "synonym-word" },
+                      vue.toDisplayString(item.synonym),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "span",
+                      { class: "synonym-chinese" },
+                      vue.toDisplayString(item.chinese),
+                      1
+                      /* TEXT */
+                    )
+                  ]),
+                  item.example ? (vue.openBlock(), vue.createElementBlock("p", {
+                    key: 0,
+                    class: "example-english"
+                  }, [
+                    vue.createElementVNode("rich-text", {
+                      nodes: $setup.formatHighlight(item.example)
+                    }, null, 8, ["nodes"])
+                  ])) : vue.createCommentVNode("v-if", true),
+                  item.exampleChinese ? (vue.openBlock(), vue.createElementBlock("p", {
+                    key: 1,
+                    class: "example-chinese"
+                  }, [
+                    vue.createElementVNode("rich-text", {
+                      nodes: $setup.formatHighlight(item.exampleChinese)
+                    }, null, 8, ["nodes"])
+                  ])) : vue.createCommentVNode("v-if", true)
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])) : (vue.openBlock(), vue.createElementBlock("p", {
+            key: 2,
+            class: "no-examples"
+          }, "暂无近义词"))
+        ]),
+        vue.createElementVNode("view", { class: "center-action-row" }, [
+          vue.createElementVNode("button", {
+            onClick: $setup.generateSynonyms,
+            class: "btn-solid btn-inline-action",
+            disabled: $setup.synonymLoading
+          }, vue.toDisplayString($setup.synonymLoading ? "生成中..." : "重新生成"), 9, ["disabled"])
+        ]),
+        $setup.synonymContrastText ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "synonym-contrast-box"
+        }, [
+          vue.createElementVNode("view", { class: "exam-tip-title" }, "近义词辨析"),
+          vue.createElementVNode("view", { class: "exam-tip-text" }, [
+            vue.createElementVNode("rich-text", {
+              nodes: $setup.formatHighlight($setup.synonymContrastText)
+            }, null, 8, ["nodes"])
+          ])
+        ])) : vue.createCommentVNode("v-if", true),
+        vue.createElementVNode("view", { class: "center-action-row" }, [
+          vue.createElementVNode("button", {
+            onClick: $setup.generateSynonymContrast,
+            class: "btn-solid btn-inline-action",
+            disabled: $setup.synonymContrastLoading
+          }, vue.toDisplayString($setup.synonymContrastLoading ? "生成中..." : "生成辨析"), 9, ["disabled"])
+        ])
+      ]),
+      vue.createElementVNode("view", { class: "form-item" }, [
+        vue.createElementVNode("view", { class: "section-header" }, [
+          vue.createElementVNode("view", { class: "soft-card-title" }, "反义词")
+        ]),
+        vue.createElementVNode("view", { class: "example-container" }, [
+          $setup.detailHeavyLoading && $setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "detail-placeholder-block"
+          }, "加载中…")) : $setup.word.antonyms && $setup.word.antonyms.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "examples-list"
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.word.antonyms, (item, index) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: index,
+                  class: "example-item antonym-item"
+                }, [
+                  vue.createElementVNode("view", { class: "synonym-header" }, [
+                    vue.createElementVNode(
+                      "span",
+                      { class: "synonym-word" },
+                      vue.toDisplayString(item.antonym),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "span",
+                      { class: "synonym-chinese" },
+                      vue.toDisplayString(item.chinese),
+                      1
+                      /* TEXT */
+                    )
+                  ]),
+                  item.example ? (vue.openBlock(), vue.createElementBlock("p", {
+                    key: 0,
+                    class: "example-english"
+                  }, [
+                    vue.createElementVNode("rich-text", {
+                      nodes: $setup.formatHighlight(item.example)
+                    }, null, 8, ["nodes"])
+                  ])) : vue.createCommentVNode("v-if", true),
+                  item.exampleChinese ? (vue.openBlock(), vue.createElementBlock("p", {
+                    key: 1,
+                    class: "example-chinese"
+                  }, [
+                    vue.createElementVNode("rich-text", {
+                      nodes: $setup.formatHighlight(item.exampleChinese)
+                    }, null, 8, ["nodes"])
+                  ])) : vue.createCommentVNode("v-if", true)
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])) : (vue.openBlock(), vue.createElementBlock("p", {
+            key: 2,
+            class: "no-examples"
+          }, "暂无反义词"))
+        ]),
+        vue.createElementVNode("view", { class: "center-action-row" }, [
+          vue.createElementVNode("button", {
+            onClick: $setup.generateAntonyms,
+            class: "btn-solid btn-inline-action",
+            disabled: $setup.antonymLoading
+          }, vue.toDisplayString($setup.antonymLoading ? "生成中..." : "重新生成"), 9, ["disabled"])
+        ])
+      ]),
+      vue.createElementVNode("view", { class: "form-item" }, [
+        vue.createElementVNode("view", { class: "soft-card-title" }, "词族与搭配"),
+        vue.createElementVNode("view", { class: "example-container" }, [
+          $setup.wordFamily.derivatives.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "examples-list"
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.wordFamily.derivatives, (item, index) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: `der-${index}`,
+                  class: "example-item synonym-item"
+                }, [
+                  vue.createElementVNode("view", { class: "synonym-header" }, [
+                    vue.createElementVNode(
+                      "span",
+                      { class: "synonym-word" },
+                      vue.toDisplayString(item.word),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "span",
+                      { class: "synonym-chinese" },
+                      vue.toDisplayString(item.chinese),
+                      1
+                      /* TEXT */
+                    )
+                  ]),
+                  item.hint ? (vue.openBlock(), vue.createElementBlock(
+                    "p",
+                    {
+                      key: 0,
+                      class: "example-chinese"
+                    },
+                    vue.toDisplayString(item.hint),
+                    1
+                    /* TEXT */
+                  )) : vue.createCommentVNode("v-if", true)
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])) : (vue.openBlock(), vue.createElementBlock("p", {
+            key: 1,
+            class: "no-examples"
+          }, "暂无词族数据")),
+          $setup.wordFamily.collocations.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 2,
+            class: "collocation-wrap"
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.wordFamily.collocations, (item, idx) => {
+                return vue.openBlock(), vue.createElementBlock(
+                  "text",
+                  {
+                    key: `col-${idx}`,
+                    class: "collocation-chip"
+                  },
+                  vue.toDisplayString(item.phrase) + " · " + vue.toDisplayString(item.chinese),
+                  1
+                  /* TEXT */
+                );
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])) : vue.createCommentVNode("v-if", true),
+          $setup.wordFamily.memory_tip ? (vue.openBlock(), vue.createElementBlock(
+            "p",
+            {
+              key: 3,
+              class: "example-chinese"
+            },
+            vue.toDisplayString($setup.wordFamily.memory_tip),
+            1
+            /* TEXT */
+          )) : vue.createCommentVNode("v-if", true)
+        ]),
+        vue.createElementVNode("view", { class: "center-action-row" }, [
+          vue.createElementVNode("button", {
+            onClick: $setup.generateWordFamilyInfo,
+            class: "btn-solid btn-inline-action",
+            disabled: $setup.wordFamilyLoading
+          }, vue.toDisplayString($setup.wordFamilyLoading ? "生成中..." : "生成词族/搭配"), 9, ["disabled"])
+        ])
+      ]),
+      $setup.wordId && $setup.sameTagWords.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 4,
+        class: "form-item same-tag-section"
+      }, [
+        vue.createElementVNode("label", null, "相关词"),
+        vue.createElementVNode("view", { class: "same-tag-list" }, [
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($setup.sameTagWords, (w2) => {
+              return vue.openBlock(), vue.createElementBlock("view", {
+                key: w2.id,
+                class: "same-tag-item",
+                onClick: ($event) => $setup.goToWord(w2.id)
+              }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "same-tag-eng" },
+                  vue.toDisplayString(w2.english),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode(
+                  "text",
+                  { class: "same-tag-chi" },
+                  vue.toDisplayString(w2.chinese),
+                  1
+                  /* TEXT */
+                )
+              ], 8, ["onClick"]);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      vue.createElementVNode("view", { class: "footer" }, [
+        $setup.wordId && !$setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("button", {
+          key: 0,
+          onClick: $setup.deleteWord,
+          class: "delete-button"
+        }, "删除")) : vue.createCommentVNode("v-if", true),
+        vue.createElementVNode("button", {
+          onClick: $setup.cancel,
+          class: "cancel-button"
+        }, "取消"),
+        !$setup.fromWordbookMode ? (vue.openBlock(), vue.createElementBlock("button", {
+          key: 1,
+          onClick: $setup.save,
+          class: "save-button"
+        }, "保存")) : vue.createCommentVNode("v-if", true)
+      ])
+    ]);
+  }
+  const PagesWordDetailWordDetail = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$a], ["__scopeId", "data-v-008cde92"], ["__file", "E:/vocal/wordbook_new/pages/word-detail/word-detail.vue"]]);
+  const getWordKey = (word) => {
+    if (!word)
+      return "";
+    const english = typeof word === "string" ? word : word.english;
+    return String(english || "").trim().toLowerCase();
+  };
+  const uniqueWordKeys = (list) => {
+    if (!Array.isArray(list))
+      return [];
+    return [...new Set(list.map((item) => getWordKey(item)).filter(Boolean))];
+  };
+  const getTodayKey = () => {
+    const d2 = /* @__PURE__ */ new Date();
+    const m2 = `${d2.getMonth() + 1}`.padStart(2, "0");
+    const day = `${d2.getDate()}`.padStart(2, "0");
+    return `${d2.getFullYear()}-${m2}-${day}`;
+  };
+  const normalizePlanEntry = (entry = {}) => ({
+    completed: Math.max(0, Number(entry.completed || 0)),
+    learnedKeys: uniqueWordKeys(entry.learnedKeys),
+    roundReviewedKeys: uniqueWordKeys(entry.roundReviewedKeys || entry.completedKeys),
+    todayKey: typeof entry.todayKey === "string" ? entry.todayKey : "",
+    todayKeys: uniqueWordKeys(entry.todayKeys),
+    updatedAt: Number(entry.updatedAt || Date.now())
+  });
+  const filterWordsByKeys = (list, keySet) => {
+    const set = keySet instanceof Set ? keySet : new Set(keySet || []);
+    return (list || []).filter((item) => set.has(getWordKey(item)));
+  };
+  const shuffleList = (list) => {
+    const arr = Array.isArray(list) ? [...list] : [];
+    for (let i2 = arr.length - 1; i2 > 0; i2--) {
+      const j2 = Math.floor(Math.random() * (i2 + 1));
+      [arr[i2], arr[j2]] = [arr[j2], arr[i2]];
+    }
+    return arr;
+  };
+  const getReviewProgressKey = () => {
+    const bookId = typeof uni !== "undefined" ? uni.getStorageSync("currentWordbook") || "self" : "self";
+    return `review_progress_${bookId}`;
+  };
+  const REVIEW_PLAN_KEY = "reviewPlanByBook_v2";
+  const loadPlanStore = () => {
+    try {
+      const raw = uni.getStorageSync(REVIEW_PLAN_KEY);
+      if (!raw)
+        return {};
+      if (typeof raw === "string") {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === "object" ? parsed : {};
+      }
+      return raw && typeof raw === "object" ? raw : {};
+    } catch (_2) {
+      return {};
+    }
+  };
+  const savePlanStore = (obj) => {
+    try {
+      uni.setStorageSync(REVIEW_PLAN_KEY, JSON.stringify(obj || {}));
+    } catch (_2) {
+    }
+  };
+  const getPlanEntry = (bookId) => {
+    const store = loadPlanStore();
+    return normalizePlanEntry(store[bookId] || {});
+  };
+  const savePlanEntry = (bookId, entry) => {
+    const store = loadPlanStore();
+    const next = normalizePlanEntry(entry);
+    store[bookId] = next;
+    savePlanStore(store);
+    return next;
+  };
+  const interleaveOldWords = (freshWords, oldWords, count) => {
+    const fresh = shuffleList(freshWords).map((item) => ({ ...item, __isOldReview: false }));
+    const old = shuffleList(oldWords).map((item) => ({ ...item, __isOldReview: true }));
+    const result = [];
+    const step = Math.max(2, Math.round(fresh.length / Math.max(old.length, 1)));
+    let freshIndex = 0;
+    let oldIndex = 0;
+    while (result.length < count && (freshIndex < fresh.length || oldIndex < old.length)) {
+      let pushedFresh = 0;
+      while (freshIndex < fresh.length && pushedFresh < step && result.length < count) {
+        result.push(fresh[freshIndex++]);
+        pushedFresh++;
+      }
+      if (oldIndex < old.length && result.length < count) {
+        result.push(old[oldIndex++]);
+      }
+    }
+    return result.slice(0, count);
+  };
+  const getOldReviewQuota = (count, oldPoolSize, newPoolSize) => {
+    if (oldPoolSize <= 0)
+      return 0;
+    if (newPoolSize <= 0)
+      return Math.min(count, oldPoolSize);
+    return Math.min(oldPoolSize, Math.max(2, Math.min(count - 1, Math.round(count * 0.25))));
+  };
+  const _sfc_main$9 = {
+    __name: "review",
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const showSettings = vue.ref(false);
+      const showModeSelector = vue.ref(false);
+      const showSortSelector = vue.ref(false);
+      const showCountSelector = vue.ref(false);
+      const showDifficultySelector = vue.ref(false);
+      const reviewStarted = vue.ref(false);
+      const reviewFinished = vue.ref(false);
+      const settings = vue.ref({
+        mode: "choice",
+        sortBy: "smart",
+        count: 20
+      });
+      const reviewWords = vue.ref([]);
+      const currentIndex = vue.ref(0);
+      const currentWord = vue.ref(null);
+      const currentOptions = vue.ref([]);
+      const fillOptions = vue.ref([]);
+      const currentFillSentenceChinese = vue.ref("");
+      const spellInput = vue.ref("");
+      const escapeRegExp = (s2) => String(s2 || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const formatHighlight = (text) => {
+        if (!text)
+          return "";
+        let formattedText = text.replace(/\*\*(.*?)\*\*/g, function(match, word) {
+          return `<span style="color: #FF85A1; font-weight: bold;">${word}</span>`;
+        });
+        if (currentWord.value && currentWord.value.english) {
+          const targetWord = currentWord.value.english;
+          const targetRegex = new RegExp(`\\b(${escapeRegExp(targetWord)})\\b`, "gi");
+          formattedText = formattedText.replace(targetRegex, `<span style="color: #FF85A1; font-weight: bold;">$1</span>`);
+        }
+        return formattedText;
+      };
+      const currentSentence = vue.ref("");
+      const fillAnswer = vue.ref("");
+      const aiSentence = vue.ref("");
+      const userTranslation = vue.ref("");
+      const aiResult = vue.ref(null);
+      const isGenerating = vue.ref(false);
+      const isSubmitting = vue.ref(false);
+      const formatAIPhighlight = (text) => {
+        if (!text)
+          return "";
+        let formattedText = text;
+        if (currentWord.value && currentWord.value.english) {
+          const targetWord = currentWord.value.english;
+          const targetRegex = new RegExp(`\\b(${escapeRegExp(targetWord)})\\b`, "gi");
+          formattedText = formattedText.replace(targetRegex, `<span style="color: #FF85A1; font-weight: bold; background-color: #FFF0F3; padding: 2px 4px; border-radius: 4px;">$1</span>`);
+        }
+        return formattedText;
+      };
+      const selectedOption = vue.ref("");
+      const showResult = vue.ref(false);
+      const showWrongFeedback = vue.ref(false);
+      const correctCount = vue.ref(0);
+      const wrongCount = vue.ref(0);
+      const wrongWords = vue.ref([]);
+      const lastReviewResult = vue.ref(null);
+      const showResumeModal = vue.ref(false);
+      const hasProgress = vue.ref(false);
+      const activeSettingCard = vue.ref("mode");
+      const dashboardDone = vue.ref(0);
+      const dashboardTotal = vue.ref(0);
+      const bookTotalWords = vue.ref(0);
+      const totalReviewedWords = vue.ref(0);
+      const todayReviewed = vue.ref(0);
+      const learnedUniqueWords = vue.ref(0);
+      const dashboardSnapshot = vue.ref({ dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 });
+      const showMasteredConfirm = vue.ref(false);
+      const reviewPreset = vue.ref("due");
+      const sessionNewCount = vue.ref(0);
+      const sessionOldCount = vue.ref(0);
+      const recommendedReviewStage = vue.ref("new");
+      const recommendedReviewState = vue.ref({
+        newWords: [],
+        wrongWords: [],
+        oldWords: [],
+        currentStage: "new",
+        newCompleted: false,
+        wrongCompleted: false,
+        oldCompleted: false
+      });
+      const getSettingsKey = () => `reviewSettings_${getCurrentBookId()}`;
+      const getLastReviewResultKey = () => `lastReviewResult_${getCurrentBookId()}`;
+      const getCurrentBookId = () => getCurrentWordbook() || "self";
+      const saveReviewProgress = () => {
+        if (!reviewStarted.value || reviewFinished.value || reviewWords.value.length === 0)
+          return;
+        uni.setStorageSync(getReviewProgressKey(), {
+          reviewWords: reviewWords.value,
+          currentIndex: currentIndex.value,
+          correctCount: correctCount.value,
+          wrongCount: wrongCount.value,
+          wrongWords: [...wrongWords.value],
+          settings: { ...settings.value },
+          reviewPreset: reviewPreset.value,
+          sessionNewCount: sessionNewCount.value,
+          sessionOldCount: sessionOldCount.value,
+          recommendedReviewState: { ...recommendedReviewState.value }
+        });
+        hasProgress.value = true;
+      };
+      const clearReviewProgress = () => {
+        uni.removeStorageSync(getReviewProgressKey());
+        hasProgress.value = false;
+      };
+      const loadReviewProgress = () => {
+        try {
+          const saved = uni.getStorageSync(getReviewProgressKey());
+          return saved && saved.reviewWords && saved.reviewWords.length > 0 ? saved : null;
+        } catch (e2) {
+          return null;
+        }
+      };
+      const resumeReview = () => {
+        const saved = loadReviewProgress();
+        if (!saved)
+          return;
+        reviewWords.value = saved.reviewWords;
+        currentIndex.value = saved.currentIndex;
+        correctCount.value = saved.correctCount;
+        wrongCount.value = saved.wrongCount;
+        wrongWords.value = saved.wrongWords || [];
+        settings.value = saved.settings || settings.value;
+        reviewPreset.value = saved.reviewPreset || "due";
+        sessionNewCount.value = Number(saved.sessionNewCount || 0);
+        sessionOldCount.value = Number(saved.sessionOldCount || 0);
+        if (saved.recommendedReviewState) {
+          recommendedReviewState.value = saved.recommendedReviewState;
+        }
+        reviewStarted.value = true;
+        reviewFinished.value = false;
+        showResumeModal.value = false;
+        syncDashboardProgress();
+        loadCurrentQuestion();
+      };
+      const discardReview = () => {
+        clearReviewProgress();
+        showResumeModal.value = false;
+        syncDashboardProgress();
+      };
+      const checkProgress = () => {
+        hasProgress.value = !!loadReviewProgress();
+        syncDashboardProgress();
+      };
+      const getCurrentBookTotalWords = async () => {
+        const book = getCurrentBookId();
+        try {
+          if (book === "self") {
+            const all = await db.getAllWords();
+            return Array.isArray(all) ? all.length : 0;
+          }
+          if (isLocalWordbookKey(book)) {
+            const list2 = await loadLocalWordbook(book);
+            return Array.isArray(list2) ? list2.length : 0;
+          }
+          const list = getWordbookWords(book) || [];
+          return Array.isArray(list) ? list.length : 0;
+        } catch (_2) {
+          return 0;
+        }
+      };
+      const getCurrentBookWordPool = async () => {
+        const book = getCurrentBookId();
+        if (book === "self") {
+          return await db.getAllWords();
+        }
+        if (isLocalWordbookKey(book)) {
+          const list = await loadLocalWordbook(book);
+          const dictLookup = await getWordBriefBatch(list.map((w2) => w2.english));
+          return list.map((w2) => {
+            const v2 = dictLookup[(w2.english || "").trim().toLowerCase()];
+            const chinese = v2 && typeof v2 === "object" && v2.chinese != null ? String(v2.chinese).trim() : (typeof v2 === "string" ? v2 : "").trim();
+            return {
+              id: null,
+              english: w2.english,
+              chinese,
+              importance: w2.importance,
+              examples: [],
+              synonyms: [],
+              antonyms: []
+            };
+          });
+        }
+        return getWordbookWords(book) || [];
+      };
+      const refreshDashboardSnapshot = async () => {
+        try {
+          const pool = await getCurrentBookWordPool();
+          dashboardSnapshot.value = getLearningDashboard(pool, getCurrentBookId());
+        } catch (_2) {
+          dashboardSnapshot.value = { dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 };
+        }
+      };
+      const refreshPlanStats = async () => {
+        bookTotalWords.value = await getCurrentBookTotalWords();
+        const bookId = getCurrentBookId();
+        const plan = getPlanEntry(bookId);
+        totalReviewedWords.value = Number(plan.completed || 0);
+        learnedUniqueWords.value = plan.learnedKeys.length;
+        todayReviewed.value = plan.todayKey === getTodayKey() ? plan.todayKeys.length : 0;
+        refreshDashboardSnapshot().catch(() => {
+          dashboardSnapshot.value = { dueCount: 0, overdueCount: 0, mistakeCount: 0, firstDayDue: 0 };
+        });
+      };
+      const resetCurrentPlan = () => {
+        savePlanEntry(getCurrentBookId(), {
+          completed: 0,
+          learnedKeys: [],
+          roundReviewedKeys: [],
+          todayKey: getTodayKey(),
+          todayKeys: [],
+          updatedAt: Date.now()
+        });
+        totalReviewedWords.value = 0;
+        learnedUniqueWords.value = 0;
+        todayReviewed.value = 0;
+      };
+      const markWordsReviewed = (words) => {
+        const list = Array.isArray(words) ? words : [words];
+        if (!list.length)
+          return;
+        const bookId = getCurrentBookId();
+        const total = Math.max(0, Number(bookTotalWords.value || 0));
+        const todayKey = getTodayKey();
+        const old = getPlanEntry(bookId);
+        const learnedSet = new Set(old.learnedKeys);
+        const roundSet = new Set(old.roundReviewedKeys);
+        const todaySet = new Set(old.todayKey === todayKey ? old.todayKeys : []);
+        let completed = Number(old.completed || 0);
+        let newWordsCount = 0;
+        let oldWordsCount = 0;
+        for (const item of list) {
+          const key = getWordKey(item);
+          if (!key)
+            continue;
+          const isNew = !learnedSet.has(key);
+          if (isNew)
+            newWordsCount++;
+          else
+            oldWordsCount++;
+          learnedSet.add(key);
+          todaySet.add(key);
+          if (total > 0 && roundSet.size >= total) {
+            roundSet.clear();
+          }
+          if (!roundSet.has(key)) {
+            roundSet.add(key);
+            completed += 1;
+          }
+        }
+        const next = savePlanEntry(bookId, {
+          ...old,
+          completed,
+          learnedKeys: [...learnedSet],
+          roundReviewedKeys: [...roundSet],
+          todayKey,
+          todayKeys: [...todaySet],
+          updatedAt: Date.now()
+        });
+        totalReviewedWords.value = next.completed;
+        learnedUniqueWords.value = next.learnedKeys.length;
+        todayReviewed.value = next.todayKeys.length;
+        sessionNewCount.value += newWordsCount;
+        sessionOldCount.value += oldWordsCount;
+      };
+      const syncDashboardProgress = () => {
+        const saved = loadReviewProgress();
+        if (saved && Array.isArray(saved.reviewWords) && saved.reviewWords.length > 0) {
+          dashboardDone.value = Math.min(Number(saved.currentIndex || 0), saved.reviewWords.length);
+          dashboardTotal.value = saved.reviewWords.length;
+        } else {
+          dashboardDone.value = 0;
+          dashboardTotal.value = settings.value.count;
+        }
+      };
+      const dashboardTarget = vue.computed(() => {
+        if (settings.value.difficulty === "hard") {
+          return Math.max(settings.value.count, Math.ceil(settings.value.count * 1.2));
+        }
+        return settings.value.count;
+      });
+      const dashboardPercent = vue.computed(() => {
+        const total = Number(dashboardTotal.value || 0);
+        if (!total)
+          return 0;
+        const pct = Math.round(Number(dashboardDone.value || 0) / total * 100);
+        return Math.max(0, Math.min(100, pct));
+      });
+      const formatRelativeReviewTime = (isoString) => {
+        if (!isoString)
+          return "待计算";
+        const now = /* @__PURE__ */ new Date();
+        const target = new Date(isoString);
+        if (Number.isNaN(target.getTime()))
+          return "待计算";
+        const diffMs = target - now;
+        const absMinutes = Math.round(Math.abs(diffMs) / (1e3 * 60));
+        if (absMinutes < 60)
+          return diffMs >= 0 ? `${Math.max(1, absMinutes)} 分钟后` : `${Math.max(1, absMinutes)} 分钟前`;
+        const absHours = Math.round(absMinutes / 60);
+        if (absHours < 24)
+          return diffMs >= 0 ? `${absHours} 小时后` : `${absHours} 小时前`;
+        const absDays = Math.round(absHours / 24);
+        return diffMs >= 0 ? `${absDays} 天后` : `${absDays} 天前`;
+      };
+      const currentReviewInsight = vue.computed(() => {
+        var _a;
+        if (!isSelfWordbook() || !((_a = currentWord.value) == null ? void 0 : _a.id))
+          return null;
+        const insight = db.getReviewInsight(currentWord.value);
+        if (!insight)
+          return null;
+        return {
+          ...insight,
+          nextReviewText: formatRelativeReviewTime(insight.next_review_time)
+        };
+      });
+      const applyReviewPreview = (isCorrect) => {
+        var _a;
+        if (!((_a = currentWord.value) == null ? void 0 : _a.id))
+          return;
+        const preview = db.previewReviewState(currentWord.value, isCorrect);
+        if (!preview)
+          return;
+        currentWord.value = { ...currentWord.value, ...preview };
+        const idx = Number(currentIndex.value || 0);
+        if (Array.isArray(reviewWords.value) && reviewWords.value[idx]) {
+          reviewWords.value[idx] = { ...reviewWords.value[idx], ...preview };
+        }
+      };
+      const finishedReviewInsight = vue.computed(() => {
+        if (!isSelfWordbook())
+          return null;
+        const list = (reviewWords.value || []).map((word) => db.getReviewInsight(word)).filter(Boolean);
+        if (!list.length)
+          return null;
+        const avgMastery = Math.round(list.reduce((sum, item) => sum + (item.mastery || 0), 0) / list.length);
+        const nextTimes = list.map((item) => item.next_review_time).filter(Boolean).sort();
+        return {
+          avgMastery,
+          scheduledCount: list.length,
+          nextReviewText: nextTimes.length ? formatRelativeReviewTime(nextTimes[0]) : "待计算"
+        };
+      });
+      const completedInRound = vue.computed(() => {
+        const total = Number(bookTotalWords.value || 0);
+        if (total <= 0)
+          return 0;
+        return Number(totalReviewedWords.value || 0) % total;
+      });
+      const currentRound = vue.computed(() => {
+        const total = Number(bookTotalWords.value || 0);
+        if (total <= 0)
+          return 1;
+        return Math.floor(Number(totalReviewedWords.value || 0) / total) + 1;
+      });
+      const currentProgressPercent = vue.computed(() => {
+        const total = Number(bookTotalWords.value || 0);
+        if (total <= 0)
+          return 0;
+        return Math.max(0, Math.min(100, Math.round(Math.min(learnedUniqueWords.value, total) / total * 100)));
+      });
+      const oldReviewDailyTarget = vue.computed(() => {
+        if (!learnedUniqueWords.value)
+          return 0;
+        return Math.min(learnedUniqueWords.value, Math.max(3, Math.round(Number(settings.value.count || 0) * 0.25)));
+      });
+      const dailyNewTarget = vue.computed(() => {
+        return Math.max(1, Number(settings.value.count || 0) - Number(oldReviewDailyTarget.value || 0));
+      });
+      const remainDays = vue.computed(() => {
+        const total = Number(bookTotalWords.value || 0);
+        if (total <= 0)
+          return 0;
+        const remainingWords = Math.max(total - learnedUniqueWords.value, 0);
+        if (remainingWords <= 0)
+          return 0;
+        return Math.max(1, Math.ceil(remainingWords / dailyNewTarget.value));
+      });
+      const remainingNewWords = vue.computed(() => {
+        const total = Number(bookTotalWords.value || 0);
+        if (total <= 0)
+          return 0;
+        return Math.max(total - learnedUniqueWords.value, 0);
+      });
+      const estimatedFinishDate = vue.computed(() => {
+        if (!bookTotalWords.value)
+          return "—";
+        if (remainDays.value <= 0)
+          return "今日";
+        const days = Math.max(remainDays.value, 1);
+        const d2 = /* @__PURE__ */ new Date();
+        d2.setDate(d2.getDate() + days - 1);
+        const m2 = `${d2.getMonth() + 1}`.padStart(2, "0");
+        const day = `${d2.getDate()}`.padStart(2, "0");
+        return `${m2}/${day}`;
+      });
+      const dailyPlanText = vue.computed(() => {
+        if (oldReviewDailyTarget.value > 0) {
+          if (remainDays.value <= 0) {
+            return `新词已学完，当前每日复习 ${oldReviewDailyTarget.value} 词巩固记忆`;
+          }
+          return `每日新学 ${dailyNewTarget.value} 词，穿插复习 ${oldReviewDailyTarget.value} 词，剩余 ${remainDays.value} 天，预计完成 ${estimatedFinishDate.value}`;
+        }
+        return `每日 ${settings.value.count} 词，剩余 ${remainDays.value} 天，预计完成 ${estimatedFinishDate.value}`;
+      });
+      const isTodayTargetDone = vue.computed(() => {
+        const target = Number(settings.value.count || 0);
+        return target > 0 && todayReviewed.value >= target;
+      });
+      const primaryStartText = vue.computed(() => {
+        if (reviewPreset.value === "due")
+          return "开始到期复习";
+        if (reviewPreset.value === "new")
+          return "开始新词学习";
+        if (reviewPreset.value === "wrong")
+          return "开始错词复习";
+        if (reviewPreset.value === "old")
+          return "开始旧词复习";
+        return isTodayTargetDone.value ? "再来一组20" : "开始学习";
+      });
+      const todayProgressPercent = vue.computed(() => {
+        const target = Number(settings.value.count || 0);
+        if (target === 0)
+          return 0;
+        const current = reviewStarted.value ? currentIndex.value + 1 : todayReviewed.value;
+        return Math.min(100, Math.round(current / target * 100));
+      });
+      const recommendedPreset = vue.computed(() => {
+        return "new";
+      });
+      const recommendedPresetIcon = vue.computed(() => {
+        return "";
+      });
+      const recommendedPresetTitle = vue.computed(() => {
+        return "今日任务";
+      });
+      const recommendedPresetDesc = vue.computed(() => {
+        const newWordsNeeded = Math.max(0, settings.value.count - todayReviewed.value);
+        return `还需学习 ${newWordsNeeded} 个新词`;
+      });
+      const otherPresets = vue.computed(() => {
+        const allPresets = {
+          wrong: { key: "wrong", icon: "", title: "错词复习", count: dashboardSnapshot.value.mistakeCount },
+          old: { key: "old", icon: "", title: "旧词复习", count: dashboardSnapshot.value.dueCount }
+        };
+        return Object.values(allPresets);
+      });
+      const currentWordbookName = vue.computed(() => {
+        const current = getCurrentWordbook();
+        if (current === "self")
+          return "自用单词";
+        const list = getWordbookListForUI();
+        const hit = list.find((item) => item.id === current);
+        return (hit == null ? void 0 : hit.name) || current || "当前词书";
+      });
+      const openSettings = (key) => {
+        activeSettingCard.value = key;
+        showSettings.value = true;
+      };
+      const sortByText = vue.computed(() => {
+        const map = { smart: "智能推荐", error: "难点先行", new: "新词优先" };
+        return map[settings.value.sortBy] || "智能推荐";
+      });
+      const isLastQuestion = vue.computed(() => {
+        return currentIndex.value >= reviewWords.value.length - 1;
+      });
+      const modeOptions = ["看英文选中文", "看中文选英文", "AI例句填空", "AI语境复习", "拼写填空"];
+      const sortOptions = ["智能推荐", "难点先行", "新词优先"];
+      const countOptions = [20, 30, 40, 50, 80, 100, 200, 500, 800, 1e3];
+      const dailyQuickOptions = [20, 50, 100, 200, 500, 800, 1e3];
+      const modeIndex = vue.computed(() => {
+        const map = { choice: 0, choice_en: 1, fill: 2, ai: 3, spell: 4 };
+        return map[settings.value.mode] ?? 0;
+      });
+      const modeDisplayText = vue.computed(() => {
+        const map = { choice: "看英文选中文", choice_en: "看中文选英文", fill: "AI例句填空", ai: "AI语境复习", spell: "拼写填空" };
+        return map[settings.value.mode] || "看英文选中文";
+      });
+      const sortIndex = vue.computed(() => {
+        const map = { smart: 0, error: 1, new: 2 };
+        return map[settings.value.sortBy] || 0;
+      });
+      const countIndex = vue.computed(() => countOptions.indexOf(settings.value.count) >= 0 ? countOptions.indexOf(settings.value.count) : 3);
+      const onModeChange = (e2) => {
+        const map = ["choice", "choice_en", "fill", "ai", "spell"];
+        settings.value.mode = map[e2.detail.value] || "choice";
+        saveSettings();
+      };
+      const onSortChange = (e2) => {
+        const map = ["smart", "error", "new"];
+        settings.value.sortBy = map[e2.detail.value];
+        saveSettings();
+      };
+      const onCountChange = (e2) => {
+        settings.value.count = countOptions[e2.detail.value];
+        saveSettings();
+      };
+      const setDailyTarget = (n2) => {
+        settings.value.count = Number(n2);
+        saveSettings();
+      };
+      const onDifficultyChange = (difficulty) => {
+        settings.value.difficulty = difficulty;
+        saveSettings();
+      };
+      const openModeSelector = () => {
+        showModeSelector.value = true;
+      };
+      const openSortSelector = () => {
+        showSortSelector.value = true;
+      };
+      const openCountSelector = () => {
+        showCountSelector.value = true;
+      };
+      const openDifficultySelector = () => {
+        showDifficultySelector.value = true;
+      };
+      onLoad((options) => {
+        reviewPreset.value = options && options.preset ? String(options.preset) : "due";
+      });
+      vue.onMounted(() => {
+        loadSettings();
+        loadLastReviewResult();
+        checkProgress();
+        syncDashboardProgress();
+        setTimeout(() => {
+          refreshPlanStats();
+        }, 350);
+      });
+      onShow(() => {
+        loadLastReviewResult();
+        checkProgress();
+        setTimeout(() => {
+          refreshPlanStats();
+        }, 350);
+      });
+      onHide(() => {
+        if (reviewStarted.value && !reviewFinished.value) {
+          setTimeout(() => saveReviewProgress(), 300);
+        }
+      });
+      onUnload(() => {
+        if (reviewStarted.value && !reviewFinished.value) {
+          saveReviewProgress();
+        }
+        try {
+          cleanupExpiredCaches();
+        } catch (error) {
+          logger.warn("Review", "清理缓存失败", error);
+        }
+      });
+      const loadSettings = () => {
+        const saved = uni.getStorageSync(getSettingsKey()) || uni.getStorageSync("reviewSettings");
+        if (saved) {
+          settings.value = saved;
+        }
+      };
+      const saveSettings = () => {
+        uni.setStorageSync(getSettingsKey(), settings.value);
+        syncDashboardProgress();
+        refreshPlanStats();
+      };
+      const loadLastReviewResult = () => {
+        const saved = uni.getStorageSync(getLastReviewResultKey()) || getLatestSession(getCurrentBookId());
+        if (saved) {
+          lastReviewResult.value = saved.accuracy != null ? saved : {
+            correctCount: saved.correctCount || 0,
+            wrongCount: saved.wrongCount || 0,
+            accuracy: Math.round(Number(saved.correctCount || 0) / Math.max(1, Number(saved.reviewedCount || 0)) * 100),
+            wrongWords: []
+          };
+        }
+      };
+      const saveReviewResult = () => {
+        const result = {
+          correctCount: correctCount.value,
+          wrongCount: wrongCount.value,
+          accuracy: Math.round(correctCount.value / (correctCount.value + wrongCount.value || 1) * 100) || 0,
+          wrongWords: wrongWords.value,
+          reviewedCount: correctCount.value + wrongCount.value,
+          preset: reviewPreset.value,
+          newCount: sessionNewCount.value,
+          oldCount: sessionOldCount.value
+        };
+        uni.setStorageSync(getLastReviewResultKey(), result);
+        lastReviewResult.value = result;
+      };
+      const buildPresetQueue = async (list, count) => {
+        const preset = reviewPreset.value || "due";
+        if (!Array.isArray(list) || !list.length)
+          return [];
+        const filteredList = await filterOutMasteredWords(list);
+        if (!filteredList.length)
+          return [];
+        if (preset === "new") {
+          const profiles = filteredList.map((item) => getWordProfile(item)).filter(Boolean);
+          const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
+          return shuffleList(newWords.map((p2) => ({ english: p2.english, chinese: p2.chinese }))).slice(0, count);
+        }
+        if (preset === "wrong") {
+          const wrongSet = new Set(getMistakeWords(getCurrentBookId(), true).map((item) => getWordKey(item)));
+          return shuffleList(filterWordsByKeys(filteredList, wrongSet)).slice(0, count);
+        }
+        if (preset === "old") {
+          const dueProfiles = getDueProfilesForWords(filteredList, getCurrentBookId());
+          const filtered = dueProfiles.filter((item) => {
+            const reviewCount = Number(item.review_count || 0);
+            return reviewCount < 3;
+          });
+          const dueSet = new Set(filtered.map((item) => getWordKey(item)));
+          return shuffleList(filterWordsByKeys(filteredList, dueSet)).slice(0, count);
+        }
+        if (preset === "due") {
+          const dueProfiles = getDueProfilesForWords(filteredList, getCurrentBookId());
+          const dueSet = new Set(dueProfiles.map((item) => getWordKey(item)));
+          return shuffleList(filterWordsByKeys(filteredList, dueSet)).slice(0, count);
+        }
+        return [];
+      };
+      const filterOutMasteredWords = async (list) => {
+        try {
+          const { getWordbookWords: getWordbookWords2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
+          const masteredWords = getWordbookWords2("mastered") || [];
+          const masteredSet = new Set(masteredWords.map((w2) => (w2.english || "").trim().toLowerCase()));
+          return list.filter((item) => {
+            const english = (item.english || "").trim().toLowerCase();
+            return !masteredSet.has(english);
+          });
+        } catch (e2) {
+          formatAppLog("warn", "at pages/review/review.vue:1225", "filterOutMasteredWords: 过滤已斩单词失败", e2);
+          return list;
+        }
+      };
+      const buildBookReviewQueue = async (list, count) => {
+        if (!Array.isArray(list) || !list.length)
+          return [];
+        const filteredList = filterOutMasteredWords(list);
+        if (!filteredList.length)
+          return [];
+        return shuffleList(filteredList).slice(0, count);
+      };
+      const saveSettingsAndStart = () => {
+        saveSettings();
+        showSettings.value = false;
+        startReview();
+      };
+      const startReviewInternal = async (forceCount = null) => {
+        ensureDictWords();
+        const bookId = getCurrentBookId();
+        const oldPlanEntry = getPlanEntry(bookId);
+        oldPlanEntry.todayKey === getTodayKey() ? oldPlanEntry.todayKeys : [];
+        clearReviewProgress();
+        const count = forceCount != null ? Number(forceCount) : Number(settings.value.count || 20);
+        if (recommendedReviewState.value.currentStage && reviewWords.value.length > 0)
+          ;
+        else if (isSelfWordbook()) {
+          if (reviewPreset.value === "due") {
+            let words = await db.getReviewWords({
+              sortBy: settings.value.sortBy,
+              count,
+              difficulty: "normal"
+            });
+            words = await filterOutMasteredWords(words);
+            reviewWords.value = words;
+          } else {
+            const allWords = await db.getAllWords();
+            reviewWords.value = await buildPresetQueue(allWords, count);
+          }
+        } else {
+          const list = await getCurrentBookWordPool();
+          const presetQueue = await buildPresetQueue(list, count);
+          reviewWords.value = presetQueue.length ? presetQueue : await buildBookReviewQueue(list, count);
+        }
+        if (reviewWords.value.length === 0) {
+          uni.showToast({
+            title: "没有单词可复习",
+            icon: "none"
+          });
+          return;
+        }
+        reviewStarted.value = true;
+        reviewFinished.value = false;
+        currentIndex.value = 0;
+        correctCount.value = 0;
+        wrongCount.value = 0;
+        wrongWords.value = [];
+        sessionNewCount.value = reviewWords.value.filter((item) => !item.__isOldReview).length;
+        sessionOldCount.value = reviewWords.value.filter((item) => !!item.__isOldReview).length;
+        loadCurrentQuestion();
+      };
+      const startReview = async () => {
+        const progress = loadReviewProgress();
+        if (progress) {
+          resumeReview();
+        } else {
+          await startReviewInternal(null);
+        }
+      };
+      const startExtraRound20 = async () => startReviewInternal(20);
+      const onPrimaryStartClick = async () => {
+        if (isTodayTargetDone.value) {
+          await startExtraRound20();
+          return;
+        }
+        await startReview();
+      };
+      const startRecommendedReview = async () => {
+        const dailyTarget = Number(settings.value.count || 20);
+        getCurrentBookId();
+        const newWordsNeeded = Math.max(0, dailyTarget - todayReviewed.value);
+        try {
+          let allWords = [];
+          if (isSelfWordbook()) {
+            allWords = await db.getAllWords();
+          } else {
+            allWords = await getCurrentBookWordPool();
+          }
+          let newWords = allWords.filter((item) => {
+            const profile = getWordProfile(item);
+            return !profile || !profile.seen_count || Number(profile.seen_count) === 0;
+          });
+          newWords = await filterOutMasteredWords(newWords);
+          const newWordsCount = newWordsNeeded > 0 ? newWordsNeeded : newWords.length;
+          reviewWords.value = shuffleList(newWords.map((p2) => ({ english: p2.english, chinese: p2.chinese }))).slice(0, newWordsCount);
+          reviewPreset.value = "new";
+          if (reviewWords.value.length === 0) {
+            uni.showToast({ title: "暂无新词可学", icon: "none" });
+          } else {
+            await startReviewInternal(null);
+          }
+        } catch (e2) {
+          formatAppLog("error", "at pages/review/review.vue:1368", "startRecommendedReview 失败:", e2);
+          uni.showToast({ title: "加载失败", icon: "none" });
+        }
+      };
+      const startPresetReview = async (preset) => {
+        reviewPreset.value = preset;
+        reviewWords.value = [];
+        await startReviewInternal(null);
+      };
+      const prefetchNextWordDetail = (nextIndex) => {
+        const nextWord = reviewWords.value[nextIndex];
+        if (nextWord && nextWord.english) {
+          getWordFullDetail(nextWord.english).catch(() => {
+          });
+        }
+      };
+      const loadCurrentQuestion = async () => {
+        var _a;
+        showResult.value = false;
+        showWrongFeedback.value = false;
+        selectedOption.value = "";
+        userTranslation.value = "";
+        aiResult.value = null;
+        if (currentIndex.value >= reviewWords.value.length) {
+          reviewFinished.value = true;
+          return;
+        }
+        currentWord.value = reviewWords.value[currentIndex.value];
+        prefetchNextWordDetail(currentIndex.value + 1);
+        if ((_a = currentWord.value) == null ? void 0 : _a.english) {
+          try {
+            const detail = await getWordFullDetail(currentWord.value.english);
+            if (detail) {
+              const merged = {
+                ...currentWord.value,
+                chinese: detail.chinese || currentWord.value.chinese,
+                examples: Array.isArray(detail.examples) && detail.examples.length ? detail.examples : currentWord.value.examples || [],
+                synonyms: Array.isArray(detail.synonyms) && detail.synonyms.length ? detail.synonyms : currentWord.value.synonyms || [],
+                antonyms: Array.isArray(detail.antonyms) && detail.antonyms.length ? detail.antonyms : currentWord.value.antonyms || [],
+                defs: Array.isArray(detail.defs) ? detail.defs : currentWord.value.defs || [],
+                exam_tip: detail.exam_tip || currentWord.value.exam_tip || "",
+                frequency: detail.frequency || currentWord.value.frequency || 0
+              };
+              currentWord.value = merged;
+              reviewWords.value[currentIndex.value] = merged;
+            }
+          } catch (_2) {
+          }
+        }
+        spellInput.value = "";
+        if (settings.value.mode === "choice") {
+          await loadChoiceQuestion();
+        } else if (settings.value.mode === "choice_en") {
+          await loadChoiceEnQuestion();
+        } else if (settings.value.mode === "fill") {
+          await loadFillQuestion();
+        } else if (settings.value.mode === "ai") {
+          await loadAIQuestion();
+        } else if (settings.value.mode === "spell")
+          ;
+      };
+      let _dictWordsCache = [];
+      let _dictWordsPromise = null;
+      const ensureDictWords = () => {
+        if (_dictWordsCache.length > 0)
+          return Promise.resolve();
+        if (_dictWordsPromise)
+          return _dictWordsPromise;
+        _dictWordsPromise = getWordListForReview().then((list) => {
+          _dictWordsCache = list || [];
+          _dictWordsPromise = null;
+        }).catch(() => {
+          _dictWordsPromise = null;
+        });
+        return _dictWordsPromise;
+      };
+      const getFormSimilarFromDict = (targetEnglish, count, needChinese) => {
+        if (!targetEnglish || !_dictWordsCache.length)
+          return needChinese ? [] : [];
+        const target = (targetEnglish || "").trim().toLowerCase();
+        const len = target.length;
+        const pool = _dictWordsCache.filter(
+          (item) => item.word && item.chinese && item.word.trim().toLowerCase() !== target
+        ).filter((item) => Math.abs((item.word || "").trim().length - len) <= 2);
+        const capped = pool.length > 3e3 ? pool.slice(0, 3e3) : pool;
+        const scored = capped.map((item) => ({
+          word: (item.word || "").trim(),
+          chinese: (item.chinese || "").trim(),
+          score: formSimilarityScore((item.word || "").trim(), targetEnglish)
+        }));
+        scored.sort((a2, b2) => b2.score - a2.score);
+        const top = scored.slice(0, Math.max(count, 5));
+        const pick = top.length <= count ? top : top.slice(0, 5).sort(() => Math.random() - 0.5).slice(0, count);
+        return needChinese ? pick.map((p2) => ({ word: p2.word, chinese: p2.chinese })) : pick.map((p2) => p2.word);
+      };
+      const loadChoiceQuestion = async () => {
+        await ensureDictWords();
+        const distractors = getFormSimilarFromDict(currentWord.value.english, 3, true);
+        let currentWordOption = { chinese: currentWord.value.chinese, pos: "" };
+        try {
+          const currentDetail = await getWordFullDetail(currentWord.value.english);
+          if (currentDetail) {
+            if (currentDetail.data_json && currentDetail.data_json.phonetic) {
+              currentWord.value.phonetic = currentDetail.data_json.phonetic;
+            }
+            if (currentDetail.defs && currentDetail.defs.length > 0) {
+              const def = currentDetail.defs[0];
+              currentWordOption = {
+                pos: def.pos || "",
+                chinese: def.trans || currentWord.value.chinese
+              };
+            }
+          }
+        } catch (e2) {
+          formatAppLog("error", "at pages/review/review.vue:1498", "获取当前单词释义失败:", e2);
+        }
+        const distractorOptions = [];
+        for (const d2 of distractors) {
+          let option = { pos: "", chinese: d2.chinese };
+          try {
+            const detail = await getWordFullDetail(d2.word);
+            if (detail && detail.defs && detail.defs.length > 0) {
+              const def = detail.defs[0];
+              option = {
+                pos: def.pos || "",
+                chinese: def.trans || d2.chinese
+              };
+            }
+          } catch (e2) {
+            formatAppLog("error", "at pages/review/review.vue:1515", "获取干扰项释义失败:", e2);
+          }
+          distractorOptions.push(option);
+        }
+        const options = [currentWordOption, ...distractorOptions].filter((o2) => o2.chinese);
+        const unique = [];
+        const seen2 = /* @__PURE__ */ new Set();
+        for (const opt of options) {
+          const key = `${opt.pos}:${opt.chinese}`;
+          if (!seen2.has(key)) {
+            seen2.add(key);
+            unique.push(opt);
+          }
+        }
+        while (unique.length < 4) {
+          const extra = getFormSimilarFromDict(currentWord.value.english, 1, true);
+          if (extra[0]) {
+            let option = { pos: "", chinese: extra[0].chinese };
+            try {
+              const detail = await getWordFullDetail(extra[0].word);
+              if (detail && detail.defs && detail.defs.length > 0) {
+                const def = detail.defs[0];
+                option = {
+                  pos: def.pos || "",
+                  chinese: def.trans || extra[0].chinese
+                };
+              }
+            } catch (e2) {
+            }
+            const key = `${option.pos}:${option.chinese}`;
+            if (!seen2.has(key)) {
+              unique.push(option);
+              seen2.add(key);
+            }
+          } else {
+            break;
+          }
+        }
+        currentOptions.value = unique.slice(0, 4).sort(() => Math.random() - 0.5);
+      };
+      const levenshtein = (a2, b2) => {
+        if (!a2 || !b2)
+          return Math.max((a2 || "").length, (b2 || "").length);
+        const m2 = a2.length, n2 = b2.length;
+        const dp = Array(m2 + 1).fill(null).map(() => Array(n2 + 1).fill(0));
+        for (let i2 = 0; i2 <= m2; i2++)
+          dp[i2][0] = i2;
+        for (let j2 = 0; j2 <= n2; j2++)
+          dp[0][j2] = j2;
+        for (let i2 = 1; i2 <= m2; i2++) {
+          for (let j2 = 1; j2 <= n2; j2++) {
+            const cost = a2[i2 - 1].toLowerCase() === b2[j2 - 1].toLowerCase() ? 0 : 1;
+            dp[i2][j2] = Math.min(dp[i2 - 1][j2] + 1, dp[i2][j2 - 1] + 1, dp[i2 - 1][j2 - 1] + cost);
+          }
+        }
+        return dp[m2][n2];
+      };
+      const formSimilarityScore = (eng, target) => {
+        if (!eng || !target)
+          return 0;
+        const a2 = eng.trim().toLowerCase();
+        const b2 = target.trim().toLowerCase();
+        if (a2 === b2)
+          return -1e9;
+        let score = 0;
+        const lenDiff = Math.abs(a2.length - b2.length);
+        if (lenDiff === 0)
+          score += 10;
+        else if (lenDiff === 1)
+          score += 5;
+        if (a2.slice(0, 2) === b2.slice(0, 2))
+          score += 4;
+        if (a2.length >= 2 && b2.length >= 2 && a2.slice(-2) === b2.slice(-2))
+          score += 4;
+        score -= levenshtein(a2, b2);
+        return score;
+      };
+      const getFormSimilarDistractors = (targetEnglish, wordList, count = 3) => {
+        const pool = (wordList || []).filter((w2) => {
+          var _a;
+          return w2.id !== ((_a = currentWord.value) == null ? void 0 : _a.id) && w2.english;
+        }).map((w2) => typeof w2.english === "string" ? w2.english.trim() : "").filter((eng) => eng && eng.toLowerCase() !== (targetEnglish || "").trim().toLowerCase());
+        if (pool.length === 0)
+          return [];
+        const scored = pool.map((eng) => ({ eng, score: formSimilarityScore(eng, targetEnglish) }));
+        scored.sort((x2, y2) => y2.score - x2.score);
+        const top = scored.slice(0, Math.max(count, scored.length));
+        const pick = top.length <= count ? top : top.slice(0, 5).sort(() => Math.random() - 0.5).slice(0, count);
+        return pick.map((p2) => p2.eng);
+      };
+      const loadChoiceEnQuestion = async () => {
+        var _a;
+        await ensureDictWords();
+        const target = (_a = currentWord.value) == null ? void 0 : _a.english;
+        const distractors = getFormSimilarFromDict(target, 3, false);
+        const options = [target, ...distractors].filter(Boolean);
+        const unique = [...new Set(options)];
+        while (unique.length < 4) {
+          const extra = getFormSimilarFromDict(target, 1, false);
+          if (extra[0] && !unique.includes(extra[0]))
+            unique.push(extra[0]);
+          else
+            break;
+        }
+        currentOptions.value = unique.slice(0, 4).sort(() => Math.random() - 0.5);
+      };
+      const loadFillQuestion = async () => {
+        const examples = currentWord.value.examples || [];
+        currentFillSentenceChinese.value = "";
+        if (examples.length === 0) {
+          currentSentence.value = "暂无例句";
+          fillAnswer.value = currentWord.value.english;
+          fillOptions.value = [currentWord.value.english];
+          return;
+        }
+        const randomExample = examples[Math.floor(Math.random() * examples.length)];
+        const sentence = randomExample.english;
+        const targetWord = currentWord.value.english;
+        currentFillSentenceChinese.value = randomExample.chinese || "";
+        const blankSentence = sentence.replace(new RegExp(`\\b${escapeRegExp(targetWord)}\\b`, "gi"), "____");
+        currentSentence.value = blankSentence;
+        fillAnswer.value = targetWord;
+        await ensureDictWords();
+        const otherWords = getFormSimilarFromDict(targetWord, 3, false);
+        fillOptions.value = [...otherWords, targetWord].filter(Boolean);
+        const unique = [...new Set(fillOptions.value)];
+        while (unique.length < 4) {
+          const extra = getFormSimilarFromDict(targetWord, 1, false);
+          if (extra[0] && !unique.includes(extra[0]))
+            unique.push(extra[0]);
+          else
+            break;
+        }
+        fillOptions.value = unique.slice(0, 4).sort(() => Math.random() - 0.5);
+      };
+      const loadAIQuestion = async () => {
+        isGenerating.value = true;
+        aiSentence.value = "";
+        try {
+          const word = currentWord.value.english;
+          const prompt = `你是一个考研英语名师。请为单词 '${word}' 生成一句符合考研难度、简短且地道的英文例句。只需返回纯英文句子，不要任何解释和标点符号外的多余字符。`;
+          const response = await aiService.callAPI(prompt);
+          aiSentence.value = response.trim();
+        } catch (error) {
+          formatAppLog("error", "at pages/review/review.vue:1665", "生成例句失败:", error);
+          aiSentence.value = "生成例句失败，请重试";
+        } finally {
+          isGenerating.value = false;
+        }
+      };
+      const queueRetryWord = () => {
+        const key = getWordKey(currentWord.value);
+        if (!key)
+          return;
+        const retryCount = Number(currentWord.value.__retryCount || 0);
+        if (retryCount >= 1)
+          return;
+        reviewWords.value.push({
+          ...currentWord.value,
+          __retryCount: retryCount + 1,
+          __isOldReview: true,
+          __fromWrongRetry: true
+        });
+      };
+      const applyReviewOutcome = async (isCorrect, wrongPayload = null) => {
+        recordReviewOutcome(currentWord.value, isCorrect, {
+          bookId: getCurrentBookId(),
+          mode: settings.value.mode,
+          source: "review"
+        });
+        if (currentWord.value.id) {
+          await db.updateErrorRate(currentWord.value.id, isCorrect);
+          applyReviewPreview(isCorrect);
+        }
+        if (isCorrect) {
+          correctCount.value++;
+          return;
+        }
+        wrongCount.value++;
+        if (reviewPreset.value !== "new") {
+          queueRetryWord();
+        }
+        if (wrongPayload) {
+          wrongWords.value.push(wrongPayload);
+        }
+      };
+      const submitAnswer = async () => {
+        if (!userTranslation.value.trim() || isSubmitting.value)
+          return;
+        isSubmitting.value = true;
+        try {
+          const word = currentWord.value.english;
+          const sentence = aiSentence.value;
+          const userInput = userTranslation.value.trim();
+          const prompt = `目标单词：'${word}'。英文例句：'${sentence}'。学生输入该词在此句中的中文意思：'${userInput}'。
+
+请以宽松、包容的标准判分：只要学生表达的意思与目标词在本句中的含义相近、同义、或合理意译，就应判为正确（is_correct: true）。只有明显错误、完全偏离才判错。
+请同时给出该英文例句的完整中文翻译。
+严格返回 JSON，不要其他内容：{"is_correct": true或false, "explanation": "简短解析", "sentence_chinese": "整句中文翻译"}`;
+          const response = await aiService.callAPI(prompt);
+          const jsonMatch = response.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            aiResult.value = {
+              is_correct: !!parsed.is_correct,
+              explanation: parsed.explanation || "解析失败",
+              sentence_chinese: parsed.sentence_chinese || ""
+            };
+          } else {
+            aiResult.value = { is_correct: false, explanation: "解析失败，请重试", sentence_chinese: "" };
+          }
+          showResult.value = true;
+          markWordsReviewed(currentWord.value);
+          if (aiResult.value.is_correct) {
+            await applyReviewOutcome(true);
+          } else {
+            await applyReviewOutcome(false, {
+              english: currentWord.value.english,
+              chinese: currentWord.value.chinese,
+              yourAnswer: userInput,
+              explanation: aiResult.value.explanation,
+              synonyms: currentWord.value.synonyms || []
+            });
+          }
+        } catch (error) {
+          formatAppLog("error", "at pages/review/review.vue:1760", "提交答案失败:", error);
+          uni.showToast({
+            title: "AI判卷失败，请重试",
+            icon: "none"
+          });
+        } finally {
+          isSubmitting.value = false;
+        }
+      };
+      const handleChoice = async (option) => {
+        selectedOption.value = option;
+        showResult.value = true;
+        markWordsReviewed(currentWord.value);
+        const optionChinese = typeof option === "object" ? option.chinese : option;
+        let isCorrect = false;
+        if (currentWord.value.defs && currentWord.value.defs.length > 0) {
+          const firstDef = currentWord.value.defs[0];
+          isCorrect = optionChinese === (firstDef.trans || currentWord.value.chinese);
+        } else {
+          isCorrect = optionChinese === currentWord.value.chinese;
+        }
+        if (isCorrect) {
+          await applyReviewOutcome(true);
+        } else {
+          await applyReviewOutcome(false, {
+            english: currentWord.value.english,
+            chinese: currentWord.value.chinese,
+            yourAnswer: optionChinese,
+            synonyms: currentWord.value.synonyms || []
+          });
+        }
+      };
+      const handleChoiceEn = async (option) => {
+        selectedOption.value = option;
+        showResult.value = true;
+        markWordsReviewed(currentWord.value);
+        const correct = (option || "").trim().toLowerCase() === (currentWord.value.english || "").trim().toLowerCase();
+        if (correct) {
+          await applyReviewOutcome(true);
+        } else {
+          await applyReviewOutcome(false, {
+            english: currentWord.value.english,
+            chinese: currentWord.value.chinese,
+            yourAnswer: option,
+            synonyms: currentWord.value.synonyms || []
+          });
+        }
+      };
+      const handleFillChoice = async (option) => {
+        selectedOption.value = option;
+        showResult.value = true;
+        markWordsReviewed(currentWord.value);
+        if (option === fillAnswer.value) {
+          await applyReviewOutcome(true);
+        } else {
+          await applyReviewOutcome(false, {
+            english: currentWord.value.english,
+            chinese: currentWord.value.chinese,
+            yourAnswer: option,
+            correctAnswer: fillAnswer.value,
+            synonyms: currentWord.value.synonyms || []
+          });
+        }
+      };
+      const handleSpellSubmit = async () => {
+        const input = (spellInput.value || "").trim().toLowerCase();
+        if (!input)
+          return;
+        const correct = input === (currentWord.value.english || "").trim().toLowerCase();
+        showResult.value = true;
+        markWordsReviewed(currentWord.value);
+        if (correct) {
+          await applyReviewOutcome(true);
+        } else {
+          await applyReviewOutcome(false, {
+            english: currentWord.value.english,
+            chinese: currentWord.value.chinese,
+            yourAnswer: spellInput.value.trim(),
+            correctAnswer: currentWord.value.english,
+            synonyms: currentWord.value.synonyms || []
+          });
+        }
+      };
+      const nextQuestion = () => {
+        if (currentIndex.value >= reviewWords.value.length - 1) {
+          finishReview();
+          return;
+        }
+        currentIndex.value++;
+        saveReviewProgress();
+        loadCurrentQuestion();
+      };
+      const finishReview = async () => {
+        reviewFinished.value = true;
+        clearReviewProgress();
+        saveReviewResult();
+        logStudySession({
+          bookId: getCurrentBookId(),
+          mode: settings.value.mode,
+          preset: reviewPreset.value,
+          reviewedCount: correctCount.value + wrongCount.value,
+          correctCount: correctCount.value,
+          wrongCount: wrongCount.value,
+          newCount: sessionNewCount.value,
+          oldCount: sessionOldCount.value,
+          mistakeCount: wrongWords.value.length
+        });
+        refreshPlanStats();
+      };
+      const restartReview = () => {
+        onPrimaryStartClick();
+      };
+      const goBack = () => {
+        uni.navigateBack();
+      };
+      const goToWordDetail = () => {
+        if (!currentWord.value) {
+          uni.showToast({ title: "无法查看详情", icon: "none" });
+          return;
+        }
+        saveReviewProgress();
+        uni.navigateTo({
+          url: `/pages/word-detail/word-detail?english=${encodeURIComponent(currentWord.value.english)}&source=masterdb`,
+          fail: (err) => {
+            formatAppLog("error", "at pages/review/review.vue:1904", "跳转失败:", err);
+            uni.showToast({ title: "跳转失败", icon: "none" });
+          }
+        });
+      };
+      const markCurrentWordAsMastered = async () => {
+        if (!currentWord.value || !currentWord.value.english) {
+          uni.showToast({ title: "无法斩掉该单词", icon: "none" });
+          showMasteredConfirm.value = false;
+          return;
+        }
+        try {
+          const bookId = getCurrentBookId();
+          if (bookId && bookId !== "self") {
+            formatAppLog("log", "at pages/review/review.vue:1923", "markCurrentWordAsMastered: 词书单词，存储到本地");
+            addMasteredWordbookWord(bookId, currentWord.value.english);
+          } else if (currentWord.value.id) {
+            formatAppLog("log", "at pages/review/review.vue:1927", "markCurrentWordAsMastered: 自用词库单词，使用id斩掉");
+            await db.masterWord(currentWord.value.id);
+          } else {
+            formatAppLog("log", "at pages/review/review.vue:1931", "markCurrentWordAsMastered: 其他情况，使用english斩掉");
+            await db.masterWordByEnglish(currentWord.value.english);
+          }
+          formatAppLog("log", "at pages/review/review.vue:1935", "markCurrentWordAsMastered: 斩掉成功");
+          uni.showToast({ title: "已斩掉！", icon: "success" });
+          showMasteredConfirm.value = false;
+          setTimeout(() => {
+            nextQuestion();
+          }, 500);
+        } catch (error) {
+          formatAppLog("error", "at pages/review/review.vue:1944", "markCurrentWordAsMastered: 斩掉失败", error);
+          uni.showToast({ title: "斩掉失败: " + (error.message || "未知错误"), icon: "none" });
+          showMasteredConfirm.value = false;
+        }
+      };
+      const backToStartScreen = () => {
+        saveReviewProgress();
+        checkProgress();
+        reviewStarted.value = false;
+        reviewFinished.value = false;
+        selectedOption.value = "";
+        showResult.value = false;
+        showWrongFeedback.value = false;
+        userTranslation.value = "";
+        aiResult.value = null;
+      };
+      onBackPress(() => {
+        if (reviewStarted.value && !reviewFinished.value) {
+          backToStartScreen();
+          return true;
+        }
+        return false;
+      });
+      const __returned__ = { showSettings, showModeSelector, showSortSelector, showCountSelector, showDifficultySelector, reviewStarted, reviewFinished, settings, reviewWords, currentIndex, currentWord, currentOptions, fillOptions, currentFillSentenceChinese, spellInput, escapeRegExp, formatHighlight, currentSentence, fillAnswer, aiSentence, userTranslation, aiResult, isGenerating, isSubmitting, formatAIPhighlight, selectedOption, showResult, showWrongFeedback, correctCount, wrongCount, wrongWords, lastReviewResult, showResumeModal, hasProgress, activeSettingCard, dashboardDone, dashboardTotal, bookTotalWords, totalReviewedWords, todayReviewed, learnedUniqueWords, dashboardSnapshot, showMasteredConfirm, reviewPreset, sessionNewCount, sessionOldCount, recommendedReviewStage, recommendedReviewState, getSettingsKey, getLastReviewResultKey, getCurrentBookId, saveReviewProgress, clearReviewProgress, loadReviewProgress, resumeReview, discardReview, checkProgress, getCurrentBookTotalWords, getCurrentBookWordPool, refreshDashboardSnapshot, refreshPlanStats, resetCurrentPlan, markWordsReviewed, syncDashboardProgress, dashboardTarget, dashboardPercent, formatRelativeReviewTime, currentReviewInsight, applyReviewPreview, finishedReviewInsight, completedInRound, currentRound, currentProgressPercent, oldReviewDailyTarget, dailyNewTarget, remainDays, remainingNewWords, estimatedFinishDate, dailyPlanText, isTodayTargetDone, primaryStartText, todayProgressPercent, recommendedPreset, recommendedPresetIcon, recommendedPresetTitle, recommendedPresetDesc, otherPresets, currentWordbookName, openSettings, sortByText, isLastQuestion, modeOptions, sortOptions, countOptions, dailyQuickOptions, modeIndex, modeDisplayText, sortIndex, countIndex, onModeChange, onSortChange, onCountChange, setDailyTarget, onDifficultyChange, openModeSelector, openSortSelector, openCountSelector, openDifficultySelector, loadSettings, saveSettings, loadLastReviewResult, saveReviewResult, buildPresetQueue, filterOutMasteredWords, buildBookReviewQueue, saveSettingsAndStart, startReviewInternal, startReview, startExtraRound20, onPrimaryStartClick, startRecommendedReview, startPresetReview, prefetchNextWordDetail, loadCurrentQuestion, get _dictWordsCache() {
+        return _dictWordsCache;
+      }, set _dictWordsCache(v2) {
+        _dictWordsCache = v2;
+      }, get _dictWordsPromise() {
+        return _dictWordsPromise;
+      }, set _dictWordsPromise(v2) {
+        _dictWordsPromise = v2;
+      }, ensureDictWords, getFormSimilarFromDict, loadChoiceQuestion, levenshtein, formSimilarityScore, getFormSimilarDistractors, loadChoiceEnQuestion, loadFillQuestion, loadAIQuestion, queueRetryWord, applyReviewOutcome, submitAnswer, handleChoice, handleChoiceEn, handleFillChoice, handleSpellSubmit, nextQuestion, finishReview, restartReview, goBack, goToWordDetail, markCurrentWordAsMastered, backToStartScreen, ref: vue.ref, computed: vue.computed, onMounted: vue.onMounted, get onBackPress() {
+        return onBackPress;
+      }, get onShow() {
+        return onShow;
+      }, get onHide() {
+        return onHide;
+      }, get onUnload() {
+        return onUnload;
+      }, get onLoad() {
+        return onLoad;
+      }, get db() {
+        return db;
+      }, get aiService() {
+        return aiService;
+      }, get masterDb() {
+        return masterDb;
+      }, get getCurrentWordbook() {
+        return getCurrentWordbook;
+      }, get getWordbookListForUI() {
+        return getWordbookListForUI;
+      }, get isSelfWordbook() {
+        return isSelfWordbook;
+      }, get isLocalWordbookKey() {
+        return isLocalWordbookKey;
+      }, get loadLocalWordbook() {
+        return loadLocalWordbook;
+      }, get getWordbookWords() {
+        return getWordbookWords;
+      }, get recordReviewOutcome() {
+        return recordReviewOutcome;
+      }, get getLearningDashboard() {
+        return getLearningDashboard;
+      }, get getMistakeWords() {
+        return getMistakeWords;
+      }, get getDueProfilesForWords() {
+        return getDueProfilesForWords;
+      }, get getLatestSession() {
+        return getLatestSession;
+      }, get logStudySession() {
+        return logStudySession;
+      }, get getWordProfile() {
+        return getWordProfile;
+      }, get logger() {
+        return logger;
+      }, get errorHandler() {
+        return errorHandler;
+      }, get cleanupExpiredCaches() {
+        return cleanupExpiredCaches;
+      }, get getMasteredWordbookWords() {
+        return getMasteredWordbookWords;
+      }, get addMasteredWordbookWord() {
+        return addMasteredWordbookWord;
+      }, get getWordKey() {
+        return getWordKey;
+      }, get uniqueWordKeys() {
+        return uniqueWordKeys;
+      }, get getTodayKey() {
+        return getTodayKey;
+      }, get normalizePlanEntry() {
+        return normalizePlanEntry;
+      }, get filterWordsByKeys() {
+        return filterWordsByKeys;
+      }, get shuffleList() {
+        return shuffleList;
+      }, get getReviewProgressKey() {
+        return getReviewProgressKey;
+      }, get REVIEW_PLAN_KEY() {
+        return REVIEW_PLAN_KEY;
+      }, get loadPlanStore() {
+        return loadPlanStore;
+      }, get savePlanStore() {
+        return savePlanStore;
+      }, get getPlanEntry() {
+        return getPlanEntry;
+      }, get savePlanEntry() {
+        return savePlanEntry;
+      }, get interleaveOldWords() {
+        return interleaveOldWords;
+      }, get getOldReviewQuota() {
+        return getOldReviewQuota;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$9(_ctx, _cache, $props, $setup, $data, $options) {
+    var _a, _b, _c, _d;
+    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
+      !$setup.reviewStarted ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "custom-nav-bar"
+      }, [
+        vue.createElementVNode("view", {
+          class: "nav-back-btn",
+          onClick: $setup.goBack
+        }, "‹"),
+        vue.createElementVNode(
+          "text",
+          { class: "nav-title" },
+          vue.toDisplayString($setup.currentWordbookName),
+          1
+          /* TEXT */
+        ),
+        vue.createElementVNode("view", {
+          class: "nav-settings-btn",
+          onClick: _cache[0] || (_cache[0] = ($event) => $setup.showSettings = true)
+        }, "⚙")
+      ])) : vue.createCommentVNode("v-if", true),
+      !$setup.reviewStarted ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "start-review-fixed"
+      }, [
+        vue.createElementVNode("view", { class: "section-label" }, "今日进度"),
+        vue.createElementVNode("view", { class: "card stat-card-large" }, [
+          vue.createElementVNode("view", { class: "stat-value-large" }, [
+            vue.createElementVNode(
+              "text",
+              { class: "stat-number" },
+              vue.toDisplayString($setup.todayReviewed),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode(
+              "text",
+              { class: "stat-sep" },
+              "/ " + vue.toDisplayString($setup.settings.count),
+              1
+              /* TEXT */
+            )
+          ]),
+          vue.createElementVNode("view", { class: "stat-bar" }, [
+            vue.createElementVNode(
+              "view",
+              {
+                class: "stat-bar-fill",
+                style: vue.normalizeStyle({ width: $setup.todayReviewed / $setup.settings.count * 100 + "%" })
+              },
+              null,
+              4
+              /* STYLE */
+            )
+          ]),
+          vue.createElementVNode(
+            "view",
+            { class: "stat-detail-row" },
+            "新学 " + vue.toDisplayString($setup.sessionNewCount) + " · 复习 " + vue.toDisplayString($setup.sessionOldCount),
+            1
+            /* TEXT */
+          )
+        ]),
+        vue.createElementVNode("view", { class: "section-label" }, "词书进度"),
+        vue.createElementVNode("view", { class: "card stat-card-large stat-card-book" }, [
+          vue.createElementVNode("view", { class: "stat-header-row" }, [
+            vue.createElementVNode(
+              "text",
+              { class: "stat-left-text" },
+              "已学 " + vue.toDisplayString($setup.learnedUniqueWords) + " / " + vue.toDisplayString($setup.bookTotalWords) + " 词",
+              1
+              /* TEXT */
+            )
+          ]),
+          vue.createElementVNode("view", { class: "stat-bar" }, [
+            vue.createElementVNode(
+              "view",
+              {
+                class: "stat-bar-fill",
+                style: vue.normalizeStyle({ width: $setup.currentProgressPercent + "%" })
+              },
+              null,
+              4
+              /* STYLE */
+            )
+          ]),
+          vue.createElementVNode(
+            "view",
+            { class: "stat-detail-row" },
+            "剩余 " + vue.toDisplayString($setup.remainingNewWords) + " 词 · 预计 " + vue.toDisplayString($setup.remainDays) + " 天完成",
+            1
+            /* TEXT */
+          )
+        ]),
+        vue.createElementVNode("view", { class: "section-label" }, "今日任务"),
+        vue.createElementVNode("view", {
+          class: "card recommend-card",
+          onClick: $setup.startRecommendedReview
+        }, [
+          vue.createElementVNode("view", { class: "recommend-info" }, [
+            vue.createElementVNode(
+              "text",
+              { class: "recommend-title" },
+              vue.toDisplayString($setup.recommendedPresetTitle),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode(
+              "text",
+              { class: "recommend-desc" },
+              vue.toDisplayString($setup.recommendedPresetDesc),
+              1
+              /* TEXT */
+            )
+          ]),
+          vue.createElementVNode("button", { class: "start-btn" }, "开始学习")
+        ]),
+        vue.createElementVNode("view", { class: "section-label" }, "其他复习方式"),
+        vue.createElementVNode("view", { class: "other-buttons" }, [
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($setup.otherPresets, (preset) => {
+              return vue.openBlock(), vue.createElementBlock("view", {
+                key: preset.key,
+                class: "card other-btn",
+                onClick: ($event) => $setup.startPresetReview(preset.key)
+              }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "btn-title" },
+                  vue.toDisplayString(preset.title),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode(
+                  "text",
+                  { class: "btn-count" },
+                  vue.toDisplayString(preset.count) + "个",
+                  1
+                  /* TEXT */
+                )
+              ], 8, ["onClick"]);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.showSettings ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 2,
+        class: "modal-overlay",
+        onClick: _cache[14] || (_cache[14] = ($event) => $setup.showSettings = false)
+      }, [
+        vue.createElementVNode("view", {
+          class: "settings-modal",
+          onClick: _cache[13] || (_cache[13] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("view", { class: "modal-header" }, [
+            vue.createElementVNode("text", { class: "modal-title" }, "复习设置"),
+            vue.createElementVNode("view", {
+              class: "modal-close",
+              onClick: _cache[1] || (_cache[1] = ($event) => $setup.showSettings = false)
+            }, "✕")
+          ]),
+          vue.createElementVNode("view", { class: "settings-cards-grid" }, [
+            vue.createElementVNode("view", {
+              class: "settings-card",
+              onClick: $setup.openModeSelector
+            }, [
+              vue.createElementVNode("text", { class: "card-title" }, "复习模式"),
+              vue.createElementVNode(
+                "text",
+                { class: "card-description" },
+                vue.toDisplayString($setup.modeDisplayText),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
+            ]),
+            vue.createElementVNode("view", {
+              class: "settings-card",
+              onClick: $setup.openSortSelector
+            }, [
+              vue.createElementVNode("text", { class: "card-title" }, "排序方式"),
+              vue.createElementVNode(
+                "text",
+                { class: "card-description" },
+                vue.toDisplayString($setup.sortByText),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
+            ]),
+            vue.createElementVNode("view", {
+              class: "settings-card",
+              onClick: $setup.openCountSelector
+            }, [
+              vue.createElementVNode("text", { class: "card-title" }, "复习数量"),
+              vue.createElementVNode(
+                "text",
+                { class: "card-description" },
+                vue.toDisplayString($setup.settings.count) + " 个",
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
+            ]),
+            vue.createElementVNode("view", {
+              class: "settings-card",
+              onClick: $setup.openDifficultySelector
+            }, [
+              vue.createElementVNode("text", { class: "card-title" }, "复习难度"),
+              vue.createElementVNode(
+                "text",
+                { class: "card-description" },
+                vue.toDisplayString($setup.settings.difficulty === "hard" ? "困难" : "标准"),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("view", { class: "card-arrow-icon" }, "›")
+            ])
+          ]),
+          $setup.showModeSelector ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "selector-overlay",
+            onClick: _cache[3] || (_cache[3] = ($event) => $setup.showModeSelector = false)
+          }, [
+            vue.createElementVNode("view", {
+              class: "selector-modal",
+              onClick: _cache[2] || (_cache[2] = vue.withModifiers(() => {
+              }, ["stop"]))
+            }, [
+              vue.createElementVNode("text", { class: "selector-title" }, "选择复习模式"),
+              vue.createElementVNode("view", { class: "selector-options" }, [
+                (vue.openBlock(), vue.createElementBlock(
+                  vue.Fragment,
+                  null,
+                  vue.renderList($setup.modeOptions, (name, idx) => {
+                    return vue.createElementVNode("view", {
+                      key: "mode-" + idx,
+                      class: vue.normalizeClass(["selector-item", { active: $setup.modeIndex === idx }]),
+                      onClick: ($event) => {
+                        $setup.onModeChange({ detail: { value: idx } });
+                        $setup.showModeSelector = false;
+                      }
+                    }, vue.toDisplayString(name), 11, ["onClick"]);
+                  }),
+                  64
+                  /* STABLE_FRAGMENT */
+                ))
+              ])
+            ])
+          ])) : vue.createCommentVNode("v-if", true),
+          $setup.showSortSelector ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "selector-overlay",
+            onClick: _cache[5] || (_cache[5] = ($event) => $setup.showSortSelector = false)
+          }, [
+            vue.createElementVNode("view", {
+              class: "selector-modal",
+              onClick: _cache[4] || (_cache[4] = vue.withModifiers(() => {
+              }, ["stop"]))
+            }, [
+              vue.createElementVNode("text", { class: "selector-title" }, "选择排序方式"),
+              vue.createElementVNode("view", { class: "selector-options" }, [
+                (vue.openBlock(), vue.createElementBlock(
+                  vue.Fragment,
+                  null,
+                  vue.renderList($setup.sortOptions, (name, idx) => {
+                    return vue.createElementVNode("view", {
+                      key: "sort-" + idx,
+                      class: vue.normalizeClass(["selector-item", { active: $setup.sortIndex === idx }]),
+                      onClick: ($event) => {
+                        $setup.onSortChange({ detail: { value: idx } });
+                        $setup.showSortSelector = false;
+                      }
+                    }, vue.toDisplayString(name), 11, ["onClick"]);
+                  }),
+                  64
+                  /* STABLE_FRAGMENT */
+                ))
+              ])
+            ])
+          ])) : vue.createCommentVNode("v-if", true),
+          $setup.showCountSelector ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 2,
+            class: "selector-overlay",
+            onClick: _cache[7] || (_cache[7] = ($event) => $setup.showCountSelector = false)
+          }, [
+            vue.createElementVNode("view", {
+              class: "selector-modal",
+              onClick: _cache[6] || (_cache[6] = vue.withModifiers(() => {
+              }, ["stop"]))
+            }, [
+              vue.createElementVNode("text", { class: "selector-title" }, "选择复习数量"),
+              vue.createElementVNode("view", { class: "selector-options" }, [
+                (vue.openBlock(), vue.createElementBlock(
+                  vue.Fragment,
+                  null,
+                  vue.renderList($setup.countOptions, (n2) => {
+                    return vue.createElementVNode("view", {
+                      key: "count-" + n2,
+                      class: vue.normalizeClass(["selector-item", { active: $setup.settings.count === n2 }]),
+                      onClick: ($event) => {
+                        $setup.setDailyTarget(n2);
+                        $setup.showCountSelector = false;
+                      }
+                    }, vue.toDisplayString(n2) + " 个 ", 11, ["onClick"]);
+                  }),
+                  64
+                  /* STABLE_FRAGMENT */
+                ))
+              ])
+            ])
+          ])) : vue.createCommentVNode("v-if", true),
+          $setup.showDifficultySelector ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 3,
+            class: "selector-overlay",
+            onClick: _cache[11] || (_cache[11] = ($event) => $setup.showDifficultySelector = false)
+          }, [
+            vue.createElementVNode("view", {
+              class: "selector-modal",
+              onClick: _cache[10] || (_cache[10] = vue.withModifiers(() => {
+              }, ["stop"]))
+            }, [
+              vue.createElementVNode("text", { class: "selector-title" }, "选择复习难度"),
+              vue.createElementVNode("view", { class: "selector-options" }, [
+                vue.createElementVNode(
+                  "view",
+                  {
+                    class: vue.normalizeClass(["selector-item", { active: $setup.settings.difficulty === "normal" }]),
+                    onClick: _cache[8] || (_cache[8] = ($event) => {
+                      $setup.onDifficultyChange("normal");
+                      $setup.showDifficultySelector = false;
+                    })
+                  },
+                  " 标准 ",
+                  2
+                  /* CLASS */
+                ),
+                vue.createElementVNode(
+                  "view",
+                  {
+                    class: vue.normalizeClass(["selector-item", { active: $setup.settings.difficulty === "hard" }]),
+                    onClick: _cache[9] || (_cache[9] = ($event) => {
+                      $setup.onDifficultyChange("hard");
+                      $setup.showDifficultySelector = false;
+                    })
+                  },
+                  " 困难 ",
+                  2
+                  /* CLASS */
+                )
+              ])
+            ])
+          ])) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("view", { class: "modal-actions" }, [
+            vue.createElementVNode("button", {
+              class: "modal-btn",
+              onClick: _cache[12] || (_cache[12] = ($event) => $setup.showSettings = false)
+            }, "关闭")
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.showResumeModal ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 3,
+        class: "modal-overlay",
+        onClick: vue.withModifiers($setup.discardReview, ["self"])
+      }, [
+        vue.createElementVNode("view", {
+          class: "resume-modal",
+          onClick: _cache[15] || (_cache[15] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("text", { class: "modal-title" }, "发现未完成的复习"),
+          vue.createElementVNode("text", { class: "resume-text" }, "是否继续上次的复习？"),
+          vue.createElementVNode("view", { class: "modal-actions" }, [
+            vue.createElementVNode("button", {
+              class: "modal-btn secondary",
+              onClick: $setup.discardReview
+            }, "放弃"),
+            vue.createElementVNode("button", {
+              class: "modal-btn primary",
+              onClick: $setup.resumeReview
+            }, "继续")
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.showMasteredConfirm ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 4,
+        class: "modal-overlay",
+        onClick: _cache[18] || (_cache[18] = ($event) => $setup.showMasteredConfirm = false)
+      }, [
+        vue.createElementVNode("view", {
+          class: "resume-modal",
+          onClick: _cache[17] || (_cache[17] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("text", { class: "modal-title" }, "斩掉这个单词？"),
+          vue.createElementVNode(
+            "text",
+            { class: "resume-text" },
+            vue.toDisplayString($setup.currentWord.english) + " - " + vue.toDisplayString($setup.currentWord.chinese),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode("text", {
+            class: "resume-text",
+            style: { "font-size": "13px", "color": "#A1A1AA" }
+          }, "斩掉后该单词将在复习中隐藏"),
+          vue.createElementVNode("view", { class: "modal-actions" }, [
+            vue.createElementVNode("button", {
+              class: "modal-btn secondary",
+              onClick: _cache[16] || (_cache[16] = ($event) => $setup.showMasteredConfirm = false)
+            }, "取消"),
+            vue.createElementVNode("button", {
+              class: "modal-btn primary",
+              onClick: $setup.markCurrentWordAsMastered
+            }, "确认斩掉")
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.showMasteredConfirm ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 5,
+        class: "modal-overlay",
+        onClick: _cache[21] || (_cache[21] = ($event) => $setup.showMasteredConfirm = false)
+      }, [
+        vue.createElementVNode("view", {
+          class: "resume-modal",
+          onClick: _cache[20] || (_cache[20] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("text", { class: "modal-title" }, "斩掉这个单词？"),
+          vue.createElementVNode(
+            "text",
+            { class: "resume-text" },
+            vue.toDisplayString($setup.currentWord.english) + " - " + vue.toDisplayString($setup.currentWord.chinese),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode("text", {
+            class: "resume-text",
+            style: { "font-size": "13px", "color": "#A1A1AA" }
+          }, "斩掉后该单词将在复习中隐藏"),
+          vue.createElementVNode("view", { class: "modal-actions" }, [
+            vue.createElementVNode("button", {
+              class: "modal-btn secondary",
+              onClick: _cache[19] || (_cache[19] = ($event) => $setup.showMasteredConfirm = false)
+            }, "取消"),
+            vue.createElementVNode("button", {
+              class: "modal-btn primary",
+              onClick: $setup.markCurrentWordAsMastered
+            }, "确认斩掉")
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.reviewStarted && !$setup.reviewFinished ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 6,
+        class: "stats-bar"
+      }, [
+        vue.createElementVNode("view", {
+          class: "stats-back-btn",
+          onClick: $setup.backToStartScreen
+        }, "‹"),
+        vue.createElementVNode("view", { class: "stats-info" }, [
+          vue.createElementVNode(
+            "text",
+            null,
+            vue.toDisplayString($setup.currentIndex + 1) + "/" + vue.toDisplayString($setup.reviewWords.length),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode(
+            "text",
+            null,
+            "正确 " + vue.toDisplayString($setup.correctCount),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode(
+            "text",
+            null,
+            "错误 " + vue.toDisplayString($setup.wrongCount),
+            1
+            /* TEXT */
+          )
+        ]),
+        vue.createElementVNode("view", {
+          class: "stats-action-btn",
+          onClick: _cache[22] || (_cache[22] = ($event) => $setup.showMasteredConfirm = true)
+        }, "斩")
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.reviewStarted && !$setup.reviewFinished && $setup.currentReviewInsight ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 7,
+        class: "review-insight-strip"
+      }, [
+        vue.createElementVNode("view", { class: "insight-chip" }, [
+          vue.createElementVNode("text", { class: "insight-label" }, "掌握度"),
+          vue.createElementVNode(
+            "text",
+            { class: "insight-value" },
+            vue.toDisplayString($setup.currentReviewInsight.mastery) + "%",
+            1
+            /* TEXT */
+          )
+        ]),
+        vue.createElementVNode("view", { class: "insight-chip" }, [
+          vue.createElementVNode("text", { class: "insight-label" }, "下次复习"),
+          vue.createElementVNode(
+            "text",
+            { class: "insight-value" },
+            vue.toDisplayString($setup.currentReviewInsight.nextReviewText),
+            1
+            /* TEXT */
+          )
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.reviewStarted && $setup.currentWord && !$setup.reviewFinished ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 8,
+        class: "content"
+      }, [
+        $setup.settings.mode === "choice" ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "choice-mode"
+        }, [
+          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "review-word-flag"
+          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("view", { class: "word-display" }, [
+            vue.createElementVNode(
+              "view",
+              { class: "word-english" },
+              vue.toDisplayString($setup.currentWord.english),
+              1
+              /* TEXT */
+            ),
+            $setup.currentWord.phonetic ? (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 0,
+                class: "word-phonetic"
+              },
+              "/" + vue.toDisplayString($setup.currentWord.phonetic) + "/",
+              1
+              /* TEXT */
+            )) : vue.createCommentVNode("v-if", true),
+            $setup.currentWord.frequency ? (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 1,
+                class: "word-frequency"
+              },
+              vue.toDisplayString($setup.currentWord.frequency) + "次",
+              1
+              /* TEXT */
+            )) : vue.createCommentVNode("v-if", true)
+          ]),
+          vue.createElementVNode("view", { class: "options-and-buttons" }, [
+            vue.createElementVNode("view", { class: "options-grid" }, [
+              (vue.openBlock(true), vue.createElementBlock(
+                vue.Fragment,
+                null,
+                vue.renderList($setup.currentOptions, (option, idx) => {
+                  return vue.openBlock(), vue.createElementBlock("view", {
+                    key: idx,
+                    class: vue.normalizeClass(["option-card", {
+                      "correct": $setup.showResult && $setup.currentWord.defs && $setup.currentWord.defs.length > 0 && option.chinese === $setup.currentWord.defs[0].trans,
+                      "wrong": $setup.showResult && $setup.selectedOption && option.chinese === $setup.selectedOption.chinese && !($setup.currentWord.defs && $setup.currentWord.defs.length > 0 && option.chinese === $setup.currentWord.defs[0].trans)
+                    }]),
+                    onClick: ($event) => !$setup.showResult && $setup.handleChoice(option)
+                  }, [
+                    vue.createElementVNode("view", { class: "option-content" }, [
+                      option.pos ? (vue.openBlock(), vue.createElementBlock(
+                        "text",
+                        {
+                          key: 0,
+                          class: "option-pos"
+                        },
+                        vue.toDisplayString(option.pos),
+                        1
+                        /* TEXT */
+                      )) : vue.createCommentVNode("v-if", true),
+                      vue.createElementVNode(
+                        "text",
+                        { class: "option-text" },
+                        vue.toDisplayString(option.chinese),
+                        1
+                        /* TEXT */
+                      )
+                    ])
+                  ], 10, ["onClick"]);
+                }),
+                128
+                /* KEYED_FRAGMENT */
+              ))
+            ]),
+            $setup.showResult ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "action-buttons"
+            }, [
+              vue.createElementVNode("view", {
+                class: "action-btn",
+                onClick: $setup.goToWordDetail
+              }, "详情"),
+              vue.createElementVNode(
+                "view",
+                {
+                  class: "action-btn",
+                  onClick: $setup.nextQuestion
+                },
+                vue.toDisplayString($setup.isLastQuestion ? "查看结果" : "下一题 →"),
+                1
+                /* TEXT */
+              )
+            ])) : vue.createCommentVNode("v-if", true)
+          ])
+        ])) : vue.createCommentVNode("v-if", true),
+        $setup.settings.mode === "choice_en" ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 1,
+          class: "choice-mode"
+        }, [
+          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "review-word-flag"
+          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("view", { class: "word-display" }, [
+            vue.createElementVNode(
+              "view",
+              { class: "word-chinese-prompt" },
+              vue.toDisplayString($setup.currentWord.chinese),
+              1
+              /* TEXT */
+            ),
+            $setup.currentWord.frequency ? (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 0,
+                class: "word-frequency"
+              },
+              vue.toDisplayString($setup.currentWord.frequency) + "次",
+              1
+              /* TEXT */
+            )) : vue.createCommentVNode("v-if", true)
+          ]),
+          vue.createElementVNode("view", { class: "options-and-buttons" }, [
+            vue.createElementVNode("view", { class: "options-grid" }, [
+              (vue.openBlock(true), vue.createElementBlock(
+                vue.Fragment,
+                null,
+                vue.renderList($setup.currentOptions, (option, idx) => {
+                  return vue.openBlock(), vue.createElementBlock("view", {
+                    key: idx,
+                    class: vue.normalizeClass(["option-card", {
+                      "correct": $setup.showResult && (option || "").trim().toLowerCase() === ($setup.currentWord.english || "").trim().toLowerCase(),
+                      "wrong": $setup.showResult && option === $setup.selectedOption && (option || "").trim().toLowerCase() !== ($setup.currentWord.english || "").trim().toLowerCase()
+                    }]),
+                    onClick: ($event) => !$setup.showResult && $setup.handleChoiceEn(option)
+                  }, [
+                    vue.createElementVNode(
+                      "text",
+                      { class: "option-text" },
+                      vue.toDisplayString(option),
+                      1
+                      /* TEXT */
+                    )
+                  ], 10, ["onClick"]);
+                }),
+                128
+                /* KEYED_FRAGMENT */
+              ))
+            ]),
+            $setup.showResult ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "action-buttons"
+            }, [
+              vue.createElementVNode("view", {
+                class: "action-btn",
+                onClick: $setup.goToWordDetail
+              }, "详情"),
+              vue.createElementVNode(
+                "view",
+                {
+                  class: "action-btn",
+                  onClick: $setup.nextQuestion
+                },
+                vue.toDisplayString($setup.isLastQuestion ? "查看结果" : "下一题 →"),
+                1
+                /* TEXT */
+              )
+            ])) : vue.createCommentVNode("v-if", true)
+          ])
+        ])) : vue.createCommentVNode("v-if", true),
+        $setup.settings.mode === "fill" ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 2,
+          class: "fill-mode"
+        }, [
+          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "review-word-flag"
+          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("view", { class: "word-display" }, [
+            vue.createElementVNode("view", { class: "fill-sentence" }, [
+              vue.createElementVNode("rich-text", {
+                nodes: $setup.formatHighlight($setup.currentSentence)
+              }, null, 8, ["nodes"])
+            ]),
+            $setup.currentWord.frequency ? (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 0,
+                class: "word-frequency"
+              },
+              vue.toDisplayString($setup.currentWord.frequency) + "次",
+              1
+              /* TEXT */
+            )) : vue.createCommentVNode("v-if", true)
+          ]),
+          vue.createElementVNode("view", { class: "options-and-buttons" }, [
+            vue.createElementVNode("view", { class: "options-grid" }, [
+              (vue.openBlock(true), vue.createElementBlock(
+                vue.Fragment,
+                null,
+                vue.renderList($setup.fillOptions, (option, idx) => {
+                  return vue.openBlock(), vue.createElementBlock("view", {
+                    key: idx,
+                    class: vue.normalizeClass(["option-card", {
+                      "correct": $setup.showResult && option === $setup.fillAnswer,
+                      "wrong": $setup.showResult && option === $setup.selectedOption && option !== $setup.fillAnswer
+                    }]),
+                    onClick: ($event) => !$setup.showResult && $setup.handleFillChoice(option)
+                  }, [
+                    vue.createElementVNode(
+                      "text",
+                      { class: "option-text" },
+                      vue.toDisplayString(option),
+                      1
+                      /* TEXT */
+                    )
+                  ], 10, ["onClick"]);
+                }),
+                128
+                /* KEYED_FRAGMENT */
+              ))
+            ]),
+            $setup.showResult && $setup.currentFillSentenceChinese ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "fill-result"
+            }, [
+              vue.createElementVNode("view", { class: "sentence-chinese" }, [
+                vue.createTextVNode("句子释义："),
+                vue.createElementVNode("rich-text", {
+                  nodes: $setup.formatHighlight($setup.currentFillSentenceChinese)
+                }, null, 8, ["nodes"])
+              ])
+            ])) : vue.createCommentVNode("v-if", true),
+            $setup.showResult ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 1,
+              class: "action-buttons"
+            }, [
+              vue.createElementVNode("view", {
+                class: "action-btn",
+                onClick: $setup.goToWordDetail
+              }, "详情"),
+              vue.createElementVNode(
+                "view",
+                {
+                  class: "action-btn",
+                  onClick: $setup.nextQuestion
+                },
+                vue.toDisplayString($setup.isLastQuestion ? "查看结果" : "下一题 →"),
+                1
+                /* TEXT */
+              )
+            ])) : vue.createCommentVNode("v-if", true)
+          ])
+        ])) : vue.createCommentVNode("v-if", true),
+        $setup.settings.mode === "spell" ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 3,
+          class: "spell-mode"
+        }, [
+          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "review-word-flag"
+          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("view", { class: "spell-prompt" }, "根据中文释义写出英文单词"),
+          vue.createElementVNode(
+            "view",
+            { class: "spell-chinese" },
+            vue.toDisplayString($setup.currentWord.chinese),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode("view", { class: "input-area" }, [
+            vue.withDirectives(vue.createElementVNode("input", {
+              type: "text",
+              "onUpdate:modelValue": _cache[23] || (_cache[23] = ($event) => $setup.spellInput = $event),
+              class: "spell-input",
+              placeholder: "输入英文单词",
+              disabled: $setup.showResult,
+              onConfirm: $setup.handleSpellSubmit
+            }, null, 40, ["disabled"]), [
+              [vue.vModelText, $setup.spellInput]
+            ])
+          ]),
+          !$setup.showResult ? (vue.openBlock(), vue.createElementBlock("button", {
+            key: 1,
+            onClick: $setup.handleSpellSubmit,
+            class: "btn-next",
+            disabled: !($setup.spellInput || "").trim()
+          }, " 提交 ", 8, ["disabled"])) : vue.createCommentVNode("v-if", true),
+          $setup.showResult ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 2,
+            class: "action-buttons"
+          }, [
+            vue.createElementVNode("view", {
+              class: "action-btn",
+              onClick: $setup.goToWordDetail
+            }, "详情"),
+            vue.createElementVNode(
+              "view",
+              {
+                class: "action-btn",
+                onClick: $setup.nextQuestion
+              },
+              vue.toDisplayString($setup.isLastQuestion ? "查看结果" : "下一题 →"),
+              1
+              /* TEXT */
+            )
+          ])) : vue.createCommentVNode("v-if", true)
+        ])) : vue.createCommentVNode("v-if", true),
+        $setup.settings.mode === "ai" ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 4,
+          class: "ai-mode"
+        }, [
+          $setup.currentWord.__isOldReview ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "review-word-flag"
+          }, "复习巩固")) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode(
+            "view",
+            { class: "ai-word" },
+            vue.toDisplayString($setup.currentWord.english),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode("view", { class: "context-card" }, [
+            vue.createElementVNode("view", { class: "context-sentence" }, [
+              vue.createElementVNode("rich-text", {
+                nodes: $setup.formatAIPhighlight($setup.aiSentence)
+              }, null, 8, ["nodes"])
+            ]),
+            $setup.isGenerating ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "generating-indicator"
+            }, [
+              vue.createElementVNode("text", null, "AI 生成例句中...")
+            ])) : vue.createCommentVNode("v-if", true)
+          ]),
+          vue.createElementVNode("view", { class: "input-area" }, [
+            vue.withDirectives(vue.createElementVNode("input", {
+              type: "text",
+              "onUpdate:modelValue": _cache[24] || (_cache[24] = ($event) => $setup.userTranslation = $event),
+              class: "translation-input",
+              placeholder: $setup.isGenerating ? "等待例句生成..." : "输入该单词在此句中的意思...",
+              disabled: $setup.isGenerating || $setup.showResult,
+              onConfirm: $setup.submitAnswer
+            }, null, 40, ["placeholder", "disabled"]), [
+              [vue.vModelText, $setup.userTranslation]
+            ])
+          ]),
+          $setup.showResult ? (vue.openBlock(), vue.createElementBlock(
+            "view",
+            {
+              key: 1,
+              class: vue.normalizeClass(["result-card", ((_a = $setup.aiResult) == null ? void 0 : _a.is_correct) ? "result-correct" : "result-wrong"])
+            },
+            [
+              vue.createElementVNode("view", { class: "result-header" }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "result-tag" },
+                  vue.toDisplayString(((_b = $setup.aiResult) == null ? void 0 : _b.is_correct) ? "✅ 回答正确" : "❌ 需要纠正"),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              ((_c = $setup.aiResult) == null ? void 0 : _c.sentence_chinese) ? (vue.openBlock(), vue.createElementBlock(
+                "view",
+                {
+                  key: 0,
+                  class: "sentence-chinese"
+                },
+                "原句翻译：" + vue.toDisplayString($setup.aiResult.sentence_chinese),
+                1
+                /* TEXT */
+              )) : vue.createCommentVNode("v-if", true),
+              vue.createElementVNode("view", { class: "result-explanation" }, [
+                vue.createElementVNode(
+                  "text",
+                  null,
+                  vue.toDisplayString((_d = $setup.aiResult) == null ? void 0 : _d.explanation),
+                  1
+                  /* TEXT */
+                )
+              ])
+            ],
+            2
+            /* CLASS */
+          )) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("button", {
+            onClick: _cache[25] || (_cache[25] = ($event) => $setup.showResult ? $setup.nextQuestion() : $setup.submitAnswer()),
+            class: "btn-submit",
+            disabled: $setup.isSubmitting || $setup.isGenerating
+          }, vue.toDisplayString($setup.isSubmitting ? "AI 判卷中..." : $setup.showResult ? $setup.isLastQuestion ? "查看结果" : "下一题" : "提交答案"), 9, ["disabled"])
+        ])) : vue.createCommentVNode("v-if", true)
+      ])) : $setup.reviewStarted && $setup.reviewFinished ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 9,
+        class: "finished"
+      }, [
+        vue.createElementVNode(
+          "view",
+          {
+            class: vue.normalizeClass(["finished-icon", $setup.wrongCount === 0 ? "icon-perfect" : "icon-good"])
+          },
+          [
+            vue.createElementVNode(
+              "text",
+              { class: "finished-icon-text" },
+              vue.toDisplayString($setup.wrongCount === 0 ? "全对" : "加油"),
+              1
+              /* TEXT */
+            )
+          ],
+          2
+          /* CLASS */
+        ),
+        vue.createElementVNode("h3", null, "复习完成！"),
+        vue.createElementVNode("view", { class: "finished-stats" }, [
+          vue.createElementVNode(
+            "text",
+            null,
+            "正确: " + vue.toDisplayString($setup.correctCount),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode(
+            "text",
+            null,
+            "错误: " + vue.toDisplayString($setup.wrongCount),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode(
+            "text",
+            null,
+            "正确率: " + vue.toDisplayString(Math.round($setup.correctCount / ($setup.correctCount + $setup.wrongCount || 1) * 100) || 0) + "%",
+            1
+            /* TEXT */
+          )
+        ]),
+        $setup.finishedReviewInsight ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "finished-insight-card"
+        }, [
+          vue.createElementVNode("text", { class: "finished-insight-title" }, "算法调度结果"),
+          vue.createElementVNode(
+            "text",
+            null,
+            "平均掌握度 " + vue.toDisplayString($setup.finishedReviewInsight.avgMastery) + "%",
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode(
+            "text",
+            null,
+            "已更新 " + vue.toDisplayString($setup.finishedReviewInsight.scheduledCount) + " 个词条",
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode(
+            "text",
+            null,
+            "最近一次建议复习：" + vue.toDisplayString($setup.finishedReviewInsight.nextReviewText),
+            1
+            /* TEXT */
+          )
+        ])) : vue.createCommentVNode("v-if", true),
+        $setup.wrongWords.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 1,
+          class: "wrong-words-section"
+        }, [
+          vue.createElementVNode(
+            "view",
+            { class: "wrong-title" },
+            "本次错误单词 (" + vue.toDisplayString($setup.wrongWords.length) + ")",
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode("scroll-view", {
+            "scroll-y": "",
+            class: "wrong-list"
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.wrongWords, (item, idx) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: idx,
+                  class: "wrong-item"
+                }, [
+                  vue.createElementVNode("view", { class: "wrong-word" }, [
+                    vue.createElementVNode(
+                      "text",
+                      { class: "eng" },
+                      vue.toDisplayString(item.english),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "text",
+                      { class: "chi" },
+                      vue.toDisplayString(item.correctAnswer ? item.correctAnswer : item.chinese),
+                      1
+                      /* TEXT */
+                    )
+                  ]),
+                  item.yourAnswer && item.yourAnswer !== item.correctAnswer && item.yourAnswer !== item.chinese ? (vue.openBlock(), vue.createElementBlock(
+                    "view",
+                    {
+                      key: 0,
+                      class: "your-answer"
+                    },
+                    " 你的答案: " + vue.toDisplayString(item.yourAnswer),
+                    1
+                    /* TEXT */
+                  )) : vue.createCommentVNode("v-if", true),
+                  item.synonyms && item.synonyms.length > 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+                    key: 1,
+                    class: "wrong-synonyms"
+                  }, [
+                    (vue.openBlock(true), vue.createElementBlock(
+                      vue.Fragment,
+                      null,
+                      vue.renderList(item.synonyms.slice(0, 3), (syn, sidx) => {
+                        return vue.openBlock(), vue.createElementBlock(
+                          "text",
+                          {
+                            key: sidx,
+                            class: "syn-tag"
+                          },
+                          vue.toDisplayString(syn.synonym) + " (" + vue.toDisplayString(syn.chinese) + ") ",
+                          1
+                          /* TEXT */
+                        );
+                      }),
+                      128
+                      /* KEYED_FRAGMENT */
+                    ))
+                  ])) : vue.createCommentVNode("v-if", true)
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])
+        ])) : vue.createCommentVNode("v-if", true),
+        vue.createElementVNode("view", { class: "finished-buttons" }, [
+          $setup.wrongWords.length > 0 ? (vue.openBlock(), vue.createElementBlock("button", {
+            key: 0,
+            onClick: _cache[26] || (_cache[26] = ($event) => {
+              $setup.reviewPreset = "wrong";
+              $setup.restartReview();
+            }),
+            class: "btn-secondary"
+          }, "错词再练")) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("button", {
+            onClick: $setup.restartReview,
+            class: "btn-primary"
+          }, "再来一轮"),
+          vue.createElementVNode("button", {
+            onClick: $setup.goBack,
+            class: "btn-secondary"
+          }, "返回")
+        ])
+      ])) : vue.createCommentVNode("v-if", true)
+    ]);
+  }
+  const PagesReviewReview = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$9], ["__scopeId", "data-v-7018a65d"], ["__file", "E:/vocal/wordbook_new/pages/review/review.vue"]]);
+  function buildShortChineseFromDefs(defs) {
+    if (!Array.isArray(defs))
+      return "";
+    const parts = [];
+    for (const d2 of defs) {
+      if (!d2 || typeof d2 !== "object")
+        continue;
+      const pos = String(d2.pos || "").trim();
+      const trans = String(d2.trans || "").trim();
+      if (!trans)
+        continue;
+      parts.push(pos ? `${pos} ${trans}` : trans);
+      if (parts.length >= 4)
+        break;
+    }
+    return parts.join("；");
+  }
+  function splitTags(tags) {
+    if (!tags)
+      return [];
+    return String(tags).split(/[,，\s]+/).map((t2) => t2.trim()).filter(Boolean);
+  }
+  async function getLocalWordSnapshot(english, options = {}) {
+    var _a, _b, _c;
+    const key = String(english || "").trim().toLowerCase();
+    if (!key) {
+      return {
+        chinese: "",
+        examples: [],
+        synonyms: [],
+        antonyms: [],
+        tags: "",
+        importance: void 0,
+        examCount: 0
+      };
+    }
+    const briefMap = options.briefMap && typeof options.briefMap === "object" ? options.briefMap : {};
+    const brief = briefMap[key] && typeof briefMap[key] === "object" ? briefMap[key] : null;
+    const [detail, pregen] = await Promise.all([
+      getWordFullDetail(key).catch(() => null),
+      getPregenWord(key).catch(() => null)
+    ]);
+    (detail == null ? void 0 : detail.examStats) || null;
+    const chinese = ((brief == null ? void 0 : brief.chinese) || "").trim() || ((detail == null ? void 0 : detail.chinese) || "").trim() || buildShortChineseFromDefs(detail == null ? void 0 : detail.defs) || ((pregen == null ? void 0 : pregen.chinese) || "").trim() || "";
+    const examples = Array.isArray(detail == null ? void 0 : detail.examples) && detail.examples.length ? detail.examples : Array.isArray(pregen == null ? void 0 : pregen.examples) ? pregen.examples : [];
+    const synonyms = Array.isArray(detail == null ? void 0 : detail.synonyms) && detail.synonyms.length ? detail.synonyms : Array.isArray(pregen == null ? void 0 : pregen.synonyms) ? pregen.synonyms : [];
+    const antonyms = Array.isArray(detail == null ? void 0 : detail.antonyms) && detail.antonyms.length ? detail.antonyms : Array.isArray(pregen == null ? void 0 : pregen.antonyms) ? pregen.antonyms : [];
+    const tagSet = /* @__PURE__ */ new Set([
+      ...splitTags((brief == null ? void 0 : brief.tags) || ""),
+      ...((_a = detail == null ? void 0 : detail.examStats) == null ? void 0 : _a.tags) && Array.isArray(detail.examStats.tags) ? detail.examStats.tags : []
+    ]);
+    let importance;
+    if (typeof ((_b = detail == null ? void 0 : detail.examStats) == null ? void 0 : _b.importance) === "number") {
+      importance = detail.examStats.importance;
+    } else if (typeof (brief == null ? void 0 : brief.importance) === "number") {
+      importance = brief.importance;
+    } else if (typeof (brief == null ? void 0 : brief.examCount) === "number") {
+      importance = brief.examCount > 0 ? 1 : 0;
+    }
+    return {
+      chinese,
+      examples,
+      synonyms,
+      antonyms,
+      tags: Array.from(tagSet).join(","),
+      importance,
+      examCount: typeof (brief == null ? void 0 : brief.examCount) === "number" ? brief.examCount : typeof ((_c = detail == null ? void 0 : detail.examStats) == null ? void 0 : _c.total_count) === "number" ? detail.examStats.total_count : 0
+    };
+  }
+  const _sfc_main$8 = {
+    __name: "quick-add",
+    setup(__props, { expose: __expose }) {
+      var _a;
+      __expose();
+      const word = vue.ref({
+        english: "",
+        chinese: "",
+        importance: 3,
+        // 默认三星
+        source_page: "",
+        year: "",
+        tags: ""
+      });
+      const foundWord = vue.ref(null);
+      const isLoading = vue.ref(false);
+      const isSaving = vue.ref(false);
+      const goBack = () => uni.navigateBack();
+      const cloudWordbooks = vue.ref(getCloudWordbooks());
+      const addToWordbook = vue.ref(((_a = cloudWordbooks.value[0]) == null ? void 0 : _a.id) || "self");
+      const addToWordbookOptions = vue.computed(() => cloudWordbooks.value.map((o2) => o2.name));
+      const addToWordbookIndex = vue.computed(() => {
+        const i2 = cloudWordbooks.value.findIndex((o2) => o2.id === addToWordbook.value);
+        return i2 >= 0 ? i2 : 0;
+      });
+      const addToWordbookLabel = vue.computed(() => {
+        const w2 = cloudWordbooks.value.find((o2) => o2.id === addToWordbook.value);
+        return w2 ? w2.name : "自用单词";
+      });
+      const onAddToWordbookChange = (e2) => {
+        const i2 = Number(e2.detail.value) || 0;
+        const w2 = cloudWordbooks.value[i2];
+        addToWordbook.value = w2 ? w2.id : "self";
+      };
+      const applyLocalSnapshotToWord = (local) => {
+        if (!local || typeof local !== "object")
+          return;
+        if (local.chinese && !word.value.chinese)
+          word.value.chinese = local.chinese;
+        if (local.tags)
+          word.value.tags = local.tags;
+        if (typeof local.importance === "number")
+          word.value.importance = local.importance;
+        word.value.examples = local.examples || [];
+        word.value.synonyms = local.synonyms || [];
+        word.value.antonyms = local.antonyms || [];
+      };
+      const normalizeWordHeavyFields = () => {
+        word.value.examples = word.value.examples || [];
+        word.value.synonyms = word.value.synonyms || [];
+        word.value.antonyms = word.value.antonyms || [];
+      };
+      let _searchTimer = null;
+      const searchWord = () => {
+        if (_searchTimer)
+          clearTimeout(_searchTimer);
+        if (!word.value.english) {
+          foundWord.value = null;
+          return;
+        }
+        _searchTimer = setTimeout(async () => {
+          _searchTimer = null;
+          const english = word.value.english;
+          if (!english)
+            return;
+          foundWord.value = null;
+          const local = await getLocalWordSnapshot(english);
+          if (word.value.english !== english)
+            return;
+          if (local && local.chinese) {
+            foundWord.value = { word: english.trim(), chinese: local.chinese };
+            word.value.chinese = local.chinese;
+          } else {
+            word.value.chinese = "";
+          }
+        }, 400);
+      };
+      const saveQuick = async () => {
+        if (isSaving.value) {
+          return;
+        }
+        if (!word.value.english || !word.value.chinese) {
+          uni.showToast({
+            title: "请输入英文单词",
+            duration: 2e3
+          });
+          return;
+        }
+        try {
+          const targetId = addToWordbook.value || "self";
+          if (targetId !== "self") {
+            const list = getWordbookWords(targetId) || [];
+            const existing = list.find((w2) => (w2.english || "").toLowerCase() === word.value.english.toLowerCase());
+            if (existing) {
+              uni.showToast({ title: "该单词本中已存在该词", icon: "none" });
+              return;
+            }
+            const local2 = await getLocalWordSnapshot(word.value.english);
+            applyLocalSnapshotToWord(local2);
+            isSaving.value = true;
+            normalizeWordHeavyFields();
+            const newWord = {
+              id: String(Date.now()),
+              ...word.value,
+              create_time: (/* @__PURE__ */ new Date()).toISOString(),
+              update_time: (/* @__PURE__ */ new Date()).toISOString(),
+              view_count: 0
+            };
+            list.push(newWord);
+            setWordbookWords(targetId, list);
+            noteNewWordLearned(newWord, { bookId: targetId, source: "quick-add" });
+            uni.showToast({ title: "已加入首日巩固", icon: "none", duration: 1800 });
+            uni.$emit("refreshWordList");
+            uni.navigateTo({ url: "/pages/index/index" });
+            return;
+          }
+          const existingList = await db.getWordsForList(1, 0, "create_time", "desc", { search: word.value.english.trim() });
+          const existingWord = existingList.find(
+            (w2) => (w2.english || "").toLowerCase() === word.value.english.toLowerCase()
+          );
+          if (existingWord) {
+            const newRepeat = (existingWord.repeat_count || 0) + 1;
+            await db.updateWord(existingWord.id, {
+              repeat_count: newRepeat,
+              update_time: (/* @__PURE__ */ new Date()).toISOString()
+            });
+            uni.showToast({
+              title: `该单词已存在，重复次数已增加到 ${newRepeat} 次`,
+              duration: 2e3
+            });
+            uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${existingWord.id}` });
+            return;
+          }
+          const local = await getLocalWordSnapshot(word.value.english);
+          applyLocalSnapshotToWord(local);
+          isSaving.value = true;
+          normalizeWordHeavyFields();
+          const payload = { ...word.value };
+          const added = await db.addWord(payload);
+          const addedId = added == null ? void 0 : added.id;
+          noteNewWordLearned({ ...payload, id: addedId }, { bookId: "self", source: "quick-add" });
+          uni.showToast({ title: "已加入首日巩固", icon: "none", duration: 1800 });
+          uni.navigateTo({ url: "/pages/index/index" });
+          const english = word.value.english;
+          (async () => {
+            var _a2, _b, _c, _d, _e2, _f, _g, _h;
+            try {
+              const pregen = await getPregenWord(english);
+              if (pregen && (((_a2 = pregen.examples) == null ? void 0 : _a2.length) || ((_b = pregen.synonyms) == null ? void 0 : _b.length) || ((_c = pregen.antonyms) == null ? void 0 : _c.length))) {
+                const updates2 = { update_time: (/* @__PURE__ */ new Date()).toISOString() };
+                if ((_d = pregen.examples) == null ? void 0 : _d.length)
+                  updates2.examples = pregen.examples;
+                if ((_e2 = pregen.synonyms) == null ? void 0 : _e2.length)
+                  updates2.synonyms = pregen.synonyms;
+                if ((_f = pregen.antonyms) == null ? void 0 : _f.length)
+                  updates2.antonyms = pregen.antonyms;
+                if (Object.keys(updates2).length > 1) {
+                  await db.updateWord(addedId, updates2);
+                  uni.$emit("wordEnriched", addedId);
+                }
+                return;
+              }
+              const recentWords = await db.getWordsForList(10, 0, "create_time", "desc", {});
+              const existingWords = recentWords.filter((w2) => w2.english && w2.english.toLowerCase() !== english.toLowerCase()).map((w2) => w2.english).slice(0, 10);
+              let examStatsText = "";
+              try {
+                const examData = await getWordExamData(english);
+                if (examData == null ? void 0 : examData.examStats)
+                  examStatsText = formatWordStatsForPrompt(examData.examStats);
+              } catch (_2) {
+              }
+              const [result, antonyms] = await Promise.all([
+                aiService.generateExamplesAndSynonyms(english, existingWords, examStatsText),
+                aiService.generateAntonyms(english, 3)
+              ]);
+              const updates = { update_time: (/* @__PURE__ */ new Date()).toISOString() };
+              if ((_g = result == null ? void 0 : result.examples) == null ? void 0 : _g.length)
+                updates.examples = result.examples;
+              if ((_h = result == null ? void 0 : result.synonyms) == null ? void 0 : _h.length)
+                updates.synonyms = result.synonyms;
+              if (antonyms == null ? void 0 : antonyms.length)
+                updates.antonyms = antonyms;
+              if (Object.keys(updates).length > 1) {
+                await db.updateWord(addedId, updates);
+                uni.$emit("wordEnriched", addedId);
+              }
+            } catch (_2) {
+            }
+          })();
+        } catch (error) {
+          formatAppLog("error", "at pages/quick-add/quick-add.vue:268", "保存失败:", error);
+          uni.showToast({ title: "保存失败，请重试", icon: "none", duration: 2e3 });
+        } finally {
+          isSaving.value = false;
+        }
+      };
+      const saveAndEdit = async () => {
+        if (isSaving.value)
+          return;
+        if (!word.value.english || !word.value.chinese) {
+          uni.showToast({ title: "请输入英文单词", duration: 2e3 });
+          return;
+        }
+        try {
+          const targetId = addToWordbook.value || "self";
+          if (targetId !== "self") {
+            const list = getWordbookWords(targetId) || [];
+            const existing = list.find((w2) => (w2.english || "").toLowerCase() === word.value.english.toLowerCase());
+            if (existing) {
+              uni.showToast({ title: "该单词本中已存在该词", icon: "none" });
+              return;
+            }
+            const local2 = await getLocalWordSnapshot(word.value.english);
+            applyLocalSnapshotToWord(local2);
+            isSaving.value = true;
+            normalizeWordHeavyFields();
+            const newWord = {
+              id: String(Date.now()),
+              ...word.value,
+              create_time: (/* @__PURE__ */ new Date()).toISOString(),
+              update_time: (/* @__PURE__ */ new Date()).toISOString(),
+              view_count: 0
+            };
+            list.push(newWord);
+            setWordbookWords(targetId, list);
+            noteNewWordLearned(newWord, { bookId: targetId, source: "quick-add" });
+            uni.showToast({ title: "已加入首日巩固", icon: "none", duration: 1800 });
+            uni.$emit("refreshWordList");
+            uni.navigateTo({ url: "/pages/index/index" });
+            return;
+          }
+          const existingList2 = await db.getWordsForList(1, 0, "create_time", "desc", { search: word.value.english.trim() });
+          const existingWord = existingList2.find(
+            (w2) => (w2.english || "").toLowerCase() === word.value.english.toLowerCase()
+          );
+          if (existingWord) {
+            const newRepeat = (existingWord.repeat_count || 0) + 1;
+            await db.updateWord(existingWord.id, {
+              repeat_count: newRepeat,
+              update_time: (/* @__PURE__ */ new Date()).toISOString()
+            });
+            uni.showToast({
+              title: `该单词已存在，重复次数已增加到 ${newRepeat} 次`,
+              duration: 1e3
+            });
+            uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${existingWord.id}` });
+            return;
+          }
+          const local = await getLocalWordSnapshot(word.value.english);
+          applyLocalSnapshotToWord(local);
+          isSaving.value = true;
+          normalizeWordHeavyFields();
+          const payload = { ...word.value };
+          const added = await db.addWord(payload);
+          const addedId = added == null ? void 0 : added.id;
+          noteNewWordLearned({ ...payload, id: addedId }, { bookId: "self", source: "quick-add" });
+          uni.showToast({ title: "已加入首日巩固", icon: "none", duration: 1800 });
+          uni.navigateTo({ url: `/pages/word-detail/word-detail?id=${addedId}` });
+          const english = word.value.english;
+          (async () => {
+            var _a2, _b, _c, _d, _e2, _f, _g, _h;
+            try {
+              const pregen = await getPregenWord(english);
+              if (pregen && (((_a2 = pregen.examples) == null ? void 0 : _a2.length) || ((_b = pregen.synonyms) == null ? void 0 : _b.length) || ((_c = pregen.antonyms) == null ? void 0 : _c.length))) {
+                const updates2 = { update_time: (/* @__PURE__ */ new Date()).toISOString() };
+                if ((_d = pregen.examples) == null ? void 0 : _d.length)
+                  updates2.examples = pregen.examples;
+                if ((_e2 = pregen.synonyms) == null ? void 0 : _e2.length)
+                  updates2.synonyms = pregen.synonyms;
+                if ((_f = pregen.antonyms) == null ? void 0 : _f.length)
+                  updates2.antonyms = pregen.antonyms;
+                if (Object.keys(updates2).length > 1) {
+                  await db.updateWord(addedId, updates2);
+                  uni.$emit("wordEnriched", addedId);
+                }
+                return;
+              }
+              const recentWords2 = await db.getWordsForList(10, 0, "create_time", "desc", {});
+              const existingWords = recentWords2.filter((w2) => w2.english && w2.english.toLowerCase() !== english.toLowerCase()).map((w2) => w2.english).slice(0, 10);
+              let examStatsText = "";
+              try {
+                const examData = await getWordExamData(english);
+                if (examData == null ? void 0 : examData.examStats)
+                  examStatsText = formatWordStatsForPrompt(examData.examStats);
+              } catch (_2) {
+              }
+              const [result, antonyms] = await Promise.all([
+                aiService.generateExamplesAndSynonyms(english, existingWords, examStatsText),
+                aiService.generateAntonyms(english, 3)
+              ]);
+              const updates = { update_time: (/* @__PURE__ */ new Date()).toISOString() };
+              if ((_g = result == null ? void 0 : result.examples) == null ? void 0 : _g.length)
+                updates.examples = result.examples;
+              if ((_h = result == null ? void 0 : result.synonyms) == null ? void 0 : _h.length)
+                updates.synonyms = result.synonyms;
+              if (antonyms == null ? void 0 : antonyms.length)
+                updates.antonyms = antonyms;
+              if (Object.keys(updates).length > 1) {
+                await db.updateWord(addedId, updates);
+                uni.$emit("wordEnriched", addedId);
+              }
+            } catch (_2) {
+            }
+          })();
+        } catch (error) {
+          formatAppLog("error", "at pages/quick-add/quick-add.vue:384", "保存失败:", error);
+          uni.showToast({ title: "保存失败，请重试", icon: "none", duration: 2e3 });
+        } finally {
+          isSaving.value = false;
+        }
+      };
+      vue.onMounted(async () => {
+        cloudWordbooks.value = getCloudWordbooks();
+        const lastWord = await db.getLastWord();
+        if (lastWord) {
+          word.value.source_page = lastWord.source_page || "";
+          word.value.year = lastWord.year || "";
+        }
+      });
+      onShow(() => {
+        cloudWordbooks.value = getCloudWordbooks();
+      });
+      onUnload(() => {
+        try {
+          cleanupExpiredCaches();
+        } catch (error) {
+          logger.warn("QuickAdd", "清理缓存失败", error);
+        }
+      });
+      const __returned__ = { word, foundWord, isLoading, isSaving, goBack, cloudWordbooks, addToWordbook, addToWordbookOptions, addToWordbookIndex, addToWordbookLabel, onAddToWordbookChange, applyLocalSnapshotToWord, normalizeWordHeavyFields, get _searchTimer() {
+        return _searchTimer;
+      }, set _searchTimer(v2) {
+        _searchTimer = v2;
+      }, searchWord, saveQuick, saveAndEdit, ref: vue.ref, computed: vue.computed, onMounted: vue.onMounted, VocalColorBlockSelector, get onShow() {
+        return onShow;
+      }, get onUnload() {
+        return onUnload;
+      }, get db() {
+        return db;
+      }, get aiService() {
+        return aiService;
+      }, get formatWordStatsForPrompt() {
+        return formatWordStatsForPrompt;
+      }, get pregenVocab() {
+        return pregenVocab;
+      }, get masterDb() {
+        return masterDb;
+      }, get getLocalWordSnapshot() {
+        return getLocalWordSnapshot;
+      }, get getCloudWordbooks() {
+        return getCloudWordbooks;
+      }, get getWordbookWords() {
+        return getWordbookWords;
+      }, get setWordbookWords() {
+        return setWordbookWords;
+      }, get noteNewWordLearned() {
+        return noteNewWordLearned;
+      }, get logger() {
+        return logger;
+      }, get errorHandler() {
+        return errorHandler;
+      }, get cleanupExpiredCaches() {
+        return cleanupExpiredCaches;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$8(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
+      vue.createElementVNode("view", { class: "custom-nav-bar" }, [
+        vue.createElementVNode("view", {
+          class: "nav-back-btn",
+          onClick: $setup.goBack
+        }, "‹")
+      ]),
+      vue.createElementVNode("view", { class: "main-content" }, [
+        vue.createElementVNode("view", { class: "qa-english-wrap" }, [
+          vue.withDirectives(vue.createElementVNode("input", {
+            type: "text",
+            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.word.english = $event),
+            onInput: $setup.searchWord,
+            placeholder: "请输入英文单词...",
+            disabled: $setup.isSaving,
+            class: "qa-english-input"
+          }, null, 40, ["disabled"]), [
+            [vue.vModelText, $setup.word.english]
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "qa-meta-row" }, [
+          vue.createElementVNode("view", { class: "qa-meta-item" }, [
+            vue.createElementVNode("text", { class: "qa-meta-label" }, "P."),
+            vue.withDirectives(vue.createElementVNode(
+              "input",
+              {
+                type: "number",
+                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.word.source_page = $event),
+                placeholder: "页码",
+                class: "qa-meta-input"
+              },
+              null,
+              512
+              /* NEED_PATCH */
+            ), [
+              [vue.vModelText, $setup.word.source_page]
+            ])
+          ]),
+          vue.createElementVNode("view", { class: "qa-meta-item" }, [
+            vue.createElementVNode("text", { class: "qa-meta-label" }, "Year"),
+            vue.withDirectives(vue.createElementVNode(
+              "input",
+              {
+                type: "number",
+                "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.word.year = $event),
+                placeholder: "年份",
+                class: "qa-meta-input"
+              },
+              null,
+              512
+              /* NEED_PATCH */
+            ), [
+              [vue.vModelText, $setup.word.year]
+            ])
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "add-to-wordbook-row" }, [
+          vue.createElementVNode("text", { class: "add-to-label" }, "添加到单词本"),
+          vue.createVNode($setup["VocalColorBlockSelector"], {
+            range: $setup.addToWordbookOptions,
+            value: $setup.addToWordbookIndex,
+            onChange: $setup.onAddToWordbookChange
+          }, {
+            default: vue.withCtx(() => [
+              vue.createElementVNode(
+                "view",
+                { class: "add-to-picker" },
+                vue.toDisplayString($setup.addToWordbookLabel),
+                1
+                /* TEXT */
+              )
+            ]),
+            _: 1
+            /* STABLE */
+          }, 8, ["range", "value"])
+        ]),
+        $setup.foundWord ? (vue.openBlock(), vue.createElementBlock("div", {
+          key: 0,
+          style: { "background-color": "#f5f7fa", "padding": "15px", "border-radius": "12px", "margin-top": "20px" }
+        }, [
+          vue.createElementVNode("div", { style: { "font-size": "14px", "line-height": "1.5" } }, [
+            vue.createElementVNode("span", { style: { "font-weight": "bold", "color": "#4A4E69", "margin-right": "8px" } }, "中文释义："),
+            vue.createElementVNode(
+              "span",
+              null,
+              vue.toDisplayString($setup.foundWord.chinese),
+              1
+              /* TEXT */
+            )
+          ])
+        ])) : vue.createCommentVNode("v-if", true)
+      ]),
+      vue.createElementVNode("view", { class: "footer" }, [
+        vue.createElementVNode("button", {
+          onClick: $setup.goBack,
+          disabled: $setup.isSaving
+        }, "取消", 8, ["disabled"]),
+        vue.createElementVNode("button", {
+          onClick: $setup.saveQuick,
+          disabled: $setup.isSaving
+        }, "快速保存", 8, ["disabled"]),
+        vue.createElementVNode("button", {
+          onClick: $setup.saveAndEdit,
+          disabled: $setup.isSaving
+        }, "保存并编辑", 8, ["disabled"])
+      ])
+    ]);
+  }
+  const PagesQuickAddQuickAdd = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$8], ["__scopeId", "data-v-59bf85e1"], ["__file", "E:/vocal/wordbook_new/pages/quick-add/quick-add.vue"]]);
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   const _sfc_main$7 = {
     __name: "login",
@@ -13449,6 +13765,7 @@ ${i3}
           });
           uni.hideLoading();
           if (result.result && result.result.code === 0) {
+            await backupProgressToCloud();
             uni.showToast({
               title: "备份成功",
               icon: "success"
@@ -13461,7 +13778,7 @@ ${i3}
           }
         } catch (e2) {
           uni.hideLoading();
-          formatAppLog("error", "at pages/my/my.vue:470", "备份失败:", e2);
+          formatAppLog("error", "at pages/my/my.vue:473", "备份失败:", e2);
           uni.showToast({
             title: "备份失败: " + e2.message,
             icon: "none"
@@ -13493,7 +13810,7 @@ ${i3}
         }
         uni.showLoading({ title: "正在连接云端..." });
         try {
-          formatAppLog("log", "at pages/my/my.vue:507", "🚀 --- 开始向云端要数据, 账号 uid:", uid2);
+          formatAppLog("log", "at pages/my/my.vue:510", "🚀 --- 开始向云端要数据, 账号 uid:", uid2);
           const res = await _r.callFunction({
             name: "word-sync",
             data: {
@@ -13501,11 +13818,11 @@ ${i3}
               uid: uid2
             }
           });
-          formatAppLog("log", "at pages/my/my.vue:517", "📦 云端返回的完整包裹:", res);
+          formatAppLog("log", "at pages/my/my.vue:520", "📦 云端返回的完整包裹:", res);
           if (res.result.code === 0) {
             const cloudWords = res.result.words || res.result.data || [];
             if (cloudWords && cloudWords.length > 0) {
-              formatAppLog("log", "at pages/my/my.vue:523", `✅ 成功拿到 ${cloudWords.length} 个单词！准备写入本地...`);
+              formatAppLog("log", "at pages/my/my.vue:526", `✅ 成功拿到 ${cloudWords.length} 个单词！准备写入本地...`);
               const englishList = cloudWords.map((w2) => (w2.english || "").trim()).filter(Boolean);
               const briefMap = await getWordBriefBatch(englishList).catch(() => ({}));
               const restored = [];
@@ -13518,6 +13835,7 @@ ${i3}
                   importance: typeof snapshot.importance === "number" ? snapshot.importance : w2.importance || 0,
                   repeat_count: w2.repeat_count || 1,
                   view_count: w2.view_count != null ? w2.view_count : 0,
+                  is_favorite: w2.is_favorite || false,
                   examples: snapshot.examples || [],
                   synonyms: snapshot.synonyms || [],
                   antonyms: snapshot.antonyms || []
@@ -13536,11 +13854,11 @@ ${i3}
               uni.showToast({ title: "您的云端词库是空的", icon: "none" });
             }
           } else {
-            formatAppLog("error", "at pages/my/my.vue:559", "❌ 云端拒绝了请求:", res.result.msg);
+            formatAppLog("error", "at pages/my/my.vue:563", "❌ 云端拒绝了请求:", res.result.msg);
             uni.showToast({ title: res.result.msg || "恢复失败", icon: "none" });
           }
         } catch (error) {
-          formatAppLog("error", "at pages/my/my.vue:564", "💥 前端请求崩溃:", error);
+          formatAppLog("error", "at pages/my/my.vue:568", "💥 前端请求崩溃:", error);
           uni.showToast({ title: "网络通信异常", icon: "error" });
         } finally {
           uni.hideLoading();
@@ -13727,12 +14045,40 @@ ${i3}
               existingSet.add(key);
               count++;
             } catch (e2) {
-              formatAppLog("warn", "at pages/my/my.vue:766", "跳过重复或无效:", w2.english, e2);
+              formatAppLog("warn", "at pages/my/my.vue:770", "跳过重复或无效:", w2.english, e2);
             }
           }
           callback(null, count);
         })();
       }
+      const backupProgressToCloud = async () => {
+        try {
+          const uid2 = uni.getStorageSync("uid");
+          if (!uid2)
+            return;
+          const words = await db.getAllWords();
+          const progressData = words.map((w2) => ({
+            english: w2.english,
+            repeat_count: w2.repeat_count || 1,
+            view_count: w2.view_count || 0,
+            error_rate: w2.error_rate || 0,
+            review_frequency: w2.review_frequency || 0,
+            importance: w2.importance || 3,
+            update_time: w2.update_time || (/* @__PURE__ */ new Date()).toISOString()
+          }));
+          await _r.callFunction({
+            name: "word-sync",
+            data: {
+              action: "backup-progress",
+              uid: uid2,
+              progress: progressData
+            }
+          });
+          formatAppLog("log", "at pages/my/my.vue:803", "学习进度已备份到云端");
+        } catch (e2) {
+          formatAppLog("warn", "at pages/my/my.vue:805", "备份学习进度失败:", e2);
+        }
+      };
       const openAiSuggestion = async () => {
         showAiSuggestionModal.value = true;
         lastReviewResult.value = getLatestSession(getCurrentWordbook()) || uni.getStorageSync("lastReviewResult") || null;
@@ -13745,7 +14091,7 @@ ${i3}
           aiSuggestionText.value = "生成失败，请检查网络或稍后重试。";
         }
       };
-      const __returned__ = { uid, username, userDisplayName, isLoggedIn: isLoggedIn2, localWordCount, totalViewCount, lastReviewAccuracy, lastReviewResult, showAiSuggestionModal, showImportModal, aiSuggestionText, currentWordbookKey, learningSnapshot, studyStats, displayName, currentWordbookLabel, goToWordbookList, goToStats, goToMistakes, goToMasteredWords, goToDueReview, userInitial, goToEditNickname, onWordbookChanged, checkLoginStatus, loadLocalWordCount, goToLogin, handleLogout, uploadToCloud, downloadFromCloud, performDownload, exportCsv, exportTxt, exportTxtEnglishOnly, chooseImportFile, handleFileImport, readAndImportFile, parseAndImport, openAiSuggestion, ref: vue.ref, computed: vue.computed, get onShow() {
+      const __returned__ = { uid, username, userDisplayName, isLoggedIn: isLoggedIn2, localWordCount, totalViewCount, lastReviewAccuracy, lastReviewResult, showAiSuggestionModal, showImportModal, aiSuggestionText, currentWordbookKey, learningSnapshot, studyStats, displayName, currentWordbookLabel, goToWordbookList, goToStats, goToMistakes, goToMasteredWords, goToDueReview, userInitial, goToEditNickname, onWordbookChanged, checkLoginStatus, loadLocalWordCount, goToLogin, handleLogout, uploadToCloud, downloadFromCloud, performDownload, exportCsv, exportTxt, exportTxtEnglishOnly, chooseImportFile, handleFileImport, readAndImportFile, parseAndImport, backupProgressToCloud, openAiSuggestion, ref: vue.ref, computed: vue.computed, get onShow() {
         return onShow;
       }, get onUnload() {
         return onUnload;
@@ -15021,87 +15367,31 @@ ${i3}
     setup(__props, { expose: __expose }) {
       __expose();
       const masteredWords = vue.ref([]);
-      const currentBookLabel = vue.computed(() => getCurrentWordbook() || "当前词书");
       const showUnmasterModal = vue.ref(false);
       const unmasterItem = vue.ref(null);
       const loadMasteredWords = async () => {
         try {
-          const selfMastered = await db.getMasteredWords();
-          const bookId = getCurrentWordbook();
-          let wordbookMastered = [];
-          if (bookId && bookId !== "self") {
-            const masteredSet = getMasteredWordbookWords(bookId);
-            const allWords = await getCurrentBookWordPool();
-            wordbookMastered = (allWords || []).filter((w2) => masteredSet.has((w2.english || "").trim().toLowerCase())).map((w2) => ({
-              english: w2.english,
-              chinese: w2.chinese,
-              mastered_at: (/* @__PURE__ */ new Date()).toISOString(),
-              id: w2.id || `wordbook_${bookId}_${w2.english}`
-            }));
-          }
-          masteredWords.value = [...selfMastered, ...wordbookMastered];
-        } catch (error) {
-          formatAppLog("error", "at pages/mastered-words/mastered-words.vue:105", "加载已斯单词失败:", error);
+          const words = getWordbookWords("mastered") || [];
+          masteredWords.value = words.map((w2, index) => ({
+            ...w2,
+            id: w2.id || `mastered_${index}_${w2.english}`
+          }));
+        } catch (e2) {
+          formatAppLog("error", "at pages/mastered-words/mastered-words.vue:82", "加载已斯单词本失败:", e2);
           masteredWords.value = [];
         }
       };
       const formatDate = (dateStr) => {
         if (!dateStr)
           return "—";
-        try {
-          const date = new Date(dateStr);
-          const month = String(date.getMonth() + 1).padStart(2, "0");
-          const day = String(date.getDate()).padStart(2, "0");
-          const hour = String(date.getHours()).padStart(2, "0");
-          const min = String(date.getMinutes()).padStart(2, "0");
-          return `${month}/${day} ${hour}:${min}`;
-        } catch (e2) {
-          return "—";
-        }
-      };
-      const getStreak = () => {
-        if (masteredWords.value.length === 0)
-          return 0;
-        const dates = masteredWords.value.map((w2) => {
-          if (!w2.mastered_at)
-            return null;
-          const date = new Date(w2.mastered_at);
-          return date.toDateString();
-        }).filter((d2) => d2 !== null);
-        const uniqueDates = [...new Set(dates)].sort().reverse();
-        if (uniqueDates.length === 0)
-          return 0;
-        let streak = 1;
-        const today = (/* @__PURE__ */ new Date()).toDateString();
-        if (uniqueDates[0] !== today) {
-          const yesterday = /* @__PURE__ */ new Date();
-          yesterday.setDate(yesterday.getDate() - 1);
-          if (uniqueDates[0] !== yesterday.toDateString()) {
-            return 0;
-          }
-        }
-        for (let i2 = 1; i2 < uniqueDates.length; i2++) {
-          const prevDate = new Date(uniqueDates[i2 - 1]);
-          const currDate = new Date(uniqueDates[i2]);
-          const diffTime = prevDate - currDate;
-          const diffDays = diffTime / (1e3 * 60 * 60 * 24);
-          if (diffDays === 1) {
-            streak++;
-          } else {
-            break;
-          }
-        }
-        return streak;
+        const date = new Date(dateStr);
+        return date.toLocaleDateString("zh-CN", { month: "2-digit", day: "2-digit" });
       };
       const goToDetail = (item) => {
-        if (!item || !item.english)
+        if (!item.english)
           return;
         uni.navigateTo({
-          url: `/pages/word-detail/word-detail?english=${encodeURIComponent(item.english)}&fromWordbook=1`,
-          fail: (err) => {
-            formatAppLog("error", "at pages/mastered-words/mastered-words.vue:171", "跳转失败:", err);
-            uni.showToast({ title: "跳转失败", icon: "none" });
-          }
+          url: `/pages/word-detail/word-detail?english=${encodeURIComponent(item.english)}`
         });
       };
       const showUnmasterConfirm = (item) => {
@@ -15112,25 +15402,20 @@ ${i3}
         if (!unmasterItem.value)
           return;
         try {
-          const bookId = getCurrentWordbook();
-          if (unmasterItem.value.id && unmasterItem.value.id.startsWith("wordbook_")) {
-            removeMasteredWordbookWord(bookId, unmasterItem.value.english);
-          } else if (unmasterItem.value.id) {
-            await db.unmasterWord(unmasterItem.value.id);
-          }
-          uni.showToast({ title: "已取消斯掉", icon: "success" });
+          const words = getWordbookWords("mastered") || [];
+          const filtered = words.filter((w2) => (w2.english || "").trim().toLowerCase() !== (unmasterItem.value.english || "").trim().toLowerCase());
+          setWordbookWords("mastered", filtered);
+          masteredWords.value = filtered.map((w2, index) => ({
+            ...w2,
+            id: w2.id || `mastered_${index}_${w2.english}`
+          }));
           showUnmasterModal.value = false;
           unmasterItem.value = null;
-          await loadMasteredWords();
-        } catch (error) {
-          formatAppLog("error", "at pages/mastered-words/mastered-words.vue:201", "取消斯掉失败:", error);
+          uni.showToast({ title: "已取消斯掉", icon: "success" });
+        } catch (e2) {
+          formatAppLog("error", "at pages/mastered-words/mastered-words.vue:123", "取消斯掉失败:", e2);
           uni.showToast({ title: "操作失败", icon: "none" });
         }
-      };
-      const goToReview = () => {
-        uni.navigateTo({
-          url: "/pages/review/review?preset=all"
-        });
       };
       onShow(() => {
         loadMasteredWords();
@@ -15142,24 +15427,18 @@ ${i3}
           logger.warn("MasteredWords", "清理缓存失败", error);
         }
       });
-      const __returned__ = { masteredWords, currentBookLabel, showUnmasterModal, unmasterItem, loadMasteredWords, formatDate, getStreak, goToDetail, showUnmasterConfirm, confirmUnmaster, goToReview, ref: vue.ref, computed: vue.computed, get onShow() {
+      const __returned__ = { masteredWords, showUnmasterModal, unmasterItem, loadMasteredWords, formatDate, goToDetail, showUnmasterConfirm, confirmUnmaster, ref: vue.ref, get onShow() {
         return onShow;
       }, get onUnload() {
         return onUnload;
-      }, get getCurrentWordbook() {
-        return getCurrentWordbook;
-      }, get db() {
-        return db;
+      }, get getWordbookWords() {
+        return getWordbookWords;
+      }, get setWordbookWords() {
+        return setWordbookWords;
       }, get logger() {
         return logger;
       }, get cleanupExpiredCaches() {
         return cleanupExpiredCaches;
-      }, get getMasteredWordbookWords() {
-        return getMasteredWordbookWords;
-      }, get removeMasteredWordbookWord() {
-        return removeMasteredWordbookWord;
-      }, get addMasteredWordbookWord() {
-        return addMasteredWordbookWord;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -15170,14 +15449,7 @@ ${i3}
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("view", { class: "status-bar" }),
       vue.createElementVNode("view", { class: "header" }, [
-        vue.createElementVNode("view", { class: "header-title" }, "已斯单词本"),
-        vue.createElementVNode(
-          "view",
-          { class: "header-subtitle" },
-          vue.toDisplayString($setup.currentBookLabel),
-          1
-          /* TEXT */
-        )
+        vue.createElementVNode("view", { class: "header-title" }, "已斯单词本")
       ]),
       $setup.masteredWords.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
@@ -15202,17 +15474,6 @@ ${i3}
                 /* TEXT */
               ),
               vue.createElementVNode("view", { class: "stat-text" }, "个单词")
-            ]),
-            vue.createElementVNode("view", { class: "stat-divider" }),
-            vue.createElementVNode("view", { class: "stat-item" }, [
-              vue.createElementVNode(
-                "view",
-                { class: "stat-number" },
-                vue.toDisplayString($setup.getStreak()),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode("view", { class: "stat-text" }, "连续天数")
             ])
           ])
         ]),

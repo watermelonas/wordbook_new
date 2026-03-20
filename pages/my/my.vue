@@ -453,8 +453,11 @@ const uploadToCloud = async () => {
     });
     
     uni.hideLoading();
-    
+
     if (result.result && result.result.code === 0) {
+      // 备份成功后，也备份学习进度
+      await backupProgressToCloud();
+
       uni.showToast({
         title: '备份成功',
         icon: 'success'
@@ -533,6 +536,7 @@ const performDownload = async () => {
             importance: typeof snapshot.importance === 'number' ? snapshot.importance : (w.importance || 0),
             repeat_count: w.repeat_count || 1,
             view_count: w.view_count != null ? w.view_count : 0,
+            is_favorite: w.is_favorite || false,
             examples: snapshot.examples || [],
             synonyms: snapshot.synonyms || [],
             antonyms: snapshot.antonyms || [],
@@ -769,6 +773,38 @@ function parseAndImport(text, callback) {
     callback(null, count);
   })();
 }
+
+// 备份学习进度到云端
+const backupProgressToCloud = async () => {
+  try {
+    const uid = uni.getStorageSync('uid');
+    if (!uid) return;
+
+    const words = await db.getAllWords();
+    const progressData = words.map(w => ({
+      english: w.english,
+      repeat_count: w.repeat_count || 1,
+      view_count: w.view_count || 0,
+      error_rate: w.error_rate || 0,
+      review_frequency: w.review_frequency || 0,
+      importance: w.importance || 3,
+      update_time: w.update_time || new Date().toISOString()
+    }));
+
+    await uniCloud.callFunction({
+      name: 'word-sync',
+      data: {
+        action: 'backup-progress',
+        uid: uid,
+        progress: progressData
+      }
+    });
+
+    console.log('学习进度已备份到云端');
+  } catch (e) {
+    console.warn('备份学习进度失败:', e);
+  }
+};
 
 // 打开学习报告（含数据统计 + AI 复习建议）
 const openAiSuggestion = async () => {
