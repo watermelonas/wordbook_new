@@ -532,7 +532,7 @@ if (uni.restoreGlobal) {
   function I(e2) {
     return e2 && "string" == typeof e2 ? JSON.parse(e2) : e2;
   }
-  const S = true, b = "app", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), T = b, C = I('{"address":["127.0.0.1","192.168.1.222"],"servePort":7000,"debugPort":9000,"initialLaunchType":"remote","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), P = I('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
+  const S = true, b = "app", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), T = b, C = I('{"address":["127.0.0.1","192.168.1.222"],"servePort":7001,"debugPort":9001,"initialLaunchType":"remote","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), P = I('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
   let E = "";
   try {
     E = "__UNI__9F3DDBE";
@@ -3333,10 +3333,98 @@ ${i3}
     ]);
   }
   const VocalColorBlockSelector = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["render", _sfc_render$c], ["__scopeId", "data-v-62b10f5c"], ["__file", "E:/vocal/wordbook_new/components/vocal-color-block-selector/vocal-color-block-selector.vue"]]);
+  const FSRS_CONFIG = {
+    // ============ 初始值 ============
+    // 新单词的初始难度系数（0.15-0.98）
+    // 值越高，单词越难
+    INITIAL_DIFFICULTY: 0.35,
+    // 新单词的初始稳定性（天数）
+    // 值越高，遗忘越慢
+    INITIAL_STABILITY: 0.6,
+    // 新单词的初始可检索性（0.05-0.99）
+    // 表示能回忆起单词的概率
+    INITIAL_RETRIEVABILITY: 0.92,
+    // ============ 难度调整参数 ============
+    // 答对时难度的减少量
+    DIFFICULTY_DECREASE_ON_CORRECT: 0.06,
+    // 答错时难度的增加量
+    DIFFICULTY_INCREASE_ON_WRONG: 0.12,
+    // 难度的最小值
+    DIFFICULTY_MIN: 0.15,
+    // 难度的最大值
+    DIFFICULTY_MAX: 0.98,
+    // ============ 稳定性调整参数 ============
+    // 答对时稳定性的增长系数
+    STABILITY_GROWTH_FACTOR: 1.55,
+    // 答对时难度对稳定性的影响系数
+    STABILITY_DIFFICULTY_FACTOR: 0.65,
+    // 答对时可检索性对稳定性的影响系数
+    STABILITY_RETRIEVABILITY_FACTOR: 0.35,
+    // 答对时重要性对稳定性的影响系数
+    STABILITY_IMPORTANCE_FACTOR: 0.04,
+    // 答错时稳定性的衰减系数
+    STABILITY_DECAY_FACTOR: 0.42,
+    // 稳定性的最小值
+    STABILITY_MIN: 0.2,
+    // ============ 复习间隔参数 ============
+    // 复习间隔的基础系数
+    INTERVAL_BASE_FACTOR: 0.7,
+    // 复习间隔的难度系数
+    INTERVAL_DIFFICULTY_FACTOR: 0.9,
+    // 复习间隔的最大值（天）
+    INTERVAL_MAX_DAYS: 90,
+    // 答错后的复习间隔（天）
+    INTERVAL_ON_WRONG: 0.125,
+    // ============ 可检索性参数 ============
+    // 答对时的可检索性
+    RETRIEVABILITY_ON_CORRECT: 0.97,
+    // 答错时的可检索性
+    RETRIEVABILITY_ON_WRONG: 0.35,
+    // 可检索性的最小值
+    RETRIEVABILITY_MIN: 0.05,
+    // 可检索性的最大值
+    RETRIEVABILITY_MAX: 0.99,
+    // ============ 重要性参数 ============
+    // 重要性的最小值
+    IMPORTANCE_MIN: 0,
+    // 重要性的最大值
+    IMPORTANCE_MAX: 5,
+    // 重要性的默认值
+    IMPORTANCE_DEFAULT: 3,
+    // ============ 缓存参数 ============
+    // 内存缓存过期时间（毫秒）
+    MEMORY_CACHE_TTL: 5 * 60 * 1e3,
+    // 5 分钟
+    // 存储缓存过期时间（毫秒）
+    STORAGE_CACHE_TTL: 24 * 60 * 60 * 1e3,
+    // 24 小时
+    // 最大缓存条数
+    MAX_CACHE_SIZE: 500,
+    // ============ 复习设置 ============
+    // 每日默认复习数量
+    DAILY_REVIEW_COUNT: 20,
+    // 新单词每日学习数量
+    DAILY_NEW_WORDS: 10,
+    // 首日巩固复习次数
+    FIRST_DAY_REVIEW_COUNT: 3,
+    // ============ 掌握度阈值 ============
+    // 掌握度的最小值（0-100）
+    MASTERY_MIN: 0,
+    // 掌握度的最大值（0-100）
+    MASTERY_MAX: 100,
+    // 掌握度分层：熟练（%）
+    MASTERY_STRONG_THRESHOLD: 80,
+    // 掌握度分层：稳定（%）
+    MASTERY_NORMAL_THRESHOLD: 60,
+    // 掌握度分层：薄弱（%）
+    MASTERY_WEAK_THRESHOLD: 40,
+    // 掌握度分层：危险（%）
+    MASTERY_DANGER_THRESHOLD: 0
+  };
   const REVIEW_DEFAULTS = {
-    difficulty_score: 0.35,
-    stability: 0.6,
-    retrievability: 0.92,
+    difficulty_score: FSRS_CONFIG.INITIAL_DIFFICULTY,
+    stability: FSRS_CONFIG.INITIAL_STABILITY,
+    retrievability: FSRS_CONFIG.INITIAL_RETRIEVABILITY,
     interval_days: 0,
     lapse_count: 0,
     review_count: 0,
@@ -3345,9 +3433,20 @@ ${i3}
   };
   const clamp = (num, min, max) => Math.min(max, Math.max(min, num));
   const normalizeReviewFields = (word = {}) => ({
-    difficulty_score: clamp(Number(word.difficulty_score ?? REVIEW_DEFAULTS.difficulty_score) || REVIEW_DEFAULTS.difficulty_score, 0.15, 0.98),
-    stability: Math.max(0.2, Number(word.stability ?? REVIEW_DEFAULTS.stability) || REVIEW_DEFAULTS.stability),
-    retrievability: clamp(Number(word.retrievability ?? REVIEW_DEFAULTS.retrievability) || REVIEW_DEFAULTS.retrievability, 0.05, 0.99),
+    difficulty_score: clamp(
+      Number(word.difficulty_score ?? REVIEW_DEFAULTS.difficulty_score) || REVIEW_DEFAULTS.difficulty_score,
+      FSRS_CONFIG.DIFFICULTY_MIN,
+      FSRS_CONFIG.DIFFICULTY_MAX
+    ),
+    stability: Math.max(
+      FSRS_CONFIG.STABILITY_MIN,
+      Number(word.stability ?? REVIEW_DEFAULTS.stability) || REVIEW_DEFAULTS.stability
+    ),
+    retrievability: clamp(
+      Number(word.retrievability ?? REVIEW_DEFAULTS.retrievability) || REVIEW_DEFAULTS.retrievability,
+      FSRS_CONFIG.RETRIEVABILITY_MIN,
+      FSRS_CONFIG.RETRIEVABILITY_MAX
+    ),
     interval_days: Math.max(0, Number(word.interval_days ?? REVIEW_DEFAULTS.interval_days) || 0),
     lapse_count: Math.max(0, Number(word.lapse_count ?? REVIEW_DEFAULTS.lapse_count) || 0),
     review_count: Math.max(0, Number(word.review_count ?? word.review_frequency ?? REVIEW_DEFAULTS.review_count) || 0),
@@ -3361,11 +3460,11 @@ ${i3}
     return Math.max(0, (now - new Date(base)) / (1e3 * 60 * 60 * 24));
   };
   const computeRetrievabilityByStability = (stability, elapsedDays) => {
-    const s2 = Math.max(0.2, Number(stability) || REVIEW_DEFAULTS.stability);
+    const s2 = Math.max(FSRS_CONFIG.STABILITY_MIN, Number(stability) || REVIEW_DEFAULTS.stability);
     return clamp(Math.exp(-elapsedDays / s2), 0.02, 0.999);
   };
   const scheduleReviewState = (word = {}, isCorrect = false, now = /* @__PURE__ */ new Date()) => {
-    const importance = clamp(Number(word.importance) || 3, 0, 5);
+    const importance = clamp(Number(word.importance) || FSRS_CONFIG.IMPORTANCE_DEFAULT, FSRS_CONFIG.IMPORTANCE_MIN, FSRS_CONFIG.IMPORTANCE_MAX);
     const prev = normalizeReviewFields(word);
     const elapsedDays = computeElapsedDays(word, now);
     const recallProb = computeRetrievabilityByStability(prev.stability, elapsedDays);
@@ -3377,26 +3476,33 @@ ${i3}
     let intervalDays = prev.interval_days;
     if (isCorrect) {
       difficulty = clamp(
-        difficulty - 0.06 + (1 - recallProb) * 0.05 - importance / 100,
-        0.15,
+        difficulty - FSRS_CONFIG.DIFFICULTY_DECREASE_ON_CORRECT + (1 - recallProb) * FSRS_CONFIG.STABILITY_RETRIEVABILITY_FACTOR - importance / 100,
+        FSRS_CONFIG.DIFFICULTY_MIN,
         0.95
       );
       stability = Math.max(
         0.5,
-        stability * (1.55 + (1 - difficulty) * 0.65 + recallProb * 0.35 + importance * 0.04)
+        stability * (FSRS_CONFIG.STABILITY_GROWTH_FACTOR + (1 - difficulty) * FSRS_CONFIG.STABILITY_DIFFICULTY_FACTOR + recallProb * FSRS_CONFIG.STABILITY_RETRIEVABILITY_FACTOR + importance * FSRS_CONFIG.STABILITY_IMPORTANCE_FACTOR)
       );
-      intervalDays = clamp(stability * (0.7 + (1 - difficulty) * 0.9), 0.5, 90);
-      retrievability = 0.97;
+      intervalDays = clamp(
+        stability * (FSRS_CONFIG.INTERVAL_BASE_FACTOR + (1 - difficulty) * FSRS_CONFIG.INTERVAL_DIFFICULTY_FACTOR),
+        0.5,
+        FSRS_CONFIG.INTERVAL_MAX_DAYS
+      );
+      retrievability = FSRS_CONFIG.RETRIEVABILITY_ON_CORRECT;
     } else {
       difficulty = clamp(
-        difficulty + 0.12 + (1 - recallProb) * 0.12 + 0.02 * Math.max(0, 3 - importance),
-        0.2,
-        0.98
+        difficulty + FSRS_CONFIG.DIFFICULTY_INCREASE_ON_WRONG + (1 - recallProb) * FSRS_CONFIG.DIFFICULTY_INCREASE_ON_WRONG + 0.02 * Math.max(0, FSRS_CONFIG.IMPORTANCE_DEFAULT - importance),
+        FSRS_CONFIG.DIFFICULTY_MIN + 0.05,
+        FSRS_CONFIG.DIFFICULTY_MAX
       );
-      stability = Math.max(0.2, stability * (0.42 + (1 - difficulty) * 0.22));
+      stability = Math.max(
+        FSRS_CONFIG.STABILITY_MIN,
+        stability * (FSRS_CONFIG.STABILITY_DECAY_FACTOR + (1 - difficulty) * 0.22)
+      );
       lapseCount += 1;
-      intervalDays = 0.125;
-      retrievability = 0.35;
+      intervalDays = FSRS_CONFIG.INTERVAL_ON_WRONG;
+      retrievability = FSRS_CONFIG.RETRIEVABILITY_ON_WRONG;
     }
     return {
       difficulty_score: Number(difficulty.toFixed(4)),
@@ -3417,10 +3523,11 @@ ${i3}
     const forgetProb = 1 - computeRetrievabilityByStability(fields.stability, elapsedDays);
     const dueAt = fields.next_review_time ? new Date(fields.next_review_time) : new Date(word.last_reviewed_at || word.update_time || word.create_time || now.toISOString());
     const overdueDays = Math.max(0, (now - dueAt) / (1e3 * 60 * 60 * 24));
-    const importance = clamp(Number(word.importance) || 3, 0, 5);
+    const importance = clamp(Number(word.importance) || FSRS_CONFIG.IMPORTANCE_DEFAULT, FSRS_CONFIG.IMPORTANCE_MIN, FSRS_CONFIG.IMPORTANCE_MAX);
     let score = forgetProb * 55 + fields.difficulty_score * 22 + overdueDays * 12 + fields.lapse_count * 8 + importance * 4;
-    if (hardMode)
+    if (hardMode) {
       score += forgetProb * 10 + fields.difficulty_score * 8 + (word.error_rate || 0) * 0.2;
+    }
     return {
       score,
       forget_probability: Number(forgetProb.toFixed(4)),
@@ -5979,10 +6086,126 @@ ${i3}
     setCurrentWordbook,
     setWordbookWords
   }, Symbol.toStringTag, { value: "Module" }));
-  const PROFILE_KEY = "learning_center_profiles_v1";
-  const MISTAKE_KEY = "learning_center_mistakes_v1";
-  const HISTORY_KEY = "learning_center_history_v1";
-  const EXTRA_KEY = "learning_center_extra_v1";
+  class LRUCache {
+    constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
+      this.maxSize = maxSize;
+      this.ttlMs = ttlMs;
+      this.cache = /* @__PURE__ */ new Map();
+      this.timestamps = /* @__PURE__ */ new Map();
+    }
+    /**
+     * 获取缓存值
+     * @param {string} key
+     * @returns {*}
+     */
+    get(key) {
+      if (!this.cache.has(key))
+        return void 0;
+      const timestamp = this.timestamps.get(key);
+      if (timestamp && Date.now() - timestamp > this.ttlMs) {
+        this.cache.delete(key);
+        this.timestamps.delete(key);
+        return void 0;
+      }
+      const value = this.cache.get(key);
+      this.cache.delete(key);
+      this.cache.set(key, value);
+      return value;
+    }
+    /**
+     * 设置缓存值
+     * @param {string} key
+     * @param {*} value
+     */
+    set(key, value) {
+      if (this.cache.has(key)) {
+        this.cache.delete(key);
+      }
+      if (this.cache.size >= this.maxSize) {
+        const firstKey = this.cache.keys().next().value;
+        this.cache.delete(firstKey);
+        this.timestamps.delete(firstKey);
+      }
+      this.cache.set(key, value);
+      this.timestamps.set(key, Date.now());
+    }
+    /**
+     * 检查是否存在
+     * @param {string} key
+     * @returns {boolean}
+     */
+    has(key) {
+      return this.get(key) !== void 0;
+    }
+    /**
+     * 删除缓存
+     * @param {string} key
+     */
+    delete(key) {
+      this.cache.delete(key);
+      this.timestamps.delete(key);
+    }
+    /**
+     * 清空所有缓存
+     */
+    clear() {
+      this.cache.clear();
+      this.timestamps.clear();
+    }
+    /**
+     * 获取缓存大小
+     * @returns {number}
+     */
+    size() {
+      return this.cache.size;
+    }
+    /**
+     * 清理过期项
+     */
+    cleanup() {
+      const now = Date.now();
+      for (const [key, timestamp] of this.timestamps.entries()) {
+        if (now - timestamp > this.ttlMs) {
+          this.cache.delete(key);
+          this.timestamps.delete(key);
+        }
+      }
+    }
+  }
+  class MemoryCache {
+    constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
+      this.lru = new LRUCache(maxSize, ttlMs);
+    }
+    get(key, fallback = null) {
+      const value = this.lru.get(key);
+      return value !== void 0 ? value : fallback;
+    }
+    set(key, value) {
+      this.lru.set(key, value);
+    }
+    has(key) {
+      return this.lru.has(key);
+    }
+    delete(key) {
+      this.lru.delete(key);
+    }
+    clear() {
+      this.lru.clear();
+    }
+    size() {
+      return this.lru.size();
+    }
+    cleanup() {
+      this.lru.cleanup();
+    }
+  }
+  const PROFILE_KEY = "learning_center_profiles_v2";
+  const MISTAKE_KEY = "learning_center_mistakes_v2";
+  const HISTORY_KEY = "learning_center_history_v2";
+  const EXTRA_KEY = "learning_center_extra_v2";
+  const CACHE_TTL_MS = 5 * 60 * 1e3;
+  const profilesMemCache = new MemoryCache(500, CACHE_TTL_MS);
+  const mistakesMemCache = new MemoryCache(200, CACHE_TTL_MS);
   const safeRead = (key, fallback) => {
     try {
       const raw = uni.getStorageSync(key);
@@ -5993,14 +6216,16 @@ ${i3}
         return parsed && typeof parsed === "object" ? parsed : fallback;
       }
       return raw && typeof raw === "object" ? raw : fallback;
-    } catch (_2) {
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/learningCenter_v2.js:48", `[learningCenter] 读取 ${key} 失败:`, e2);
       return fallback;
     }
   };
   const safeWrite = (key, value) => {
     try {
       uni.setStorageSync(key, JSON.stringify(value));
-    } catch (_2) {
+    } catch (e2) {
+      formatAppLog("error", "at src/utils/learningCenter_v2.js:60", `[learningCenter] 写入 ${key} 失败:`, e2);
     }
   };
   const normalizeWordKey = (word) => {
@@ -6036,27 +6261,31 @@ ${i3}
     normalized.mastery = normalized.mastery || calculateMastery(normalized);
     return normalized;
   };
-  let _profilesCache = null;
-  let _mistakesCache = null;
   const getProfilesMap = () => {
-    if (_profilesCache)
-      return _profilesCache;
-    _profilesCache = safeRead(PROFILE_KEY, {});
-    return _profilesCache;
+    const memKey = "__profiles_map";
+    if (profilesMemCache.has(memKey)) {
+      return profilesMemCache.get(memKey, {});
+    }
+    const map = safeRead(PROFILE_KEY, {});
+    profilesMemCache.set(memKey, map);
+    return map;
   };
   const setProfilesMap = (map) => {
-    _profilesCache = map || {};
-    safeWrite(PROFILE_KEY, _profilesCache);
+    profilesMemCache.set("__profiles_map", map || {});
+    safeWrite(PROFILE_KEY, map || {});
   };
   const getMistakesMap = () => {
-    if (_mistakesCache)
-      return _mistakesCache;
-    _mistakesCache = safeRead(MISTAKE_KEY, {});
-    return _mistakesCache;
+    const memKey = "__mistakes_map";
+    if (mistakesMemCache.has(memKey)) {
+      return mistakesMemCache.get(memKey, {});
+    }
+    const map = safeRead(MISTAKE_KEY, {});
+    mistakesMemCache.set(memKey, map);
+    return map;
   };
   const setMistakesMap = (map) => {
-    _mistakesCache = map || {};
-    safeWrite(MISTAKE_KEY, _mistakesCache);
+    mistakesMemCache.set("__mistakes_map", map || {});
+    safeWrite(MISTAKE_KEY, map || {});
   };
   const getHistoryList = () => {
     const list = safeRead(HISTORY_KEY, []);
@@ -6133,59 +6362,64 @@ ${i3}
       return null;
     const now = /* @__PURE__ */ new Date();
     const bookId = options.bookId || getCurrentWordbook() || "self";
-    const prev = getWordProfile(word) || normalizeProfile({
-      ...typeof word === "object" ? word : {},
-      english: typeof word === "string" ? word : word.english,
-      chinese: typeof word === "object" ? word.chinese : "",
-      importance: typeof word === "object" ? word.importance : 0,
-      created_at: now.toISOString()
-    });
-    const reviewState = scheduleReviewState({ ...prev, ...typeof word === "object" ? word : {} }, isCorrect, now);
-    const firstDayState = getFirstDayNextDue(prev, isCorrect, now);
-    const next = saveWordProfile(word, {
-      ...reviewState,
-      mastery: calculateMastery({ ...prev, ...reviewState }),
-      seen_count: prev.seen_count + 1,
-      correct_count: prev.correct_count + (isCorrect ? 1 : 0),
-      wrong_count: prev.wrong_count + (isCorrect ? 0 : 1),
-      consecutive_correct: isCorrect ? prev.consecutive_correct + 1 : 0,
-      chinese: typeof word === "object" && word.chinese ? word.chinese : prev.chinese,
-      importance: typeof word === "object" && word.importance != null ? Number(word.importance) || 0 : prev.importance,
-      bookIds: [.../* @__PURE__ */ new Set([...prev.bookIds || [], bookId])],
-      last_book_id: bookId,
-      source: options.source || "review",
-      first_learned_at: firstDayState.first_learned_at,
-      first_day_stage: firstDayState.first_day_stage,
-      first_day_due_at: firstDayState.first_day_due_at
-    });
-    const mistakes = getMistakesMap();
-    const oldMistake = mistakes[key] || {
-      key,
-      english: next.english,
-      chinese: next.chinese,
-      error_count: 0,
-      recover_count: 0,
-      active: false,
-      bookIds: [],
-      last_wrong_at: ""
-    };
-    if (isCorrect) {
-      oldMistake.recover_count = Math.min(2, Number(oldMistake.recover_count || 0) + 1);
-      if (oldMistake.recover_count >= 2)
-        oldMistake.active = false;
-    } else {
-      oldMistake.error_count = Number(oldMistake.error_count || 0) + 1;
-      oldMistake.recover_count = 0;
-      oldMistake.active = true;
-      oldMistake.last_wrong_at = now.toISOString();
-      oldMistake.chinese = next.chinese || oldMistake.chinese;
+    try {
+      const prev = getWordProfile(word) || normalizeProfile({
+        ...typeof word === "object" ? word : {},
+        english: typeof word === "string" ? word : word.english,
+        chinese: typeof word === "object" ? word.chinese : "",
+        importance: typeof word === "object" ? word.importance : 0,
+        created_at: now.toISOString()
+      });
+      const reviewState = scheduleReviewState({ ...prev, ...typeof word === "object" ? word : {} }, isCorrect, now);
+      const firstDayState = getFirstDayNextDue(prev, isCorrect, now);
+      const next = saveWordProfile(word, {
+        ...reviewState,
+        mastery: calculateMastery({ ...prev, ...reviewState }),
+        seen_count: prev.seen_count + 1,
+        correct_count: prev.correct_count + (isCorrect ? 1 : 0),
+        wrong_count: prev.wrong_count + (isCorrect ? 0 : 1),
+        consecutive_correct: isCorrect ? prev.consecutive_correct + 1 : 0,
+        chinese: typeof word === "object" && word.chinese ? word.chinese : prev.chinese,
+        importance: typeof word === "object" && word.importance != null ? Number(word.importance) || 0 : prev.importance,
+        bookIds: [.../* @__PURE__ */ new Set([...prev.bookIds || [], bookId])],
+        last_book_id: bookId,
+        source: options.source || "review",
+        first_learned_at: firstDayState.first_learned_at,
+        first_day_stage: firstDayState.first_day_stage,
+        first_day_due_at: firstDayState.first_day_due_at
+      });
+      const mistakes = getMistakesMap();
+      const oldMistake = mistakes[key] || {
+        key,
+        english: next.english,
+        chinese: next.chinese,
+        error_count: 0,
+        recover_count: 0,
+        active: false,
+        bookIds: [],
+        last_wrong_at: ""
+      };
+      if (isCorrect) {
+        oldMistake.recover_count = Math.min(2, Number(oldMistake.recover_count || 0) + 1);
+        if (oldMistake.recover_count >= 2)
+          oldMistake.active = false;
+      } else {
+        oldMistake.error_count = Number(oldMistake.error_count || 0) + 1;
+        oldMistake.recover_count = 0;
+        oldMistake.active = true;
+        oldMistake.last_wrong_at = now.toISOString();
+        oldMistake.chinese = next.chinese || oldMistake.chinese;
+      }
+      oldMistake.english = next.english;
+      oldMistake.bookIds = [.../* @__PURE__ */ new Set([...oldMistake.bookIds || [], bookId])];
+      oldMistake.updated_at = now.toISOString();
+      mistakes[key] = oldMistake;
+      setMistakesMap(mistakes);
+      return next;
+    } catch (error) {
+      formatAppLog("error", "at src/utils/learningCenter_v2.js:328", "[learningCenter] recordReviewOutcome 失败:", error);
+      return null;
     }
-    oldMistake.english = next.english;
-    oldMistake.bookIds = [.../* @__PURE__ */ new Set([...oldMistake.bookIds || [], bookId])];
-    oldMistake.updated_at = now.toISOString();
-    mistakes[key] = oldMistake;
-    setMistakesMap(mistakes);
-    return next;
   };
   const noteNewWordLearned = (word, options = {}) => {
     const now = /* @__PURE__ */ new Date();
@@ -6264,7 +6498,7 @@ ${i3}
       else
         masteryBuckets.danger++;
     });
-    const firstDayDue = dueProfiles.filter((item) => item.first_day_due_at && item.first_day_due_at === item.first_day_due_at && Number(item.first_day_stage || 0) > 0 && Number(item.first_day_stage || 0) < 4).length;
+    const firstDayDue = dueProfiles.filter((item) => item.first_day_due_at && Number(item.first_day_stage || 0) > 0 && Number(item.first_day_stage || 0) < 4).length;
     const overdueCount = dueProfiles.filter((item) => item.dueMs < now.getTime()).length;
     return {
       dueCount: dueProfiles.length,
@@ -6279,7 +6513,7 @@ ${i3}
   const logStudySession = (session = {}) => {
     const list = getHistoryList();
     list.push({
-      id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      id: `session_${Date.now()}_${Math.random().toString(36).slice(2, 11)}_${Math.floor(Math.random() * 1e4)}`,
       created_at: (/* @__PURE__ */ new Date()).toISOString(),
       bookId: session.bookId || getCurrentWordbook() || "self",
       mode: session.mode || "",
@@ -6360,6 +6594,10 @@ ${i3}
     extras[key] = next;
     setExtraMap(extras);
     return next;
+  };
+  const cleanupExpiredCaches = () => {
+    profilesMemCache.cleanup();
+    mistakesMemCache.cleanup();
   };
   const LogLevel = {
     DEBUG: 0,
@@ -6634,126 +6872,6 @@ ${i3}
   const globalErrorManager = new GlobalErrorManager();
   const logger = globalErrorManager.getLogger();
   const errorHandler = globalErrorManager.getErrorHandler();
-  class LRUCache {
-    constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
-      this.maxSize = maxSize;
-      this.ttlMs = ttlMs;
-      this.cache = /* @__PURE__ */ new Map();
-      this.timestamps = /* @__PURE__ */ new Map();
-    }
-    /**
-     * 获取缓存值
-     * @param {string} key
-     * @returns {*}
-     */
-    get(key) {
-      if (!this.cache.has(key))
-        return void 0;
-      const timestamp = this.timestamps.get(key);
-      if (timestamp && Date.now() - timestamp > this.ttlMs) {
-        this.cache.delete(key);
-        this.timestamps.delete(key);
-        return void 0;
-      }
-      const value = this.cache.get(key);
-      this.cache.delete(key);
-      this.cache.set(key, value);
-      return value;
-    }
-    /**
-     * 设置缓存值
-     * @param {string} key
-     * @param {*} value
-     */
-    set(key, value) {
-      if (this.cache.has(key)) {
-        this.cache.delete(key);
-      }
-      if (this.cache.size >= this.maxSize) {
-        const firstKey = this.cache.keys().next().value;
-        this.cache.delete(firstKey);
-        this.timestamps.delete(firstKey);
-      }
-      this.cache.set(key, value);
-      this.timestamps.set(key, Date.now());
-    }
-    /**
-     * 检查是否存在
-     * @param {string} key
-     * @returns {boolean}
-     */
-    has(key) {
-      return this.get(key) !== void 0;
-    }
-    /**
-     * 删除缓存
-     * @param {string} key
-     */
-    delete(key) {
-      this.cache.delete(key);
-      this.timestamps.delete(key);
-    }
-    /**
-     * 清空所有缓存
-     */
-    clear() {
-      this.cache.clear();
-      this.timestamps.clear();
-    }
-    /**
-     * 获取缓存大小
-     * @returns {number}
-     */
-    size() {
-      return this.cache.size;
-    }
-    /**
-     * 清理过期项
-     */
-    cleanup() {
-      const now = Date.now();
-      for (const [key, timestamp] of this.timestamps.entries()) {
-        if (now - timestamp > this.ttlMs) {
-          this.cache.delete(key);
-          this.timestamps.delete(key);
-        }
-      }
-    }
-  }
-  class MemoryCache {
-    constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
-      this.lru = new LRUCache(maxSize, ttlMs);
-    }
-    get(key, fallback = null) {
-      const value = this.lru.get(key);
-      return value !== void 0 ? value : fallback;
-    }
-    set(key, value) {
-      this.lru.set(key, value);
-    }
-    has(key) {
-      return this.lru.has(key);
-    }
-    delete(key) {
-      this.lru.delete(key);
-    }
-    clear() {
-      this.lru.clear();
-    }
-    size() {
-      return this.lru.size();
-    }
-    cleanup() {
-      this.lru.cleanup();
-    }
-  }
-  const CACHE_TTL_MS = 5 * 60 * 1e3;
-  const profilesMemCache = new MemoryCache(500, CACHE_TTL_MS);
-  const mistakesMemCache = new MemoryCache(200, CACHE_TTL_MS);
-  const cleanupExpiredCaches = () => {
-    profilesMemCache.cleanup();
-    mistakesMemCache.cleanup();
-  };
   const MASTERED_WORDBOOK_WORDS_KEY = "mastered_wordbook_words_global_v1";
   const getGlobalMasteredWords = () => {
     try {

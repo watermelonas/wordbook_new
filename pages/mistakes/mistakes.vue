@@ -38,7 +38,7 @@
 import { ref, computed } from 'vue';
 import { onShow, onUnload } from '@dcloudio/uni-app';
 import { getCurrentWordbook } from '../../src/utils/wordbookSource.js';
-import { getMistakeWords, clearMistake } from '../../src/utils/learningCenter.js';
+import { getMistakeWords, clearMistake } from '../../src/utils/learningCenter_v2.js';
 import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 

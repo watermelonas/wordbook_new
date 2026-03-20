@@ -265,7 +265,7 @@ import aiService from '../../src/utils/aiService';
 import { getWordBriefBatch } from '../../src/utils/masterDb.js';
 import { getLocalWordSnapshot } from '../../src/utils/localWordSnapshot.js';
 import { getCurrentWordbook, getWordbookListForUI, setCurrentWordbook, isLocalWordbookKey, loadLocalWordbook, getWordbookWords } from '../../src/utils/wordbookSource';
-import { getLearningDashboard, getStudyStats, getLatestSession } from '../../src/utils/learningCenter.js';
+import { getLearningDashboard, getStudyStats, getLatestSession } from '../../src/utils/learningCenter_v2.js';
 import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 

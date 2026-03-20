@@ -70,7 +70,7 @@ import * as pregenVocab from "../../src/utils/pregenVocab.js";
 import * as masterDb from "../../src/utils/masterDb.js";
 import { getLocalWordSnapshot } from "../../src/utils/localWordSnapshot.js";
 import { getCloudWordbooks, getWordbookWords, setWordbookWords } from "../../src/utils/wordbookSource.js";
-import { noteNewWordLearned } from "../../src/utils/learningCenter.js";
+import { noteNewWordLearned } from "../../src/utils/learningCenter_v2.js";
 import { logger, errorHandler } from "../../src/utils/errorHandler.js";
 import { cleanupExpiredCaches } from "../../src/utils/learningCenter_v2.js";
 

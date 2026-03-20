@@ -7,7 +7,10 @@
       "Bash(npx vue-tsc:*)",
       "Bash(npm ci:*)",
       "Bash(ls -la *.config.*)",
-      "Bash(grep -r 斯 pages/ src/ --include=*.vue --include=*.js)"
+      "Bash(grep -r 斯 pages/ src/ --include=*.vue --include=*.js)",
+      "Bash(xargs wc:*)",
+      "Bash(grep -E \"\\\\.js$\")",
+      "Bash(wc -l ./src/utils/*.js)"
     ],
     "additionalDirectories": [
       "E:\\vocal\\wordbook_new\\pages\\review"

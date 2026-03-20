@@ -335,7 +335,7 @@ import aiService from '../../src/utils/aiService.js';
 import { formatWordStatsForPrompt } from '../../src/utils/wordStats.js';
 import * as pregenVocab from '../../src/utils/pregenVocab.js';
 import * as masterDb from '../../src/utils/masterDb.js';
-import { getWordExtra, saveWordExtra } from '../../src/utils/learningCenter.js';
+import { getWordExtra, saveWordExtra } from '../../src/utils/learningCenter_v2.js';
 import { logger, errorHandler } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 

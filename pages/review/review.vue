@@ -481,7 +481,7 @@ import {
   getLatestSession,
   logStudySession,
   getWordProfile,
-} from '../../src/utils/learningCenter.js';
+} from '../../src/utils/learningCenter_v2.js';
 import { logger, errorHandler } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 import { getMasteredWordbookWords, addMasteredWordbookWord } from '../../src/utils/masteredWordbookWords.js';
