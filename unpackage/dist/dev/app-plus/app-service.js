@@ -532,7 +532,7 @@ if (uni.restoreGlobal) {
   function I(e2) {
     return e2 && "string" == typeof e2 ? JSON.parse(e2) : e2;
   }
-  const S = true, b = "app", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), T = b, C = I('{"address":["127.0.0.1","192.168.1.222"],"servePort":7001,"debugPort":9001,"initialLaunchType":"remote","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), P = I('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
+  const S = true, b = "app", A = I(define_process_env_UNI_SECURE_NETWORK_CONFIG_default), T = b, C = I('{"address":["127.0.0.1","192.168.1.222"],"servePort":7000,"debugPort":9000,"initialLaunchType":"remote","skipFiles":["<node_internals>/**","E:/HBuilderX/plugins/unicloud/**/*.js"]}'), P = I('[{"provider":"aliyun","spaceName":"wordnew","spaceId":"mp-4b800ed8-579d-404c-a8fb-f0fc4beb1a1a","clientSecret":"hSEJluzCsjrHIHlTEgp7Ow==","endpoint":"https://api.next.bspapp.com"}]') || [];
   let E = "";
   try {
     E = "__UNI__9F3DDBE";
@@ -3646,7 +3646,7 @@ ${i3}
           formatAppLog("error", "at src/utils/errorHandler.js:101", "[Logger] 监听器执行失败:", e2);
         }
       });
-      if (this.isDev || level >= LogLevel.ERROR) {
+      if (this.isDev || level >= LogLevel.INFO) {
         this.printToConsole(level, tag, message, data);
       }
     }
@@ -3657,9 +3657,9 @@ ${i3}
       const levelName = Object.keys(LogLevel).find((k) => LogLevel[k] === level) || "UNKNOWN";
       const prefix = `[${levelName}] [${tag}]`;
       if (data !== null && data !== void 0) {
-        formatAppLog("log", "at src/utils/errorHandler.js:119", `${prefix} ${message}`, data);
+        formatAppLog("log", "at src/utils/errorHandler.js:121", `${prefix} ${message}`, data);
       } else {
-        formatAppLog("log", "at src/utils/errorHandler.js:121", `${prefix} ${message}`);
+        formatAppLog("log", "at src/utils/errorHandler.js:123", `${prefix} ${message}`);
       }
     }
     /**

@@ -102,8 +102,10 @@ class Logger {
       }
     });
 
-    // 输出到控制台（仅在开发环境或 ERROR 级别）
-    if (this.isDev || level >= LogLevel.ERROR) {
+    // 输出到控制台
+    // 开发环境：输出所有日志
+    // 生产环境：只输出 INFO 及以上（ERROR、WARN、INFO）
+    if (this.isDev || level >= LogLevel.INFO) {
       this.printToConsole(level, tag, message, data);
     }
   }
