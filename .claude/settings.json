@@ -59,7 +59,8 @@
       "Bash(md5sum static/*.db)",
       "Bash(grep -l \"review\\\\|Review\" src/utils/*.js)",
       "Bash(/tmp/analysis_summary.txt:*)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "Bash(ls -lh static/*.db)"
     ],
     "additionalDirectories": [
       "E:\\vocal\\wordbook_new\\pages\\review"

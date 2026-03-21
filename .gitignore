@@ -1,0 +1,32 @@
+# 构建产物
+unpackage/
+dist/
+build/
+
+# 缓存
+__pycache__/
+*.pyc
+.DS_Store
+node_modules/
+
+# 备份文件
+*.bak
+*.backup
+*.tmp
+
+# 数据库备份
+*_backup.db
+*_before_*.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 日志
+*.log
+
+# 临时文件
+.temp/
+temp/
