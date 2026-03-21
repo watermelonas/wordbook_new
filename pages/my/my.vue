@@ -269,27 +269,41 @@ import { getLearningDashboard, getStudyStats, getLatestSession } from '../../src
 import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 
-const uid = ref('');
-const username = ref('');
-const userDisplayName = ref(''); // 用户自定义昵称，优先于登录用户名展示
-const isLoggedIn = ref(false);
-const localWordCount = ref(0);
-const totalViewCount = ref(0);
-const lastReviewAccuracy = ref(null);
-const lastReviewResult = ref(null);
-const showAiSuggestionModal = ref(false);
-const showImportModal = ref(false);
-const aiSuggestionText = ref('');
-const currentWordbookKey = ref(getCurrentWordbook());
-const learningSnapshot = ref({ dueCount: 0, mistakeCount: 0, firstDayDue: 0 });
-const studyStats = ref({ streak: 0 });
+// ========== 用户信息 ==========
+const uid = ref('');  // 用户 ID
+const username = ref('');  // 登录用户名
+const userDisplayName = ref('');  // 用户自定义昵称（优先于登录用户名展示）
+const isLoggedIn = ref(false);  // 是否已登录
 
+// ========== 学习统计 ==========
+const localWordCount = ref(0);  // 本地单词总数
+const totalViewCount = ref(0);  // 累计查看次数
+const lastReviewAccuracy = ref(null);  // 上次复习正确率
+const lastReviewResult = ref(null);  // 上次复习结果（包括错误单词）
+
+// ========== UI 状态 ==========
+const showAiSuggestionModal = ref(false);  // 是否显示 AI 建议弹窗
+const showImportModal = ref(false);  // 是否显示导入说明弹窗
+const aiSuggestionText = ref('');  // AI 建议文本
+
+// ========== 词书信息 ==========
+const currentWordbookKey = ref(getCurrentWordbook());  // 当前词书 ID
+const learningSnapshot = ref({ dueCount: 0, mistakeCount: 0, firstDayDue: 0 });  // 学习快照
+const studyStats = ref({ streak: 0 });  // 学习统计
+
+/**
+ * 计算显示的用户名
+ * 优先显示自定义昵称，其次显示登录用户名
+ */
 const displayName = computed(() => {
   if (!isLoggedIn.value) return '未登录';
   const name = (userDisplayName.value || username.value || '').trim();
   return name ? `用户名：${name}` : '用户名：—';
 });
 
+/**
+ * 计算当前词书的显示名称
+ */
 const currentWordbookLabel = computed(() => {
   const id = currentWordbookKey.value;
   const list = getWordbookListForUI();
@@ -347,6 +361,10 @@ onUnload(() => {
   }
 });
 
+/**
+ * 检查登录状态
+ * 从本地存储读取用户信息，更新登录状态
+ */
 const checkLoginStatus = () => {
   uid.value = uni.getStorageSync('uid') || '';
   username.value = uni.getStorageSync('username') || '';
@@ -362,6 +380,10 @@ const checkLoginStatus = () => {
   loadLocalWordCount();
 };
 
+/**
+ * 加载本地单词统计
+ * 计算本地单词总数、累计查看次数、学习快照等
+ */
 const loadLocalWordCount = async () => {
   try {
     const words = await db.getAllWords();
@@ -384,18 +406,21 @@ const loadLocalWordCount = async () => {
   }
 };
 
-const goToLogin = () => {
-  uni.navigateTo({
-    url: '/pages/login/login'
-  });
-};
-
+/**
+ * 处理退出登录
+ * 流程：
+ * 1. 显示确认对话框
+ * 2. 清除本地存储的用户信息
+ * 3. 重置词书为默认词书
+ * 4. 显示退出成功提示
+ */
 const handleLogout = () => {
   uni.showModal({
     title: '确认退出',
     content: '确定要退出登录吗？',
     success: (res) => {
       if (res.confirm) {
+        // 清除本地存储的用户信息
         uni.removeStorageSync('uid');
         uni.removeStorageSync('username');
         uni.removeStorageSync('userDisplayName');
@@ -403,10 +428,12 @@ const handleLogout = () => {
         username.value = '';
         userDisplayName.value = '';
         isLoggedIn.value = false;
+
+        // 重置词书为默认词书
         setCurrentWordbook('红宝书');
         currentWordbookKey.value = '红宝书';
         uni.$emit('wordbookChanged', '红宝书');
-        
+
         uni.showToast({
           title: '已退出登录',
           icon: 'success'

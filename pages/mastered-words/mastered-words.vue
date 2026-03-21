@@ -1,3 +1,25 @@
+<!--
+  已斯掉单词本页面 (mastered-words.vue)
+
+  功能：
+  - 显示用户已经斯掉（掌握）的所有单词
+  - 统计已斯掉单词的数量
+  - 支持查看单词详情
+  - 支持取消斯掉状态
+  - 使用虚拟滚动优化性能
+
+  页面结构：
+  1. 顶部标题栏
+  2. 空状态提示（无单词时）
+  3. 统计卡片（显示已斯掉单词数）
+  4. 单词列表（虚拟滚动）
+  5. 取消斯掉确认弹窗
+
+  性能优化：
+  - 虚拟滚动：只渲染可见区域的单词
+  - 缓存清理：页面卸载时清理过期缓存
+  - 异步加载：不阻塞 UI 线程
+-->
 <template>
   <view class="container">
     <!-- 状态栏占位 -->
@@ -5,19 +27,20 @@
 
     <!-- 顶部标题 -->
     <view class="header">
-      <view class="header-title">已斩单词本</view>
+      <view class="header-title">已斯掉单词本</view>
     </view>
 
-    <!-- 空状态 -->
+    <!-- 空状态：当没有已斯掉的单词时显示 -->
     <view v-if="masteredWords.length === 0" class="empty-state">
       <view class="empty-icon">📚</view>
       <text class="empty-title">还没有斯掉任何单词</text>
       <text class="empty-desc">开始复习，掌握更多单词吧</text>
     </view>
 
-    <!-- 统计卡片和单词列表 -->
+    <!-- 统计卡片和单词列表：当有已斯掉的单词时显示 -->
     <view v-else class="content">
-      <view class="section-label">已斩统计</view>
+      <!-- 统计部分 -->
+      <view class="section-label">已斯掉统计</view>
       <view class="card stat-card">
         <view class="stat-row">
           <view class="stat-item">
@@ -27,7 +50,7 @@
         </view>
       </view>
 
-      <!-- 单词列表 - 使用虚拟滚动 -->
+      <!-- 单词列表：使用虚拟滚动提升性能 -->
       <view class="section-label">单词列表</view>
       <VirtualScroller
         :items="masteredWords"
@@ -38,8 +61,10 @@
         @scroll="handleVirtualScroll"
         class="words-list"
       >
+        <!-- 单词卡片模板 -->
         <template #default="{ item, index }">
           <view class="card word-card">
+            <!-- 单词信息：英文、中文、斯掉日期 -->
             <view class="word-header">
               <view class="word-info">
                 <text class="word-english">{{ item.english }}</text>
@@ -47,6 +72,7 @@
               </view>
               <view class="word-date">{{ formatDate(item.mastered_at) }}</view>
             </view>
+            <!-- 操作按钮：查看详情、取消斯掉 -->
             <view class="word-actions">
               <button class="action-btn detail-btn" @click="goToDetail(item)">查看详情</button>
               <button class="action-btn unmaster-btn" @click="showUnmasterConfirm(item)">取消斯掉</button>
@@ -72,6 +98,16 @@
 </template>
 
 <script setup>
+/**
+ * 已斯掉单词本页面脚本
+ *
+ * 主要功能：
+ * - 加载已斯掉单词列表
+ * - 显示单词统计信息
+ * - 处理虚拟滚动
+ * - 管理取消斯掉操作
+ */
+
 import { ref } from 'vue';
 import { onShow, onUnload } from '@dcloudio/uni-app';
 import VirtualScroller from '../../src/components/VirtualScroller.vue';
@@ -79,31 +115,70 @@ import { getWordbookWords, setWordbookWords } from '../../src/utils/wordbookSour
 import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 
+// ========== 响应式数据 ==========
+// 已斯掉的单词列表
 const masteredWords = ref([]);
+
+// 虚拟滚动容器的高度（像素）
 const containerHeight = ref(600);
+
+// 是否显示取消斯掉确认弹窗
 const showUnmasterModal = ref(false);
+
+// 待取消斯掉的单词项
 const unmasterItem = ref(null);
 
+/**
+ * 加载已斯掉单词列表
+ *
+ * 流程：
+ * 1. 从本地存储读取"已斯掉"单词本
+ * 2. 为每个单词生成唯一 ID
+ * 3. 更新响应式数据
+ * 4. 处理错误情况
+ */
 const loadMasteredWords = async () => {
   try {
-    // 加载"已斩"单词本
+    // 加载"已斯掉"单词本
     const words = getWordbookWords('mastered') || [];
     masteredWords.value = words.map((w, index) => ({
       ...w,
+      // 生成唯一 ID：用于虚拟滚动的 key
       id: w.id || `mastered_${index}_${w.english}`
     }));
   } catch (e) {
-    logger.error('MasteredWords', '加载已斩单词本失败', e);
+    logger.error('MasteredWords', '加载已斯掉单词本失败', e);
     masteredWords.value = [];
   }
 };
 
+/**
+ * 格式化日期
+ *
+ * 功能：
+ * - 将 ISO 日期字符串转换为本地日期格式
+ * - 格式：MM-DD（如 03-21）
+ * - 无效日期返回 "—"
+ *
+ * @param {string} dateStr - ISO 日期字符串
+ * @returns {string} 格式化后的日期
+ */
 const formatDate = (dateStr) => {
   if (!dateStr) return '—';
   const date = new Date(dateStr);
   return date.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' });
 };
 
+/**
+ * 跳转到单词详情页面
+ *
+ * 功能：
+ * - 验证单词英文不为空
+ * - 编码单词英文（处理特殊字符）
+ * - 导航到单词详情页面
+ *
+ * @param {object} item - 单词对象
+ */
 const goToDetail = (item) => {
   if (!item.english) return;
   uni.navigateTo({
@@ -113,6 +188,13 @@ const goToDetail = (item) => {
 
 /**
  * 虚拟滚动事件处理
+ *
+ * 功能：
+ * - 记录滚动位置
+ * - 记录可见单词数量
+ * - 用于性能监控和调试
+ *
+ * @param {object} event - 滚动事件对象
  */
 const handleVirtualScroll = (event) => {
   logger.debug('MasteredWords', '虚拟滚动', {
@@ -121,27 +203,59 @@ const handleVirtualScroll = (event) => {
   });
 };
 
+/**
+ * 显示取消斯掉确认弹窗
+ *
+ * 功能：
+ * - 保存待取消斯掉的单词
+ * - 显示确认弹窗
+ *
+ * @param {object} item - 单词对象
+ */
 const showUnmasterConfirm = (item) => {
   unmasterItem.value = item;
   showUnmasterModal.value = true;
 };
 
+/**
+ * 确认取消斯掉
+ *
+ * 流程：
+ * 1. 验证待取消斯掉的单词
+ * 2. 从本地存储读取已斯掉单词列表
+ * 3. 过滤掉该单词
+ * 4. 保存更新后的列表
+ * 5. 更新页面显示
+ * 6. 关闭弹窗
+ * 7. 显示成功提示
+ *
+ * 错误处理：
+ * - 操作失败时显示错误提示
+ * - 记录错误日志
+ */
 const confirmUnmaster = async () => {
   if (!unmasterItem.value) return;
 
   try {
-    // 从"已斩"单词本中移除
+    // 从"已斯掉"单词本中移除
     const words = getWordbookWords('mastered') || [];
-    const filtered = words.filter(w => (w.english || '').trim().toLowerCase() !== (unmasterItem.value.english || '').trim().toLowerCase());
+    const filtered = words.filter(w =>
+      (w.english || '').trim().toLowerCase() !==
+      (unmasterItem.value.english || '').trim().toLowerCase()
+    );
     setWordbookWords('mastered', filtered);
 
+    // 更新页面显示
     masteredWords.value = filtered.map((w, index) => ({
       ...w,
       id: w.id || `mastered_${index}_${w.english}`
     }));
 
+    // 关闭弹窗
     showUnmasterModal.value = false;
     unmasterItem.value = null;
+
+    // 显示成功提示
     uni.showToast({ title: '已取消斯掉', icon: 'success' });
   } catch (e) {
     logger.error('取消斯掉失败:', e);
@@ -149,6 +263,17 @@ const confirmUnmaster = async () => {
   }
 };
 
+/**
+ * 页面显示时的生命周期钩子
+ *
+ * 功能：
+ * 1. 加载已斯掉单词列表
+ * 2. 计算虚拟滚动容器的高度
+ *
+ * 高度计算：
+ * - 屏幕高度 - 状态栏 - 顶部标题 - 统计卡片 - 单词列表标签 - 底部导航
+ * - 最小高度：400px
+ */
 onShow(() => {
   loadMasteredWords();
 
@@ -156,12 +281,14 @@ onShow(() => {
   try {
     uni.getSystemInfo({
       success: (res) => {
-        // 屏幕高度 - 状态栏 - 顶部标题 - 统计卡片 - 单词列表标签 - 底部导航
+        // 各部分高度
         const statusBarHeight = res.statusBarHeight || 0;
         const headerHeight = 50; // 顶部标题
         const statCardHeight = 100; // 统计卡片
         const labelHeight = 40; // 单词列表标签
         const footerHeight = 50; // 底部导航
+
+        // 计算容器高度
         const containerH = res.windowHeight - statusBarHeight - headerHeight - statCardHeight - labelHeight - footerHeight;
         containerHeight.value = Math.max(400, containerH);
       }
@@ -171,6 +298,14 @@ onShow(() => {
   }
 });
 
+/**
+ * 页面卸载时的生命周期钩子
+ *
+ * 功能：
+ * - 清理过期缓存
+ * - 释放内存
+ * - 防止内存泄漏
+ */
 onUnload(() => {
   try {
     cleanupExpiredCaches();

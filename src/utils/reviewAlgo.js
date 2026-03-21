@@ -1,9 +1,11 @@
 /**
- * reviewAlgo.js — 记忆算法公共模块（FSRS-lite）
+ * 复习算法模块 (reviewAlgo.js)
  *
- * 本模块实现了基于 FSRS（Free Spaced Repetition Scheduler）的记忆算法。
- * 该算法基于遗忘曲线理论，通过计算单词的难度、稳定性、可检索性等参数，
- * 为每个单词安排最优的复习时间。
+ * 功能：
+ * - 实现 FSRS（Free Spaced Repetition Scheduler）算法
+ * - 计算单词的难度、稳定性、可检索性
+ * - 安排最优的复习时间
+ * - 根据答题结果更新单词参数
  *
  * 核心概念：
  * - 难度（Difficulty）：单词的学习难度，范围 0.15-0.98
@@ -11,32 +13,41 @@
  * - 可检索性（Retrievability）：能回忆起单词的概率，范围 0.05-0.99
  * - 复习间隔（Interval）：下次复习的天数
  *
+ * 算法原理：
+ * 基于遗忘曲线理论，通过计算单词的各项参数，为每个单词安排最优的复习时间。
+ * 当用户答对时，增加稳定性和复习间隔；当用户答错时，降低稳定性和可检索性。
+ *
  * 参考文献：
- * - Ebbinghaus Forgetting Curve
- * - SM-2 Algorithm
- * - FSRS Algorithm
+ * - Ebbinghaus Forgetting Curve（艾宾浩斯遗忘曲线）
+ * - SM-2 Algorithm（间隔重复算法）
+ * - FSRS Algorithm（自由间隔重复调度器）
  */
 
 import { FSRS_CONFIG } from './algorithmConfig.js';
 
 /**
  * 复习字段的默认值
+ * 新单词初始化时使用这些默认值
  * @type {object}
  */
 export const REVIEW_DEFAULTS = {
-  difficulty_score: FSRS_CONFIG.INITIAL_DIFFICULTY,
-  stability: FSRS_CONFIG.INITIAL_STABILITY,
-  retrievability: FSRS_CONFIG.INITIAL_RETRIEVABILITY,
-  interval_days: 0,
-  lapse_count: 0,
-  review_count: 0,
-  next_review_time: '',
-  last_reviewed_at: '',
+  difficulty_score: FSRS_CONFIG.INITIAL_DIFFICULTY,  // 初始难度
+  stability: FSRS_CONFIG.INITIAL_STABILITY,  // 初始稳定性
+  retrievability: FSRS_CONFIG.INITIAL_RETRIEVABILITY,  // 初始可检索性
+  interval_days: 0,  // 初始复习间隔
+  lapse_count: 0,  // 初始失误次数
+  review_count: 0,  // 初始复习次数
+  next_review_time: '',  // 下次复习时间
+  last_reviewed_at: '',  // 上次复习时间
 };
 
 /**
  * 数值夹紧函数
  * 将数值限制在指定范围内
+ *
+ * 用途：
+ * - 防止参数超出有效范围
+ * - 确保算法的稳定性
  *
  * @param {number} num - 要夹紧的数值
  * @param {number} min - 最小值
@@ -53,6 +64,11 @@ export const clamp = (num, min, max) => Math.min(max, Math.max(min, num));
 /**
  * 规范化复习字段
  * 确保所有复习相关字段都在有效范围内
+ *
+ * 功能：
+ * - 转换字段类型为数字
+ * - 应用默认值
+ * - 夹紧到有效范围
  *
  * @param {object} word - 单词对象
  * @returns {object} 规范化后的复习字段
@@ -88,6 +104,11 @@ export const normalizeReviewFields = (word = {}) => ({
 /**
  * 计算经过的天数
  * 从上次复习（或更新、创建）到现在的天数
+ *
+ * 用途：
+ * - 计算可检索性衰减
+ * - 判断是否需要复习
+ * - 计算复习优先级
  *
  * @param {object} word - 单词对象
  * @param {Date} [now=new Date()] - 当前时间，默认为现在

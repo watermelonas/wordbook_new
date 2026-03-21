@@ -1,6 +1,25 @@
 /**
- * 改进的 learningCenter.js - 添加缓存过期机制和数据一致性保护
- * 解决缓存无过期机制和数据一致性问题
+ * 学习中心模块 (learningCenter_v2.js)
+ *
+ * 功能：
+ * - 管理用户的学习档案（学习进度、掌握度等）
+ * - 管理错词本（记录答错的单词）
+ * - 管理学习历史（复习记录）
+ * - 计算学习统计（正确率、连续学习天数等）
+ * - 生成学习建议
+ *
+ * 核心特性：
+ * 1. 缓存机制：内存缓存 + 本地存储缓存，带过期机制
+ * 2. 数据一致性：规范化数据格式，防止数据不一致
+ * 3. 多词书支持：支持不同词书的独立学习档案
+ * 4. FSRS 算法集成：使用 FSRS 算法计算复习间隔
+ * 5. 性能优化：批量操作、缓存优化
+ *
+ * 数据结构：
+ * - Profile：学习档案（单词的学习进度）
+ * - Mistake：错词记录（答错的单词）
+ * - History：学习历史（复习记录）
+ * - Extra：额外信息（词族、搭配等）
  */
 
 import { getCurrentWordbook } from './wordbookSource.js';
@@ -16,18 +35,20 @@ import {
 import { StorageCache, MemoryCache } from './cacheManager.js';
 import { logger } from './errorHandler.js';
 
-const PROFILE_KEY = 'learning_center_profiles_v2';
-const MISTAKE_KEY = 'learning_center_mistakes_v2';
-const HISTORY_KEY = 'learning_center_history_v2';
-const EXTRA_KEY = 'learning_center_extra_v2';
+// ========== 存储 key ==========
+const PROFILE_KEY = 'learning_center_profiles_v2';  // 学习档案存储 key
+const MISTAKE_KEY = 'learning_center_mistakes_v2';  // 错词本存储 key
+const HISTORY_KEY = 'learning_center_history_v2';  // 学习历史存储 key
+const EXTRA_KEY = 'learning_center_extra_v2';  // 额外信息存储 key
 
-// 缓存配置
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 分钟
-const STORAGE_TTL_MS = 24 * 60 * 60 * 1000; // 24 小时
+// ========== 缓存配置 ==========
+const CACHE_TTL_MS = 5 * 60 * 1000;  // 内存缓存过期时间：5 分钟
+const STORAGE_TTL_MS = 24 * 60 * 60 * 1000;  // 本地存储缓存过期时间：24 小时
 
+// ========== 缓存实例 ==========
 // 内存缓存（带过期机制）
-const profilesMemCache = new MemoryCache(500, CACHE_TTL_MS);
-const mistakesMemCache = new MemoryCache(200, CACHE_TTL_MS);
+const profilesMemCache = new MemoryCache(500, CACHE_TTL_MS);  // 最多缓存 500 个档案
+const mistakesMemCache = new MemoryCache(200, CACHE_TTL_MS);  // 最多缓存 200 个错词
 
 // 本地存储缓存（带过期机制）
 const profilesStorageCache = new StorageCache(PROFILE_KEY, STORAGE_TTL_MS);
@@ -35,6 +56,10 @@ const mistakesStorageCache = new StorageCache(MISTAKE_KEY, STORAGE_TTL_MS);
 
 /**
  * 安全读取本地存储
+ * 处理 JSON 解析错误和类型检查
+ * @param {string} key - 存储 key
+ * @param {*} fallback - 读取失败时的默认值
+ * @returns {*} 读取的值或默认值
  */
 const safeRead = (key, fallback) => {
   try {
@@ -53,6 +78,9 @@ const safeRead = (key, fallback) => {
 
 /**
  * 安全写入本地存储
+ * 处理 JSON 序列化错误
+ * @param {string} key - 存储 key
+ * @param {*} value - 要存储的值
  */
 const safeWrite = (key, value) => {
   try {
@@ -64,6 +92,9 @@ const safeWrite = (key, value) => {
 
 /**
  * 规范化单词键
+ * 统一为小写，用于作为 Map 的 key
+ * @param {string|object} word - 单词字符串或单词对象
+ * @returns {string} 规范化后的 key
  */
 export const normalizeWordKey = (word) => {
   if (!word) return '';
@@ -73,6 +104,9 @@ export const normalizeWordKey = (word) => {
 
 /**
  * 规范化学习档案
+ * 确保所有字段都有正确的类型和默认值
+ * @param {object} profile - 学习档案对象
+ * @returns {object} 规范化后的档案
  */
 export const normalizeProfile = (profile = {}) => {
   const key = normalizeWordKey(profile.english || profile.key || '');

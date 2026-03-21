@@ -164,6 +164,45 @@
   </view>
 </template>
 
+/**
+ * ============================================================================
+ * 首页 (index.vue)
+ * ============================================================================
+ *
+ * 功能概述：
+ * 本页面是应用的主页面，展示单词列表和学习中心信息，支持以下功能：
+ * 1. 显示当前词书的单词列表（虚拟滚动优化性能）
+ * 2. 搜索和筛选单词（按标签、年份、页码等）
+ * 3. 排序单词（按录入时间、首字母、重要程度等）
+ * 4. 显示/隐藏中文释义
+ * 5. 收藏和斩掉单词
+ * 6. 学习中心快速入口
+ * 7. 支持多个词书切换
+ *
+ * 页面结构：
+ * - 工具栏：筛选排序、学习中心按钮
+ * - 搜索栏：搜索单词
+ * - 筛选卡片：展开式筛选和排序选项
+ * - 学习中心卡片：显示学习统计和快速入口
+ * - 单词列表：虚拟滚动列表
+ * - 底部导航：添加、复习、我的
+ *
+ * 性能优化：
+ * - 虚拟滚动：只渲染可见的单词，减少 DOM 节点
+ * - 两阶段热加载：优先加载顶部单词，后台补全其他单词
+ * - 分页加载：自用词库分页加载，外部词书全量加载到内存
+ * - 异步补全：后台异步补全释义、标签、真题次数等信息
+ * - 缓存优化：使用 Set 缓存收藏单词和已斩单词，快速查询
+ *
+ * 数据来源：
+ * - 自用词库：本地数据库（db_v2.js）
+ * - 外部词书：内存中的词书数据（wordbookSource.js）
+ * - 学习中心：学习统计数据（learningCenter_v2.js）
+ * - 主库：真题数据和补全信息（masterDb.js）
+ * - 预生成库：预生成的例句、近义词等（pregenVocab.js）
+ * ============================================================================
+ */
+
 <script setup>
 import { ref, computed, watch } from 'vue';
 import VocalColorBlockSelector from '../../components/vocal-color-block-selector/vocal-color-block-selector.vue';
@@ -179,18 +218,25 @@ import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 import { getMasteredWordbookWords } from '../../src/utils/masteredWordbookWords.js';
 import { dbToJs } from '../../src/utils/dataTransformer.js';
 
-const ENRICH_CHUNK = 200;
-const FIRST_SCREEN_COUNT = 120;
-const HOT_TOP_COUNT = 20; // 热加载：优先补全顶部 20 个词
-const PAGE_SIZE = 50;
-let loadWordsInProgress = false;
+// ========== 性能优化常量 ==========
+/**
+ * 性能优化参数
+ * 这些常量控制数据加载和渲染的性能
+ */
+const ENRICH_CHUNK = 200;  // 每次补全的单词数量（分批处理，避免卡顿）
+const FIRST_SCREEN_COUNT = 120;  // 首屏显示的单词数量
+const HOT_TOP_COUNT = 20;  // 热加载：优先补全顶部 20 个词（提升用户体感）
+const PAGE_SIZE = 50;  // 分页加载的单词数量
+
+// ========== 全局状态 ==========
+let loadWordsInProgress = false;  // 防止重复加载单词列表
 /** 非响应式全量缓存，仅外部/本地单词本使用，避免 6000+ 词进 ref 导致卡顿 */
-let allExternalWords = [];
-let plusReadyHandler = null;
+let allExternalWords = [];  // 外部单词本的全量单词（不放入 Vue ref，避免性能问题）
+let plusReadyHandler = null;  // App 端 plusready 事件处理器
 /** 收藏单词集合缓存 */
-let favoriteWordsSet = new Set();
+let favoriteWordsSet = new Set();  // 用 Set 存储收藏单词，快速查询
 /** 已斩单词集合缓存 */
-let masteredWordsSet = new Set();
+let masteredWordsSet = new Set();  // 用 Set 存储已斩单词，快速查询
 
 const mapSortByToDb = (sortBy) => {
   const map = { create_time: 'create_time', alphabetical: 'english', importance: 'importance', repeat_count: 'repeat_count', view_count: 'view_count', exam_count: 'create_time' };
@@ -204,6 +250,25 @@ const getFilters = () => ({
   page: filterType.value === 'page' ? filterValue.value : undefined,
 });
 
+/**
+ * 将数据库字段转换为列表显示格式
+ * 功能：
+ * 1. 过滤掉已斩的单词
+ * 2. 转换字段名为 camelCase（数据库用 snake_case）
+ * 3. 标准化数据格式
+ * 4. 添加收藏状态
+ *
+ * 数据转换：
+ * - repeat_count → repeatCount
+ * - source_page → sourcePage
+ * - view_count → viewCount
+ * - exam_count → examCount
+ * - create_time → createTime
+ * - is_favorite → isFavorite
+ *
+ * @param {object} w - 数据库中的单词对象
+ * @returns {object|null} 转换后的单词对象，如果已斩则返回 null
+ */
 function normalizeListWord(w) {
   // 如果单词已斩，返回 null 表示过滤掉
   if (masteredWordsSet.has((w.english || '').trim().toLowerCase())) {
@@ -540,7 +605,31 @@ async function retryEnrichUntilReady(list, bookAtLoad, wordsRef) {
   }
 }
 
-/** 后台补全：首页卡片只依赖主库批量查（vocal_master 含释义+真题次数+标签），采用热加载两阶段 */
+/**
+ * 后台补全单词信息
+ * 采用多阶段热加载策略，确保用户体验流畅
+ *
+ * 加载阶段：
+ * 1. 热加载：优先补全顶部 20 个词（提升用户体感）
+ * 2. 后台补全：补全剩余词汇（分批处理，避免卡顿）
+ * 3. 兜底补全：若仍有缺失，逐词查主库补全
+ * 4. 延迟重试：启动阶段主库可能晚到，延迟重试若干次
+ *
+ * 补全内容：
+ * - chinese：中文释义
+ * - tags：标签
+ * - exam_count：真题次数
+ * - importance：重要程度
+ *
+ * 数据来源优先级：
+ * 1. 主库批量查询（getWordBriefBatch）
+ * 2. 主库逐词查询（getWordFullDetail）
+ * 3. 预生成库（pregenVocab）
+ *
+ * @param {array} list - 要补全的单词列表
+ * @param {string} bookAtLoad - 加载时的词书 ID（用于检测词书切换）
+ * @param {ref} wordsRef - 单词列表的 Vue ref
+ */
 const enrichWordbookListInBackground = async (list, bookAtLoad, wordsRef) => {
   if (!list || list.length === 0 || !wordsRef) return;
   try {
@@ -611,6 +700,25 @@ const syncIncompleteWordsWithStats = async () => {
   } catch (_) {}
 };
 
+/**
+ * 加载单词列表
+ * 支持两种模式：
+ * 1. 自用词库：从本地数据库分页加载
+ * 2. 外部词书：从内存全量加载，然后分页显示
+ *
+ * 优化策略：
+ * - 自用词库：分页加载，减少内存占用
+ * - 外部词书：全量加载到内存（allExternalWords），但只显示首页（words.value）
+ * - 后台补全：异步补全释义、标签、真题次数等信息
+ * - 收藏和已斩缓存：使用 Set 快速查询
+ *
+ * 流程：
+ * 1. 更新收藏单词集合和已斩单词集合
+ * 2. 根据词书类型加载单词
+ * 3. 标准化和过滤单词
+ * 4. 后台补全单词信息
+ * 5. 加载学习快照
+ */
 const loadWords = async () => {
   if (loadWordsInProgress) return;
   loadWordsInProgress = true;
@@ -622,6 +730,7 @@ const loadWords = async () => {
     const book = getCurrentWordbook();
 
     if (book === 'self') {
+      // 自用词库：分页加载
       const list = await db.getWordsForList(PAGE_SIZE, 0, mapSortByToDb(sortBy.value), sortOrder.value, getFilters());
       words.value = list.map(normalizeListWord).filter(Boolean);
       hasMoreSelfWords.value = list.length >= PAGE_SIZE;
@@ -629,10 +738,11 @@ const loadWords = async () => {
       allExternalWordsLength.value = 0;
       enrichWordbookListInBackground(words.value, book, words);
       logger.debug('Index', '极速加载：自用分页成功', { count: words.value.length });
-    await loadLearningSnapshot();
+      await loadLearningSnapshot();
       return;
     }
 
+    // 外部词书：全量加载到内存，但只显示首页
     let raw = [];
     if (isLocalWordbookKey(book)) {
       raw = await loadLocalWordbook(book);
@@ -889,7 +999,24 @@ const goToMistakes = () => {
   uni.navigateTo({ url: '/pages/mistakes/mistakes' });
 };
 
-/** 斩掉单词 */
+/**
+ * 斩掉单词（从列表中移除）
+ * 流程：
+ * 1. 立即标记该单词，触发 CSS 折叠动画
+ * 2. 调用云函数或本地数据库删除单词
+ * 3. 等待动画完成（450ms）
+ * 4. 从列表中移除该单词
+ *
+ * 对于词书单词：
+ * - 添加到全局已斩列表（这样在所有词书中都不会出现）
+ * - 添加到已斩词书列表
+ * - 从词书中移除该单词
+ *
+ * 对于自用词库：
+ * - 从数据库删除单词
+ *
+ * @param {object} word - 要斩掉的单词对象
+ */
 const masterWord = async (word) => {
   if (!word || !word.english) return;
 
@@ -1010,7 +1137,26 @@ const isFavorited = (word) => {
   return word && word.isFavorite === true;
 };
 
-/** 切换收藏状态 */
+/**
+ * 切换收藏状态
+ * 功能：
+ * 1. 获取或创建"收藏"单词本
+ * 2. 如果已收藏，则从收藏本中移除
+ * 3. 如果未收藏，则添加到收藏本
+ * 4. 更新本地缓存
+ *
+ * 收藏本管理：
+ * - 自动创建"收藏"单词本（如果不存在）
+ * - 收藏单词存储在 wordbookSource 中
+ * - 收藏状态缓存在 favoriteWordsSet 中
+ *
+ * 用户反馈：
+ * - 收藏成功：显示"已收藏"提示
+ * - 取消收藏：显示"已取消收藏"提示
+ * - 操作失败：显示错误提示
+ *
+ * @param {object} word - 要收藏的单词对象
+ */
 const toggleFavorite = async (word) => {
   if (!word || !word.english) {
     logger.debug('Index', '收藏失败：单词为空');

@@ -1,13 +1,43 @@
 /**
- * importExport.js — 统一的导入导出工具
- * 支持格式：CSV, TXT, JSON, DOCX
+ * 导入导出工具模块 (importExport.js)
+ *
+ * 功能：
+ * - 支持多种文件格式的导入：CSV、TXT、JSON、DOCX
+ * - 支持多种文件格式的导出：CSV、TXT、JSON
+ * - 提供文件选择和读取接口
+ * - 提供文件生成和下载接口
+ *
+ * 支持的格式：
+ * - CSV：逗号分隔值，适合 Excel 导入导出
+ * - TXT：纯文本，每行一个单词
+ * - JSON：JSON 格式，包含完整的单词信息
+ * - DOCX：Word 文档，用于生成学习报告
+ *
+ * 使用场景：
+ * - 用户导入单词列表
+ * - 用户导出学习数据
+ * - 数据备份和恢复
+ * - 与其他应用的数据交换
  */
 
 import { logger } from './errorHandler.js';
+
 /**
- * 触发文件选择器并读取文件内容（uni-app 兼容版）
- * @param {string} accept 文件类型，如 '.csv,.txt,.json,.docx'
- * @returns {Promise<{file: File, content: string|ArrayBuffer}>}
+ * 触发文件选择器并读取文件内容
+ *
+ * 功能：
+ * - 创建隐藏的文件输入框
+ * - 触发文件选择对话框
+ * - 读取选中文件的内容
+ * - 支持 App 和 H5 环境
+ *
+ * @param {string} accept - 文件类型，如 '.csv,.txt,.json,.docx'
+ * @returns {Promise<{file: File, content: string|ArrayBuffer}>} 文件对象和内容
+ *
+ * @example
+ * const { file, content } = await selectFile('.csv,.txt');
+ * console.log(file.name);  // 文件名
+ * console.log(content);    // 文件内容
  */
 export function selectFile(accept = '*') {
   return new Promise((resolve, reject) => {
@@ -19,7 +49,7 @@ export function selectFile(accept = '*') {
         input.type = 'file';
         input.accept = accept;
         input.style.cssText = 'position:fixed;top:-100px;left:-100px;opacity:0;';
-        
+
         input.onchange = async (e) => {
           try {
             const file = e.target.files[0];
@@ -28,14 +58,14 @@ export function selectFile(accept = '*') {
               reject(new Error('未选择文件'));
               return;
             }
-            
+
             let content;
             if (file.name.endsWith('.docx')) {
               content = await readFileAsArrayBuffer(file);
             } else {
               content = await readFileAsText(file);
             }
-            
+
             document.body.removeChild(input);
             resolve({ file, content });
           } catch (error) {
@@ -43,14 +73,14 @@ export function selectFile(accept = '*') {
             reject(error);
           }
         };
-        
+
         input.onerror = () => {
           document.body.removeChild(input);
           reject(new Error('文件选择失败'));
         };
-        
+
         document.body.appendChild(input);
-        
+
         // 延迟触发，确保 DOM 已挂载
         setTimeout(() => {
           try {
@@ -60,7 +90,7 @@ export function selectFile(accept = '*') {
             reject(new Error('无法打开文件选择器: ' + err.message));
           }
         }, 100);
-        
+
       } catch (error) {
         reject(new Error('创建文件选择器失败: ' + error.message));
       }
@@ -71,12 +101,17 @@ export function selectFile(accept = '*') {
   });
 }
 
+/**
+ * 创建 HTML 文件输入框
+ * 用于 H5 环境的文件选择
+ * @private
+ */
 function createHtmlFileInput(accept, resolve, reject) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = accept;
   input.style.cssText = 'position:fixed;top:-100px;left:-100px;opacity:0;';
-  
+
   input.onchange = async (e) => {
     const file = e.target.files[0];
     if (!file) {

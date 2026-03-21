@@ -101,6 +101,35 @@
   </view>
 </template>
 
+/**
+ * ============================================================================
+ * 学习统计页面 (stats.vue)
+ * ============================================================================
+ *
+ * 功能概述：
+ * 本页面展示用户的学习进度和统计数据，包括：
+ * 1. 当前词书信息和学习概览
+ * 2. 掌握度分层统计（熟练、稳定、薄弱、危险）
+ * 3. 近 7 天学习趋势（复习数量、正确率）
+ * 4. 快速入口（到期复习、错词再练）
+ *
+ * 页面结构：
+ * - 当前词书卡片：显示词书名称和学习概览
+ * - 掌握度分层卡片：显示单词在各个掌握度等级的分布
+ * - 学习趋势卡片：显示近 7 天的学习数据
+ * - 快速入口卡片：提供快速导航按钮
+ *
+ * 数据来源：
+ * - 学习中心（learningCenter_v2.js）
+ * - 当前词书（wordbookSource.js）
+ *
+ * 优化策略：
+ * - 页面显示时加载统计数据
+ * - 使用计算属性计算百分比，避免重复计算
+ * - 页面卸载时清理缓存
+ * ============================================================================
+ */
+
 <script setup>
 import { ref, computed } from 'vue';
 import { onShow, onUnload } from '@dcloudio/uni-app';
@@ -110,24 +139,69 @@ import { getStudyStats } from '../../src/utils/learningCenter_v2.js';
 import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 
+// ========== 响应式数据 ==========
+/**
+ * 学习统计数据
+ * 包含：
+ * - dueCount: 今日到期的单词数
+ * - mistakeCount: 错词待练的单词数
+ * - reviewedCount: 已建档的单词数
+ * - streak: 连续学习天数
+ * - masteryBuckets: 掌握度分层统计
+ */
 const stats = ref({
-  dueCount: 0,
-  mistakeCount: 0,
-  reviewedCount: 0,
-  streak: 0,
-  masteryBuckets: { strong: 0, normal: 0, weak: 0, danger: 0 },
+  dueCount: 0,  // 今日到期的单词数
+  mistakeCount: 0,  // 错词待练的单词数
+  reviewedCount: 0,  // 已建档的单词数
+  streak: 0,  // 连续学习天数
+  masteryBuckets: {
+    strong: 0,  // 熟练的单词数
+    normal: 0,  // 稳定的单词数
+    weak: 0,  // 薄弱的单词数
+    danger: 0  // 危险的单词数
+  },
 });
+// 近 7 天的学习趋势
 const trend = ref([]);
 
+// 当前词书标签
 const currentBookLabel = computed(() => getCurrentWordbook() || '当前词书');
 
+/**
+ * 获取单词池
+ * 根据当前词书类型获取对应的单词列表
+ *
+ * 支持的词书类型：
+ * 1. 'self'：自用词库（从本地数据库获取）
+ * 2. 本地词书：从本地存储加载
+ * 3. 云端词书：从内存中获取
+ *
+ * @returns {array} 单词列表
+ */
 const getWordPool = async () => {
   const book = getCurrentWordbook();
-  if (book === 'self') return await db.getAllWords();
-  if (isLocalWordbookKey(book)) return await loadLocalWordbook(book);
-  return getWordbookWords(book) || [];
+  if (book === 'self') return await db.getAllWords();  // 自用词库
+  if (isLocalWordbookKey(book)) return await loadLocalWordbook(book);  // 本地词书
+  return getWordbookWords(book) || [];  // 云端词书
 };
 
+/**
+ * 加载学习统计数据
+ * 计算掌握度分层、学习趋势等信息
+ *
+ * 流程：
+ * 1. 获取当前词书的单词列表
+ * 2. 调用学习中心计算统计数据
+ * 3. 更新响应式数据
+ *
+ * 统计内容：
+ * - 今日到期单词数
+ * - 错词待练数
+ * - 已建档单词数
+ * - 连续学习天数
+ * - 掌握度分层（熟练、稳定、薄弱、危险）
+ * - 近 7 天学习趋势
+ */
 const loadStats = async () => {
   const words = await getWordPool();
   const result = getStudyStats(words, getCurrentWordbook());
@@ -135,12 +209,42 @@ const loadStats = async () => {
   trend.value = Array.isArray(result.trend) ? result.trend : [];
 };
 
+/**
+ * 计算每天的正确率
+ * 用于绘制学习趋势图表
+ *
+ * 计算公式：
+ * 正确率 = (正确数 / 复习总数) * 100
+ *
+ * 特殊情况：
+ * - 如果复习总数为 0，返回 0
+ * - 结果四舍五入到整数
+ *
+ * @param {object} item - 趋势数据项（包含 reviewedCount 和 correctCount）
+ * @returns {number} 正确率百分比（0-100）
+ */
 const getAccuracy = (item) => {
   const total = Number(item.reviewedCount || 0);
   if (!total) return 0;
   return Math.round((Number(item.correctCount || 0) / total) * 100);
 };
 
+/**
+ * 计算掌握度分层的百分比
+ * 用于绘制进度条
+ *
+ * 计算公式：
+ * 百分比 = (该分层单词数 / 总单词数) * 100
+ *
+ * 分层说明：
+ * - strong（熟练）：掌握度最高，可以停止复习
+ * - normal（稳定）：掌握度良好，定期复习
+ * - weak（薄弱）：掌握度一般，需要加强复习
+ * - danger（危险）：掌握度低，需要重点复习
+ *
+ * @param {string} key - 分层类型（strong/normal/weak/danger）
+ * @returns {number} 百分比（0-100）
+ */
 const getBucketPercent = (key) => {
   const b = stats.value.masteryBuckets;
   if (!b) return 0;
@@ -149,16 +253,28 @@ const getBucketPercent = (key) => {
   return Math.round(((b[key] || 0) / total) * 100);
 };
 
+/**
+ * 跳转到复习页面
+ * 支持多种复习预设
+ *
+ * 支持的预设：
+ * - 'due'：到期复习（复习今日到期的单词）
+ * - 'wrong'：错词再练（复习错词本中的单词）
+ * - 'firstday'：首日巩固（复习新学的单词）
+ *
+ * @param {string} preset - 复习预设
+ */
 const goToReview = (preset) => {
   uni.navigateTo({ url: `/pages/review/review?preset=${encodeURIComponent(preset)}` });
 };
 
+// 页面显示时加载统计数据
 onShow(() => {
   loadStats();
 });
 
+// 页面卸载时清理缓存
 onUnload(() => {
-  // 清理过期缓存
   try {
     cleanupExpiredCaches();
   } catch (error) {

@@ -59,6 +59,42 @@
   </view>
 </template>
 
+/**
+ * ============================================================================
+ * 快速添加单词页面 (quick-add.vue)
+ * ============================================================================
+ *
+ * 功能概述：
+ * 本页面提供快速添加单词的功能，支持以下操作：
+ * 1. 输入英文单词
+ * 2. 自动查找单词释义（从本地快照、主库、预生成库）
+ * 3. 输入页码和年份（可选）
+ * 4. 选择添加到哪个单词本
+ * 5. 快速保存（返回首页）
+ * 6. 保存并编辑（进入详情页编辑）
+ *
+ * 页面结构：
+ * - 自定义返回按钮
+ * - 英文单词输入框
+ * - 页码和年份输入框
+ * - 单词本选择器
+ * - 单词信息显示（自动查找的释义）
+ * - 底部操作按钮
+ *
+ * 数据来源：
+ * - 本地快照（localWordSnapshot.js）
+ * - 主库（masterDb.js）
+ * - 预生成库（pregenVocab.js）
+ * - 学习中心（learningCenter_v2.js）
+ *
+ * 优化策略：
+ * - 防止重复提交（isSaving 标志）
+ * - 异步查找单词释义（避免阻塞 UI）
+ * - 后台补全例句、近义词、反义词
+ * - 自动记录新学单词到学习中心
+ * ============================================================================
+ */
+
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import VocalColorBlockSelector from "../../components/vocal-color-block-selector/vocal-color-block-selector.vue";
@@ -74,28 +110,46 @@ import { noteNewWordLearned } from "../../src/utils/learningCenter_v2.js";
 import { logger, errorHandler } from "../../src/utils/errorHandler.js";
 import { cleanupExpiredCaches } from "../../src/utils/learningCenter_v2.js";
 
+// ========== 单词数据 ==========
+/**
+ * 当前编辑的单词对象
+ * 包含基本信息和学习数据
+ */
 const word = ref({
-  english: "",
-  chinese: "",
-  importance: 3, // 默认三星
-  source_page: "",
-  year: "",
-  tags: "",
+  english: "",  // 英文单词
+  chinese: "",  // 中文释义
+  importance: 3,  // 重要程度（默认三星）
+  source_page: "",  // 纸质书页码
+  year: "",  // 真题年份
+  tags: "",  // 标签
 });
 
+// ========== UI 状态 ==========
+// 从主库查找到的单词信息
 const foundWord = ref(null);
+// 是否正在加载
 const isLoading = ref(false);
+// 是否正在保存
 const isSaving = ref(false);
 
+/**
+ * 返回上一页
+ */
 const goBack = () => uni.navigateBack();
 
+// ========== 词书选择 ==========
+// 云端词书列表
 const cloudWordbooks = ref(getCloudWordbooks());
+// 当前选择的词书 ID
 const addToWordbook = ref(cloudWordbooks.value[0]?.id || 'self');
+// 词书选择器的选项列表
 const addToWordbookOptions = computed(() => cloudWordbooks.value.map((o) => o.name));
+// 当前选择的词书索引
 const addToWordbookIndex = computed(() => {
   const i = cloudWordbooks.value.findIndex((o) => o.id === addToWordbook.value);
   return i >= 0 ? i : 0;
 });
+// 当前选择的词书名称
 const addToWordbookLabel = computed(() => {
   const w = cloudWordbooks.value.find((o) => o.id === addToWordbook.value);
   return w ? w.name : '自用单词';
@@ -122,6 +176,25 @@ const normalizeWordHeavyFields = () => {
   word.value.antonyms = word.value.antonyms || [];
 };
 
+/**
+ * 搜索单词
+ * 异步查找单词的释义和其他信息
+ *
+ * 流程：
+ * 1. 防抖处理（400ms 延迟）
+ * 2. 从本地快照查找
+ * 3. 如果找到，显示释义
+ * 4. 如果没找到，清空释义
+ *
+ * 防抖目的：
+ * - 避免频繁查询
+ * - 减少数据库压力
+ * - 提升用户体验
+ *
+ * 防止竞态条件：
+ * - 检查输入是否变化
+ * - 只更新最新的查询结果
+ */
 let _searchTimer = null;
 const searchWord = () => {
   if (_searchTimer) clearTimeout(_searchTimer);
@@ -146,6 +219,30 @@ const searchWord = () => {
   }, 400);
 };
 
+/**
+ * 快速保存单词
+ * 流程：
+ * 1. 验证英文单词不为空
+ * 2. 检查单词是否已存在
+ * 3. 如果存在，增加重复次数
+ * 4. 如果不存在，添加新单词
+ * 5. 记录到学习中心（首日巩固）
+ * 6. 后台补全例句、近义词、反义词
+ * 7. 返回首页
+ *
+ * 支持两种单词本：
+ * - 自用词库：保存到本地数据库
+ * - 用户词书：保存到 wordbookSource
+ *
+ * 防止重复提交：
+ * - 使用 isSaving 标志
+ * - 禁用按钮
+ *
+ * 后台补全：
+ * - 优先从预生成库获取
+ * - 如果预生成库没有，调用 AI 生成
+ * - 异步执行，不阻塞 UI
+ */
 const saveQuick = async () => {
   // 防止重复提交
   if (isSaving.value) {
@@ -272,6 +369,24 @@ const saveQuick = async () => {
   }
 };
 
+/**
+ * 保存并编辑单词
+ * 流程：
+ * 1. 验证英文单词不为空
+ * 2. 检查单词是否已存在
+ * 3. 如果存在，增加重复次数并跳转到详情页
+ * 4. 如果不存在，添加新单词并跳转到详情页编辑
+ * 5. 记录到学习中心（首日巩固）
+ * 6. 后台补全例句、近义词、反义词
+ *
+ * 与快速保存的区别：
+ * - 快速保存：返回首页
+ * - 保存并编辑：进入详情页，可继续编辑
+ *
+ * 使用场景：
+ * - 用户想要详细编辑单词信息
+ * - 用户想要生成 AI 内容（例句、近义词等）
+ */
 const saveAndEdit = async () => {
   if (isSaving.value) return;
   if (!word.value.english || !word.value.chinese) {

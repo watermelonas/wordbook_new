@@ -1,23 +1,65 @@
+/**
+ * AI 服务模块 (aiService.js)
+ *
+ * 功能：
+ * - 调用 DeepSeek API 进行 AI 生成
+ * - 生成单词例句
+ * - 生成近义词和反义词
+ * - 生成单词分析和标签推荐
+ * - 生成词族和搭配信息
+ *
+ * 核心特性：
+ * 1. 统一的 API 调用接口
+ * 2. 支持开关控制（便于测试）
+ * 3. 完整的错误处理和日志记录
+ * 4. 支持自定义提示词（Prompt）
+ * 5. 智能解析 AI 生成的结果
+ */
+
 import { logger } from './errorHandler.js';
 import config from './config.js';
 
+/**
+ * AI 服务类
+ *
+ * 职责：
+ * - 管理 API 密钥和端点
+ * - 提供各种 AI 生成功能
+ * - 处理 API 请求和响应
+ */
 class AIService {
   constructor() {
-    this.apiKey = config.deepseekApiKey || '';
-    this.apiUrl = 'https://api.deepseek.com/v1/chat/completions';
+    this.apiKey = config.deepseekApiKey || '';  // DeepSeek API 密钥
+    this.apiUrl = 'https://api.deepseek.com/v1/chat/completions';  // API 端点
   }
 
-  async callAPI(prompt, model = 'deepseek-chat') { // 使用 deepseek-chat 模型
+  /**
+   * 调用 DeepSeek API
+   *
+   * 流程：
+   * 1. 检查 AI 服务是否启用
+   * 2. 构建请求数据
+   * 3. 发送 HTTP 请求
+   * 4. 解析响应数据
+   * 5. 返回生成的内容
+   *
+   * @param {string} prompt - 提示词（用户指令）
+   * @param {string} model - 使用的模型（默认 deepseek-chat）
+   * @returns {Promise<string>} AI 生成的内容
+   */
+  async callAPI(prompt, model = 'deepseek-chat') {
+    // 检查 AI 服务是否启用
     if (!config.aiServiceEnabled) {
       logger.debug('[AI 已关闭] 未发起请求');
       return Promise.resolve('（当前已关闭 AI 服务，仅作测试）');
     }
+
     logger.debug('开始调用 API:', {
       model,
       prompt: prompt.substring(0, 50) + '...',
       url: this.apiUrl
     });
-    
+
     return new Promise((resolve, reject) => {
       uni.request({
         url: this.apiUrl,
@@ -38,13 +80,13 @@ class AIService {
               content: prompt
             }
           ],
-          temperature: 0.6, // R1 建议设为 0.6 以获得更稳定的推理
-          stream: false
+          temperature: 0.6,  // 温度参数：控制生成的随机性（0.6 较稳定）
+          stream: false  // 不使用流式输出
         },
         success: (response) => {
           logger.debug('API 响应状态:', response.statusCode);
           logger.debug('API 响应数据:', response.data);
-          
+
           if (response.statusCode === 200) {
             const data = response.data;
             if (data && data.choices && data.choices[0] && data.choices[0].message) {
@@ -67,15 +109,38 @@ class AIService {
     });
   }
 
+  /**
+   * 分析单词并推荐标签
+   *
+   * 功能：
+   * - 解释单词的基本含义
+   * - 分析单词的使用场景
+   * - 推荐合适的标签
+   *
+   * @param {string} word - 英文单词
+   * @returns {Promise<string>} AI 分析结果
+   */
   async analyzeWord(word) {
     const prompt = `请分析以下英语单词的语义，并推荐合适的标签（如"高频"、"作文词"、"口语词"、"学术词"等）：\n\n单词：${word}\n\n分析要求：\n1. 简要解释单词的基本含义\n2. 分析单词的使用场景和适用范围\n3. 推荐2-3个合适的标签\n4. 输出格式清晰，便于程序解析`;
 
     return await this.callAPI(prompt);
   }
 
+  /**
+   * 生成单个例句
+   *
+   * 功能：
+   * - 为单词生成高级例句
+   * - 包含其他单词本中的单词（加强记忆）
+   * - 贴近考研真题风格
+   *
+   * @param {string} word - 英文单词
+   * @param {array} existingWords - 用户单词本中的其他单词
+   * @returns {Promise<string>} 生成的例句
+   */
   async generateExample(word, existingWords = []) {
-    const existingWordsStr = existingWords.length > 0 ? 
-      `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join('、')}` : 
+    const existingWordsStr = existingWords.length > 0 ?
+      `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join('、')}` :
       '用户单词本中暂无其他单词';
 
     const prompt = `请为以下英语单词生成一个例句，要求：\n\n单词：${word}\n${existingWordsStr}\n\n例句要求：\n1. 高级例句，包含高级单词\n2. 句子不能过于冗长，结构清晰\n3. 句子中包含2-3个考研词库中较难的单词\n4. 例句要像考研的作文题和翻译题，贴近考研考纲\n5. 尽量包含单词本中已有的其他单词，形成反复记忆的效果\n6. 上下文合理，能够展示单词的正确用法\n7. 提供中文翻译`;
@@ -83,20 +148,35 @@ class AIService {
     return await this.callAPI(prompt);
   }
 
+  /**
+   * 生成多个例句
+   *
+   * 功能：
+   * - 为单词生成多个不同的例句
+   * - 每个例句场景和结构不同
+   * - 包含真题统计信息（可选）
+   * - 自动解析生成的例句
+   *
+   * @param {string} word - 英文单词
+   * @param {array} existingWords - 用户单词本中的其他单词
+   * @param {number} count - 生成的例句数量（默认 3）
+   * @param {string} examStatsText - 真题统计信息（可选）
+   * @returns {Promise<array>} 生成的例句数组
+   */
   async generateMultipleExamples(word, existingWords = [], count = 3, examStatsText = '') {
-    const existingWordsStr = existingWords.length > 0 ? 
-      `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join('、')}` : 
+    const existingWordsStr = existingWords.length > 0 ?
+      `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join('、')}` :
       '用户单词本中暂无其他单词';
     const examBlock = examStatsText ? `\n\n【该词在考研真题中的统计，供生成例句时参考】\n${examStatsText}\n` : '';
 
     const prompt = `请为以下英语单词生成${count}个不同的例句，要求：\n\n单词：${word}\n${existingWordsStr}${examBlock}\n\n例句要求：\n1. 高级例句，包含高级单词\n2. 句子不能过于冗长，结构清晰\n3. 每个句子中包含2-3个考研词库中较难的单词\n4. 例句要像考研的作文题和翻译题，贴近考研考纲\n5. 尽量包含单词本中已有的其他单词，形成反复记忆的效果\n6. 上下文合理，能够展示单词的正确用法\n7. 每个例句都要提供中文翻译\n8. 确保每个例句的场景和结构都不同\n9. 重要单词标记规则：\n   - 目标单词必须用 ** 标记\n   - 每个例句中至少标记2-3个其他考研核心词汇\n   - 标记格式：**单词**，如 "**important**"\n10. 例句要生动形象，贴近现实生活场景，内容有趣，容易记忆\n11. 可以加入具体的场景描述，让例句更有画面感\n12. 输出格式：每个例句一组，英文例句和中文翻译各占一行，不要使用任何分隔符\n\n示例输出：\n英文：在一个阳光明媚的周末，**significant** number of families gathered in the park, enjoying the **vibrant** flowers and **tranquil** atmosphere.\n中文：在一个阳光明媚的周末，**大量**家庭聚集在公园里，欣赏着**鲜艳**的花朵和**宁静**的氛围。`;
 
     const result = await this.callAPI(prompt);
-    
+
     // 解析生成的例句
     const examples = [];
     const lines = result.split('\n').filter(line => line.trim() !== '');
-    
+
     // 尝试按行对解析，英文和中文交替出现
     for (let i = 0; i < lines.length; i += 2) {
       let english = lines[i].trim();

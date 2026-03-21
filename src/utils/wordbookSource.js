@@ -1,18 +1,48 @@
 /**
- * 单词本来源：当前选中的单词本
- * - 云端/可编辑：自用单词(id=self) + 用户新建的单词本(id=uuid)，存云端或本地 storage
- * - 本地只读：红宝书、红宝书补全版、真题高频词、真题所有词，来自 CSV
+ * 单词本来源管理模块 (wordbookSource.js)
+ *
+ * 功能：
+ * - 管理单词本列表（云端和本地）
+ * - 管理当前选中的单词本
+ * - 提供单词本的增删改查操作
+ * - 支持本地只读单词本和云端可编辑单词本
+ *
+ * 单词本类型：
+ * 1. 自用单词本（id=self）：用户自己添加的单词
+ * 2. 云端单词本（id=uuid）：用户创建的自定义单词本
+ * 3. 本地只读单词本：红宝书、真题词汇等（来自 CSV）
+ * 4. 特殊单词本：已斩单词本、收藏单词本
+ *
+ * 存储方式：
+ * - 云端单词本：存储在 localStorage（CLOUD_LIST_KEY）
+ * - 本地单词本：存储在 localStorage（LOCAL_KEYS）
+ * - 当前选中：存储在 localStorage（STORAGE_KEY）
  */
 
 import { logger } from './errorHandler.js';
-const STORAGE_KEY = 'currentWordbook';
-const CLOUD_LIST_KEY = 'cloudWordbooks';
-const SELF_ID = 'self';
-const GUEST_DEFAULT_BOOK = '红宝书';
-const LOGIN_DEFAULT_BOOK = SELF_ID;
 
+// ========== 存储 key ==========
+const STORAGE_KEY = 'currentWordbook';  // 当前选中单词本的 key
+const CLOUD_LIST_KEY = 'cloudWordbooks';  // 云端单词本列表的 key
+
+// ========== 单词本 ID ==========
+const SELF_ID = 'self';  // 自用单词本 ID
+const GUEST_DEFAULT_BOOK = '红宝书';  // 未登录用户的默认单词本
+const LOGIN_DEFAULT_BOOK = SELF_ID;  // 已登录用户的默认单词本
+
+// ========== 本地只读单词本 ==========
 const LOCAL_KEYS = ['红宝书', '红宝书补全版', '真题高频词', '真题所有词'];
 
+/**
+ * 获取云端单词本列表
+ *
+ * 功能：
+ * - 从本地存储读取单词本列表
+ * - 清理重复和过期的单词本
+ * - 确保必要的特殊单词本存在
+ *
+ * @returns {array} 单词本列表
+ */
 export function getCloudWordbooks() {
   try {
     const raw = uni.getStorageSync(CLOUD_LIST_KEY);
@@ -62,6 +92,16 @@ export function getCloudWordbooks() {
   }
 }
 
+/**
+ * 保存云端单词本列表
+ *
+ * 功能：
+ * - 清理过期的单词本
+ * - 确保特殊单词本始终存在
+ * - 保存到本地存储
+ *
+ * @param {array} list - 单词本列表
+ */
 export function setCloudWordbooks(list) {
   // 移除旧的"收藏单词本"和多余的"收藏"
   list = list.filter((o) => o.name !== '收藏单词本' && !(o.name === '收藏' && o.id !== 'favorite'));
@@ -82,6 +122,17 @@ export function setCloudWordbooks(list) {
   uni.setStorageSync(CLOUD_LIST_KEY, JSON.stringify(finalList));
 }
 
+/**
+ * 添加新的云端单词本
+ *
+ * 功能：
+ * - 生成唯一的单词本 ID
+ * - 添加到单词本列表
+ * - 保存到本地存储
+ *
+ * @param {string} name - 单词本名称
+ * @returns {string} 新单词本的 ID
+ */
 export function addCloudWordbook(name) {
   const id = 'wb_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
   const list = getCloudWordbooks().filter((o) => o.id !== SELF_ID && o.id !== 'mastered' && o.id !== 'favorite');
@@ -95,6 +146,16 @@ export function addCloudWordbook(name) {
   return id;
 }
 
+/**
+ * 删除云端单词本
+ *
+ * 功能：
+ * - 从单词本列表中移除指定单词本
+ * - 保存到本地存储
+ * - 防止删除特殊单词本
+ *
+ * @param {string} id - 单词本 ID
+ */
 export function removeCloudWordbook(id) {
   if (id === SELF_ID || id === 'mastered' || id === 'favorite') return;
   const list = getCloudWordbooks().filter((o) => o.id !== id);

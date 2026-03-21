@@ -1,12 +1,39 @@
 /**
- * 日志系统测试
- * 验证日志系统是否正确工作
+ * 性能优化测试模块 (testOptimizations.js)
+ *
+ * 功能：
+ * - 测试日志系统的正确性
+ * - 测试虚拟滚动的性能
+ * - 测试缓存机制的效率
+ * - 测试数据库查询的性能
+ *
+ * 使用场景：
+ * - 开发时验证各个模块的功能
+ * - 性能调优时测试优化效果
+ * - 发布前进行完整的功能测试
+ *
+ * 注意：
+ * - 这些测试函数仅用于开发和调试
+ * - 生产环境中应该禁用这些测试
  */
 
 import { logger, LogLevel } from './errorHandler.js';
 
 /**
  * 测试日志系统
+ *
+ * 测试项：
+ * 1. 环境检测：验证是否正确识别开发/生产环境
+ * 2. 日志级别：测试 DEBUG、INFO、WARN、ERROR 四个级别
+ * 3. 日志数据：测试带数据的日志记录
+ * 4. 日志获取：测试获取已记录的日志
+ * 5. 动态调整：测试运行时修改日志级别
+ * 6. 导出功能：测试导出为 JSON 和 CSV 格式
+ *
+ * 预期结果：
+ * - 开发环境：所有日志都显示
+ * - 生产环境：只显示 INFO 及以上级别
+ * - 导出功能：能正确导出日志数据
  */
 export function testLoggingSystem() {
   console.log('=== 日志系统测试开始 ===\n');
@@ -59,24 +86,42 @@ export function testLoggingSystem() {
 
 /**
  * 测试虚拟滚动
+ *
+ * 虚拟滚动原理：
+ * - 只渲染可见区域的元素
+ * - 根据滚动位置动态计算可见范围
+ * - 大幅减少 DOM 节点数量，提升性能
+ *
+ * 测试内容：
+ * - 创建 1000 个虚拟元素
+ * - 模拟滚动到不同位置
+ * - 计算每个位置的可见元素范围
+ * - 验证计算结果的正确性
+ *
+ * 性能指标：
+ * - 渲染时间：应该在 16ms 以内（60fps）
+ * - 内存占用：应该保持在较低水平
+ * - 滚动流畅度：应该没有卡顿
  */
 export function testVirtualScroller() {
   console.log('=== 虚拟滚动测试开始 ===\n');
 
   // 模拟虚拟滚动逻辑
+  // 创建 1000 个虚拟元素
   const items = Array.from({ length: 1000 }, (_, i) => ({
     id: i,
     english: `word_${i}`,
     chinese: `单词_${i}`
   }));
 
-  const itemHeight = 80;
-  const containerHeight = 600;
-  const bufferSize = 5;
+  // 虚拟滚动参数
+  const itemHeight = 80;  // 每个元素的高度（像素）
+  const containerHeight = 600;  // 容器高度（像素）
+  const bufferSize = 5;  // 缓冲区大小（在可见范围外预加载的元素数）
 
   // 计算可见范围
-  const scrollTop = 500;
-  const visibleCount = Math.ceil(containerHeight / itemHeight);
+  const scrollTop = 500;  // 当前滚动位置
+  const visibleCount = Math.ceil(containerHeight / itemHeight);  // 可见元素数量
   const visibleStart = Math.max(0, Math.floor(scrollTop / itemHeight) - bufferSize);
   const visibleEnd = Math.min(items.length, visibleStart + visibleCount + bufferSize * 2);
 

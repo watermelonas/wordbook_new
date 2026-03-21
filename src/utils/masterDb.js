@@ -1,26 +1,55 @@
 /**
- * 统一数据源：vocal_master.db 按需查询，不加载大 JSON。
- * 单例初始化：复制+打开在整个 App 生命周期内只执行一次，避免多点词触发多次复制导致 IO 锁死。
+ * 主库管理模块 (masterDb.js)
+ *
+ * 功能：
+ * - 管理 vocal_master.db（真题数据库）
+ * - 提供单词的真题统计查询
+ * - 提供真题例句查询
+ * - 支持批量查询优化
+ *
+ * 核心特性：
+ * 1. 单例初始化：复制+打开只执行一次，避免 IO 锁死
+ * 2. 按需查询：不加载大 JSON，按需查询数据
+ * 3. 缓存机制：缓存查询结果，减少数据库访问
+ * 4. 自动修复：检测到缺表时自动重建
+ * 5. 跨平台支持：H5 和 App 环境自动适配
+ *
+ * 数据库结构：
+ * - vocab_master：单词基本信息（英文、中文、词性等）
+ * - word_exam_stats：真题统计（出现次数、年份、题型等）
+ * - word_exam_sentences：真题例句（年份、题型、句子等）
  */
 
 import { logger } from './errorHandler.js';
+
+// ========== 数据库配置 ==========
 /** 查询时 name/path 必须与 openDatabase 完全一致，否则 selectSql 会挂起或报错 */
-const MASTER_DB_NAME = 'master_db';
-const MASTER_DB_PATH = '_doc/vocal_master.db';
-const MASTER_DB_SOURCE = '_www/static/vocal_master.db';
-const MASTER_DB_VERSION = 4;
-const MASTER_DB_VERSION_KEY = 'vocal_master_db_version';
+const MASTER_DB_NAME = 'master_db';  // 数据库名称
+const MASTER_DB_PATH = '_doc/vocal_master.db';  // 数据库路径（App 端）
+const MASTER_DB_SOURCE = '_www/static/vocal_master.db';  // 源数据库路径（打包时）
+const MASTER_DB_VERSION = 4;  // 数据库版本
+const MASTER_DB_VERSION_KEY = 'vocal_master_db_version';  // 版本存储 key
 
-let masterDbOpen = false;
+// ========== 全局状态 ==========
+let masterDbOpen = false;  // 数据库是否已打开
 /** 关键：缓存初始化 Promise，保证复制+打开只执行一次，后续请求只 await 同一 Promise */
-let initPromise = null;
-let repairPromise = null;
+let initPromise = null;  // 初始化 Promise（单例）
+let repairPromise = null;  // 修复 Promise（单例）
 
+/**
+ * 检查是否为 App 环境
+ * @returns {boolean} 是否为 App 环境
+ */
 function isApp() {
   return typeof plus !== 'undefined' && plus.sqlite;
 }
 
-/** 兼容部分环境返回列名大小写不一致，统一为小写键 */
+/**
+ * 规范化数据库行数据
+ * 兼容部分环境返回列名大小写不一致，统一为小写键
+ * @param {object} r - 数据库行对象
+ * @returns {object} 规范化后的对象
+ */
 function normalizeRow(r) {
   if (!r || typeof r !== 'object') return r;
   const out = {};
@@ -28,7 +57,11 @@ function normalizeRow(r) {
   return out;
 }
 
-/** 检查 _doc 下是否已有 vocal_master.db，避免重复复制 */
+/**
+ * 检查 _doc 下是否已有 vocal_master.db
+ * 避免重复复制
+ * @returns {Promise<boolean>} 是否存在
+ */
 function checkDocDbExists() {
   return new Promise((resolve) => {
     if (typeof plus === 'undefined' || !plus.io) {
@@ -39,6 +72,10 @@ function checkDocDbExists() {
   });
 }
 
+/**
+ * 获取存储的数据库版本
+ * @returns {number} 版本号
+ */
 function getStoredDbVersion() {
   try {
     return Number(uni.getStorageSync(MASTER_DB_VERSION_KEY) || 0);
@@ -47,12 +84,21 @@ function getStoredDbVersion() {
   }
 }
 
+/**
+ * 保存数据库版本
+ * @param {number} version - 版本号
+ */
 function setStoredDbVersion(version) {
   try {
     uni.setStorageSync(MASTER_DB_VERSION_KEY, Number(version) || 0);
   } catch (_) {}
 }
 
+/**
+ * 执行 SQL 查询（原始）
+ * @param {string} sql - SQL 语句
+ * @returns {Promise<array>} 查询结果
+ */
 function rawSelectSqlRows(sql) {
   return new Promise((resolve) => {
     plus.sqlite.selectSql({
@@ -67,6 +113,11 @@ function rawSelectSqlRows(sql) {
   });
 }
 
+/**
+ * 检查是否为缺表错误
+ * @param {object} err - 错误对象
+ * @returns {boolean} 是否为缺表错误
+ */
 function isMissingExamTableError(err) {
   const msg = String((err && (err.message || err.errMsg)) || '').toLowerCase();
   return (
@@ -77,6 +128,11 @@ function isMissingExamTableError(err) {
   );
 }
 
+/**
+ * 验证主库表结构
+ * 检查是否存在必要的表
+ * @returns {Promise<boolean>} 表结构是否完整
+ */
 async function validateMasterSchema() {
   if (!isApp()) return false;
   const rows = await rawSelectSqlRows(
@@ -87,6 +143,11 @@ async function validateMasterSchema() {
   return names.includes('vocab_master') && names.includes('word_exam_stats') && names.includes('word_exam_sentences');
 }
 
+/**
+ * 从静态资源重建主库
+ * 检测到缺表时自动重建
+ * @returns {Promise<boolean>} 是否重建成功
+ */
 async function repairMasterDbFromStatic() {
   if (repairPromise) return repairPromise;
   repairPromise = (async () => {

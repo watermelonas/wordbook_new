@@ -66,14 +66,27 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 
+// ========== 响应式数据 ==========
+// 用户输入的用户名
 const username = ref('');
+// 用户输入的密码
 const password = ref('');
+// 用户输入的验证码
 const captchaInput = ref('');
+// 生成的验证码（4位随机字符）
 const captchaCode = ref('');
+// 登录按钮加载状态
 const isLoading = ref(false);
 
+// ========== 验证码配置 ==========
+// 验证码可用字符（排除容易混淆的字符如 I、O、1、0）
 const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
+/**
+ * 生成随机验证码
+ * - 生成4位随机字符
+ * - 清空用户输入框
+ */
 const generateCaptcha = () => {
   let code = '';
   for (let i = 0; i < 4; i++) {
@@ -83,20 +96,40 @@ const generateCaptcha = () => {
   captchaInput.value = '';
 };
 
+/**
+ * 为验证码字符设置样式
+ * - 每个字符有不同的旋转角度（增加防爬虫效果）
+ * - 每个字符有不同的颜色（提升视觉效果）
+ * @param {number} index - 字符索引（0-3）
+ * @returns {object} 包含 transform 和 color 的样式对象
+ */
 const captchaCharStyle = (index) => {
-  const rotations = [-8, 5, -4, 6];
-  const colors = ['#FF85A1', '#4A4E69', '#E91E63', '#5C6BC0'];
+  const rotations = [-8, 5, -4, 6];  // 每个字符的旋转角度
+  const colors = ['#FF85A1', '#4A4E69', '#E91E63', '#5C6BC0'];  // 每个字符的颜色
   return {
     transform: `rotate(${rotations[index]}deg)`,
     color: colors[index % colors.length]
   };
 };
 
+/**
+ * 页面挂载时生成初始验证码
+ */
 onMounted(() => {
   generateCaptcha();
 });
 
+/**
+ * 处理登录逻辑
+ * 流程：
+ * 1. 验证用户名和密码不为空
+ * 2. 验证验证码是否正确
+ * 3. 调用云函数进行登录认证
+ * 4. 保存用户信息到本地存储
+ * 5. 返回上一页
+ */
 const handleLogin = async () => {
+  // 检查用户名和密码是否为空
   if (!username.value || !password.value) {
     uni.showToast({
       title: '请输入用户名和密码',
@@ -105,24 +138,27 @@ const handleLogin = async () => {
     return;
   }
 
+  // 验证验证码（转大写并去除空格）
   const input = captchaInput.value.toUpperCase().trim();
   if (input !== captchaCode.value) {
     uni.showToast({
       title: '验证码错误',
       icon: 'none'
     });
-    generateCaptcha();
+    generateCaptcha();  // 验证码错误时重新生成
     return;
   }
 
   isLoading.value = true;
 
   try {
+    // 显示加载中提示
     uni.showLoading({
       title: '请稍候...',
       mask: true
     });
 
+    // 调用云函数 user-center 进行登录
     const result = await uniCloud.callFunction({
       name: 'user-center',
       data: {
@@ -133,7 +169,9 @@ const handleLogin = async () => {
 
     uni.hideLoading();
 
+    // 检查登录是否成功（code === 0 表示成功）
     if (result.result && result.result.code === 0) {
+      // 保存用户信息到本地存储
       uni.setStorageSync('uid', result.result.uid);
       uni.setStorageSync('username', result.result.username);
       uni.setStorageSync('userDisplayName', result.result.displayName || result.result.username);
@@ -143,15 +181,17 @@ const handleLogin = async () => {
         icon: 'success'
       });
 
+      // 1.5秒后返回上一页
       setTimeout(() => {
         uni.navigateBack();
       }, 1500);
     } else {
+      // 登录失败，显示错误信息
       uni.showToast({
         title: result.result ? result.result.msg : '登录失败',
         icon: 'none'
       });
-      generateCaptcha();
+      generateCaptcha();  // 登录失败时重新生成验证码
     }
   } catch (e) {
     uni.hideLoading();
@@ -160,7 +200,7 @@ const handleLogin = async () => {
       title: '网络错误，请稍后重试',
       icon: 'none'
     });
-    generateCaptcha();
+    generateCaptcha();  // 网络错误时重新生成验证码
   } finally {
     isLoading.value = false;
   }

@@ -3501,54 +3501,67 @@ ${i3}
   }
   const VirtualScroller = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["render", _sfc_render$c], ["__scopeId", "data-v-312fc91d"], ["__file", "E:/vocal/wordbook_new/src/components/VirtualScroller.vue"]]);
   const FSRS_CONFIG = {
-    // ============ 初始值 ============
+    // ========== 初始值 ==========
     // 新单词的初始难度系数（0.15-0.98）
-    // 值越高，单词越难
+    // 值越高，单词越难，复习间隔越短
     INITIAL_DIFFICULTY: 0.35,
     // 新单词的初始稳定性（天数）
-    // 值越高，遗忘越慢
+    // 值越高，遗忘越慢，复习间隔越长
     // 改进：从 0.6 天改为 1.5 天，给用户更多消化时间
     INITIAL_STABILITY: 1.5,
     // 新单词的初始可检索性（0.05-0.99）
     // 表示能回忆起单词的概率
+    // 新单词初始可检索性较高（0.92），表示用户刚学会
     INITIAL_RETRIEVABILITY: 0.92,
-    // ============ 难度调整参数 ============
+    // ========== 难度调整参数 ==========
     // 答对时难度的减少量
+    // 答对会降低难度，使复习间隔增加
     DIFFICULTY_DECREASE_ON_CORRECT: 0.06,
     // 答错时难度的增加量
+    // 答错会增加难度，使复习间隔减少
     DIFFICULTY_INCREASE_ON_WRONG: 0.12,
     // 难度的最小值
     DIFFICULTY_MIN: 0.15,
     // 难度的最大值
     DIFFICULTY_MAX: 0.98,
-    // ============ 稳定性调整参数 ============
+    // ========== 稳定性调整参数 ==========
     // 答对时稳定性的增长系数
+    // 值越大，稳定性增长越快，复习间隔增加越快
     // 改进：从 1.55 改为 1.8，加快学习进度
     STABILITY_GROWTH_FACTOR: 1.8,
     // 答对时难度对稳定性的影响系数
+    // 难度越低，稳定性增长越快
     STABILITY_DIFFICULTY_FACTOR: 0.65,
     // 答对时可检索性对稳定性的影响系数
+    // 可检索性越高，稳定性增长越快
     STABILITY_RETRIEVABILITY_FACTOR: 0.35,
     // 答对时重要性对稳定性的影响系数
+    // 重要性越高，稳定性增长越快
     STABILITY_IMPORTANCE_FACTOR: 0.04,
     // 答错时稳定性的衰减系数
+    // 答错会降低稳定性，使复习间隔减少
     STABILITY_DECAY_FACTOR: 0.42,
     // 稳定性的最小值
     STABILITY_MIN: 0.2,
-    // ============ 复习间隔参数 ============
+    // ========== 复习间隔参数 ==========
     // 复习间隔的基础系数
+    // 用于计算复习间隔的基础值
     INTERVAL_BASE_FACTOR: 0.7,
     // 复习间隔的难度系数
+    // 难度越高，复习间隔越短
     INTERVAL_DIFFICULTY_FACTOR: 0.9,
     // 复习间隔的最大值（天）
+    // 防止复习间隔过长
     INTERVAL_MAX_DAYS: 90,
     // 答错后的复习间隔（天）
     // 改进：从 0.125 天改为 0.04 天（1 小时），立即复习
     INTERVAL_ON_WRONG: 0.04,
-    // ============ 可检索性参数 ============
+    // ========== 可检索性参数 ==========
     // 答对时的可检索性
+    // 答对会增加可检索性
     RETRIEVABILITY_ON_CORRECT: 0.97,
     // 答错时的可检索性
+    // 答错会降低可检索性
     RETRIEVABILITY_ON_WRONG: 0.35,
     // 可检索性的最小值
     RETRIEVABILITY_MIN: 0.05,
@@ -3596,13 +3609,21 @@ ${i3}
   };
   const REVIEW_DEFAULTS = {
     difficulty_score: FSRS_CONFIG.INITIAL_DIFFICULTY,
+    // 初始难度
     stability: FSRS_CONFIG.INITIAL_STABILITY,
+    // 初始稳定性
     retrievability: FSRS_CONFIG.INITIAL_RETRIEVABILITY,
+    // 初始可检索性
     interval_days: 0,
+    // 初始复习间隔
     lapse_count: 0,
+    // 初始失误次数
     review_count: 0,
+    // 初始复习次数
     next_review_time: "",
+    // 下次复习时间
     last_reviewed_at: ""
+    // 上次复习时间
   };
   const clamp = (num, min, max) => Math.min(max, Math.max(min, num));
   const normalizeReviewFields = (word = {}) => ({
@@ -4449,54 +4470,94 @@ ${i3}
     if (!dbRow)
       return null;
     return {
-      // 基础字段
+      // ========== 基础字段 ==========
       id: dbRow.id,
+      // 单词 ID
       english: dbRow.english,
+      // 英文单词
       chinese: dbRow.chinese,
-      // 学习相关（snake_case → camelCase）
+      // 中文释义
+      // ========== 学习相关 ==========
       repeatCount: dbRow.repeat_count,
+      // 学习次数
       viewCount: dbRow.view_count,
+      // 查看次数
       examCount: dbRow.exam_count,
-      // 时间字段
+      // 真题出现次数
+      // ========== 时间字段 ==========
       createTime: dbRow.create_time,
+      // 创建时间
       updateTime: dbRow.update_time,
+      // 更新时间
       masteredAt: dbRow.mastered_at,
+      // 斩掉时间
       firstLearnedAt: dbRow.first_learned_at,
+      // 首次学习时间
       firstDayDueAt: dbRow.first_day_due_at,
+      // 首日巩固到期时间
       lastWrongAt: dbRow.last_wrong_at,
+      // 上次答错时间
       createdAt: dbRow.created_at,
+      // 创建时间（备用）
       updatedAt: dbRow.updated_at,
+      // 更新时间（备用）
       nextReviewTime: dbRow.next_review_time,
+      // 下次复习时间
       lastReviewedAt: dbRow.last_reviewed_at,
-      // 布尔字段
+      // 上次复习时间
+      // ========== 布尔字段 ==========
       isFavorite: dbRow.is_favorite,
+      // 是否收藏
       isMastered: dbRow.is_mastered,
-      // 其他字段
+      // 是否已斩掉
+      // ========== 其他字段 ==========
       sourcePage: dbRow.source_page,
+      // 纸质书页码
       year: dbRow.year,
+      // 真题年份
       tags: dbRow.tags,
+      // 标签
       importance: dbRow.importance,
-      // FSRS 相关
+      // 重要程度
+      // ========== FSRS 算法相关 ==========
       difficulty: dbRow.difficulty,
+      // 难度
       stability: dbRow.stability,
+      // 稳定性
       retrievability: dbRow.retrievability,
+      // 可检索性
       intervalDays: dbRow.interval_days,
+      // 复习间隔（天）
       lapseCount: dbRow.lapse_count,
+      // 失误次数
       reviewCount: dbRow.review_count,
-      // 学习统计
+      // 复习次数
+      // ========== 学习统计 ==========
       seenCount: dbRow.seen_count,
+      // 见过次数
       correctCount: dbRow.correct_count,
+      // 正确次数
       wrongCount: dbRow.wrong_count,
+      // 错误次数
       consecutiveCorrect: dbRow.consecutive_correct,
+      // 连续正确次数
       errorCount: dbRow.error_count,
+      // 错误计数
       recoverCount: dbRow.recover_count,
-      // 其他
+      // 恢复计数
+      // ========== 其他 ==========
       lastBookId: dbRow.last_book_id,
+      // 上次使用的词书 ID
       firstDayStage: dbRow.first_day_stage,
+      // 首日巩固阶段
       wordbookType: dbRow.wordbook_type,
+      // 单词本类型
       errorRate: dbRow.error_rate,
+      // 错误率
       reviewFrequency: dbRow.review_frequency,
+      // 复习频率
       difficultyScore: dbRow.difficulty_score
+      // 难度分数
     };
   }
   const H5_STORAGE_KEY = "wordbook_h5_words";
@@ -4506,6 +4567,11 @@ ${i3}
       this.maxSize = maxSize;
       this.cache = /* @__PURE__ */ new Map();
     }
+    /**
+     * 获取缓存的单词
+     * @param {string} key - 缓存 key（单词 ID 或英文）
+     * @returns {object|null} 缓存的单词对象，不存在返回 null
+     */
     get(key) {
       if (!this.cache.has(key))
         return null;
@@ -4514,6 +4580,11 @@ ${i3}
       this.cache.set(key, value);
       return value;
     }
+    /**
+     * 设置缓存
+     * @param {string} key - 缓存 key
+     * @param {object} value - 单词对象
+     */
     set(key, value) {
       if (this.cache.has(key)) {
         this.cache.delete(key);
@@ -4523,6 +4594,9 @@ ${i3}
       }
       this.cache.set(key, value);
     }
+    /**
+     * 清空缓存
+     */
     clear() {
       this.cache.clear();
     }
@@ -4595,6 +4669,12 @@ ${i3}
     }
     /**
      * 初始化数据库
+     *
+     * 流程：
+     * 1. 调用适配器的初始化方法
+     * 2. 检测运行环境（H5 或 App）
+     * 3. 创建必要的表和索引
+     * 4. 记录初始化结果
      */
     async init() {
       try {
@@ -6749,6 +6829,11 @@ ${i3}
     setWordbookWords
   }, Symbol.toStringTag, { value: "Module" }));
   class LRUCache {
+    /**
+     * 构造函数
+     * @param {number} maxSize - 最大缓存项数（默认 200）
+     * @param {number} ttlMs - 缓存生存时间，单位毫秒（默认 5 分钟）
+     */
     constructor(maxSize = 200, ttlMs = 5 * 60 * 1e3) {
       this.maxSize = maxSize;
       this.ttlMs = ttlMs;
@@ -6757,8 +6842,15 @@ ${i3}
     }
     /**
      * 获取缓存值
-     * @param {string} key
-     * @returns {*}
+     *
+     * 流程：
+     * 1. 检查 key 是否存在
+     * 2. 检查是否过期（过期则删除）
+     * 3. 移到最后（标记为最近使用）
+     * 4. 返回值
+     *
+     * @param {string} key - 缓存 key
+     * @returns {*} 缓存值，不存在或过期返回 undefined
      */
     get(key) {
       if (!this.cache.has(key))
@@ -6776,8 +6868,15 @@ ${i3}
     }
     /**
      * 设置缓存值
-     * @param {string} key
-     * @param {*} value
+     *
+     * 流程：
+     * 1. 如果已存在，先删除
+     * 2. 如果超过容量，删除最旧的项
+     * 3. 添加新项
+     * 4. 记录时间戳
+     *
+     * @param {string} key - 缓存 key
+     * @param {*} value - 缓存值
      */
     set(key, value) {
       if (this.cache.has(key)) {
@@ -6793,15 +6892,15 @@ ${i3}
     }
     /**
      * 检查是否存在
-     * @param {string} key
-     * @returns {boolean}
+     * @param {string} key - 缓存 key
+     * @returns {boolean} 是否存在且未过期
      */
     has(key) {
       return this.get(key) !== void 0;
     }
     /**
      * 删除缓存
-     * @param {string} key
+     * @param {string} key - 缓存 key
      */
     delete(key) {
       this.cache.delete(key);
@@ -8651,10 +8750,15 @@ ${i3}
   }
   const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["render", _sfc_render$b], ["__scopeId", "data-v-1cf27b2a"], ["__file", "E:/vocal/wordbook_new/pages/index/index.vue"]]);
   const config = {
-    // DeepSeek API Key，修改此处即可全局生效
+    // DeepSeek API Key
+    // 用于调用 DeepSeek API 生成例句、近义词等
+    // 修改此处即可全局生效
+    // 生产环境应使用环境变量：process.env.DEEPSEEK_API_KEY
     deepseekApiKey: "sk-c8ae8c792aa04c15960a0f5c7a38442c",
     // 请替换为你的新 API Key
+    // 是否启用 AI 服务
     // 设为 false 时关闭所有 AI 请求（仅用于测试，避免误触发 API）
+    // 当禁用时，AI 相关功能会返回模拟数据
     aiServiceEnabled: true
   };
   class AIService {
@@ -8662,6 +8766,20 @@ ${i3}
       this.apiKey = config.deepseekApiKey;
       this.apiUrl = "https://api.deepseek.com/v1/chat/completions";
     }
+    /**
+     * 调用 DeepSeek API
+     *
+     * 流程：
+     * 1. 检查 AI 服务是否启用
+     * 2. 构建请求数据
+     * 3. 发送 HTTP 请求
+     * 4. 解析响应数据
+     * 5. 返回生成的内容
+     *
+     * @param {string} prompt - 提示词（用户指令）
+     * @param {string} model - 使用的模型（默认 deepseek-chat）
+     * @returns {Promise<string>} AI 生成的内容
+     */
     async callAPI(prompt, model = "deepseek-chat") {
       logger$1.debug("开始调用 API:", {
         model,
@@ -8689,8 +8807,9 @@ ${i3}
               }
             ],
             temperature: 0.6,
-            // R1 建议设为 0.6 以获得更稳定的推理
+            // 温度参数：控制生成的随机性（0.6 较稳定）
             stream: false
+            // 不使用流式输出
           },
           success: (response) => {
             var _a;
@@ -8717,6 +8836,17 @@ ${i3}
         });
       });
     }
+    /**
+     * 分析单词并推荐标签
+     *
+     * 功能：
+     * - 解释单词的基本含义
+     * - 分析单词的使用场景
+     * - 推荐合适的标签
+     *
+     * @param {string} word - 英文单词
+     * @returns {Promise<string>} AI 分析结果
+     */
     async analyzeWord(word) {
       const prompt = `请分析以下英语单词的语义，并推荐合适的标签（如"高频"、"作文词"、"口语词"、"学术词"等）：
 
@@ -8729,6 +8859,18 @@ ${i3}
 4. 输出格式清晰，便于程序解析`;
       return await this.callAPI(prompt);
     }
+    /**
+     * 生成单个例句
+     *
+     * 功能：
+     * - 为单词生成高级例句
+     * - 包含其他单词本中的单词（加强记忆）
+     * - 贴近考研真题风格
+     *
+     * @param {string} word - 英文单词
+     * @param {array} existingWords - 用户单词本中的其他单词
+     * @returns {Promise<string>} 生成的例句
+     */
     async generateExample(word, existingWords = []) {
       const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
       const prompt = `请为以下英语单词生成一个例句，要求：
@@ -8746,6 +8888,21 @@ ${existingWordsStr}
 7. 提供中文翻译`;
       return await this.callAPI(prompt);
     }
+    /**
+     * 生成多个例句
+     *
+     * 功能：
+     * - 为单词生成多个不同的例句
+     * - 每个例句场景和结构不同
+     * - 包含真题统计信息（可选）
+     * - 自动解析生成的例句
+     *
+     * @param {string} word - 英文单词
+     * @param {array} existingWords - 用户单词本中的其他单词
+     * @param {number} count - 生成的例句数量（默认 3）
+     * @param {string} examStatsText - 真题统计信息（可选）
+     * @returns {Promise<array>} 生成的例句数组
+     */
     async generateMultipleExamples(word, existingWords = [], count = 3, examStatsText = "") {
       const existingWordsStr = existingWords.length > 0 ? `用户单词本中已有的其他单词（尽量使用这些单词来加强记忆）：${existingWords.join("、")}` : "用户单词本中暂无其他单词";
       const examBlock = examStatsText ? `
@@ -9101,21 +9258,35 @@ ${existingWordsStr}${examBlock}
       __expose();
       const word = vue.ref({
         english: "",
+        // 英文单词
         chinese: "",
+        // 中文释义
         tags: "",
+        // 标签（逗号分隔）
         source_page: "",
+        // 纸质书页码
         year: "",
+        // 真题年份
         importance: 3,
-        // 默认三星
+        // 重要程度（1-5星，默认3星）
         error_rate: 0,
+        // 错误率
         review_frequency: 0,
+        // 复习频率
         repeat_count: 1,
+        // 学习次数
         examples: [],
+        // 例句列表
         synonyms: [],
+        // 近义词列表
         antonyms: [],
+        // 反义词列表
         defs: [],
+        // 词义列表（包含词性和释义）
         exam_tip: "",
+        // 真题提示
         sentiment: "neu"
+        // 情感色彩（pos/neg/neu）
       });
       const POS_BREAK_REGEX = new RegExp("(?<!\\n)(vi[.\\．。]|vt[.\\．。]|adj[.\\．。]|adv[.\\．。]|prep[.\\．。]|conj[.\\．。]|pron[.\\．。]|num[.\\．。]|int[.\\．。]|aux[.\\．。]|art[.\\．。]|[nva][.\\．。])", "gi");
       function addNewlineBeforePos(chineseText) {
@@ -11573,6 +11744,39 @@ ${existingWordsStr}${examBlock}
         }
         return [];
       };
+      const buildPresetQueueOptimized = async (list, count, initialLoad) => {
+        const preset = reviewPreset.value || "due";
+        if (!Array.isArray(list) || !list.length)
+          return { initial: [], remaining: [] };
+        const filteredList = await filterOutMasteredWords(list);
+        if (!filteredList.length)
+          return { initial: [], remaining: [] };
+        let result = [];
+        if (preset === "new") {
+          const profiles = filteredList.map((item) => getWordProfile(item)).filter(Boolean);
+          const newWords = profiles.filter((item) => !item.seen_count || Number(item.seen_count) === 0);
+          result = shuffleList(newWords.map((p2) => ({ english: p2.english, chinese: p2.chinese })));
+        } else if (preset === "wrong") {
+          const wrongSet = new Set(getMistakeWords(getCurrentBookId(), true).map((item) => getWordKey(item)));
+          result = shuffleList(filterWordsByKeys(filteredList, wrongSet));
+        } else if (preset === "old") {
+          const dueProfiles = getDueProfilesForWords(filteredList, getCurrentBookId());
+          const filtered = dueProfiles.filter((item) => {
+            const reviewCount = Number(item.review_count || 0);
+            return reviewCount < 3;
+          });
+          const dueSet = new Set(filtered.map((item) => getWordKey(item)));
+          result = shuffleList(filterWordsByKeys(filteredList, dueSet));
+        } else if (preset === "due") {
+          const dueProfiles = getDueProfilesForWords(filteredList, getCurrentBookId());
+          const dueSet = new Set(dueProfiles.map((item) => getWordKey(item)));
+          result = shuffleList(filterWordsByKeys(filteredList, dueSet));
+        }
+        const totalNeeded = Math.max(initialLoad, count);
+        const initial = result.slice(0, initialLoad);
+        const remaining = result.slice(initialLoad, totalNeeded);
+        return { initial, remaining };
+      };
       const filterOutMasteredWords = async (list) => {
         try {
           const { getWordbookWords: getWordbookWords2 } = await __vitePreload(() => Promise.resolve().then(() => wordbookSource), false ? "__VITE_PRELOAD__" : void 0);
@@ -11607,25 +11811,64 @@ ${existingWordsStr}${examBlock}
         oldPlanEntry.todayKey === getTodayKey() ? oldPlanEntry.todayKeys : [];
         clearReviewProgress();
         const count = forceCount != null ? Number(forceCount) : Number(settings.value.count || 20);
-        if (recommendedReviewState.value.currentStage && reviewWords.value.length > 0)
-          ;
-        else if (isSelfWordbook()) {
+        const INITIAL_LOAD = 20;
+        if (recommendedReviewState.value.currentStage && reviewWords.value.length > 0) {
+          if (reviewWords.value.length > INITIAL_LOAD) {
+            const initialWords = reviewWords.value.slice(0, INITIAL_LOAD);
+            const remainingWords = reviewWords.value.slice(INITIAL_LOAD);
+            reviewWords.value = initialWords;
+            setTimeout(() => {
+              reviewWords.value.push(...remainingWords);
+            }, 100);
+          }
+        } else if (isSelfWordbook()) {
           if (reviewPreset.value === "due") {
             let words = await db.getReviewWords({
               sortBy: settings.value.sortBy,
-              count,
+              count: Math.max(INITIAL_LOAD, count),
               difficulty: "normal"
             });
             words = await filterOutMasteredWords(words);
-            reviewWords.value = words;
+            if (words.length > INITIAL_LOAD) {
+              reviewWords.value = words.slice(0, INITIAL_LOAD);
+              const remainingWords = words.slice(INITIAL_LOAD);
+              setTimeout(() => {
+                reviewWords.value.push(...remainingWords);
+              }, 100);
+            } else {
+              reviewWords.value = words;
+            }
           } else {
             const allWords = await db.getAllWords();
-            reviewWords.value = await buildPresetQueue(allWords, count);
+            const presetQueue = await buildPresetQueueOptimized(allWords, count, INITIAL_LOAD);
+            reviewWords.value = presetQueue.initial;
+            if (presetQueue.remaining.length > 0) {
+              setTimeout(() => {
+                reviewWords.value.push(...presetQueue.remaining);
+              }, 100);
+            }
           }
         } else {
           const list = await getCurrentBookWordPool();
-          const presetQueue = await buildPresetQueue(list, count);
-          reviewWords.value = presetQueue.length ? presetQueue : await buildBookReviewQueue(list, count);
+          const presetQueue = await buildPresetQueueOptimized(list, count, INITIAL_LOAD);
+          if (presetQueue.initial.length > 0) {
+            reviewWords.value = presetQueue.initial;
+            if (presetQueue.remaining.length > 0) {
+              setTimeout(() => {
+                reviewWords.value.push(...presetQueue.remaining);
+              }, 100);
+            }
+          } else {
+            const bookQueue = await buildBookReviewQueue(list, count);
+            if (bookQueue.length > INITIAL_LOAD) {
+              reviewWords.value = bookQueue.slice(0, INITIAL_LOAD);
+              setTimeout(() => {
+                reviewWords.value.push(...bookQueue.slice(INITIAL_LOAD));
+              }, 100);
+            } else {
+              reviewWords.value = bookQueue;
+            }
+          }
         }
         if (reviewWords.value.length === 0) {
           uni.showToast({
@@ -11654,23 +11897,17 @@ ${existingWordsStr}${examBlock}
       };
       const startExtraRound20 = async () => startReviewInternal(20);
       const onPrimaryStartClick = async () => {
-        uni.showLoading({ title: "加载中...", mask: true });
-        try {
-          if (isTodayTargetDone.value) {
-            await startExtraRound20();
-          } else {
-            await startReview();
-          }
-        } finally {
-          uni.hideLoading();
+        if (isTodayTargetDone.value) {
+          await startExtraRound20();
+          return;
         }
+        await startReview();
       };
       const startRecommendedReview = async () => {
-        uni.showLoading({ title: "加载中...", mask: true });
+        const dailyTarget = Number(settings.value.count || 20);
+        getCurrentBookId();
+        const newWordsNeeded = Math.max(0, dailyTarget - todayReviewed.value);
         try {
-          const dailyTarget = Number(settings.value.count || 20);
-          const bookId = getCurrentBookId();
-          const newWordsNeeded = Math.max(0, dailyTarget - todayReviewed.value);
           let allWords = [];
           if (isSelfWordbook()) {
             allWords = await db.getAllWords();
@@ -11693,8 +11930,6 @@ ${existingWordsStr}${examBlock}
         } catch (e2) {
           logger$1.error("startRecommendedReview 失败:", e2);
           uni.showToast({ title: "加载失败", icon: "none" });
-        } finally {
-          uni.hideLoading();
         }
       };
       const startPresetReview = async (preset) => {
@@ -12224,7 +12459,7 @@ ${existingWordsStr}${examBlock}
         }
         return false;
       });
-      const __returned__ = { showSettings, showModeSelector, showSortSelector, showCountSelector, showDifficultySelector, reviewStarted, reviewFinished, settings, reviewWords, currentIndex, currentWord, currentOptions, fillOptions, currentFillSentenceChinese, spellInput, escapeRegExp, formatHighlight, currentSentence, fillAnswer, aiSentence, userTranslation, aiResult, isGenerating, isSubmitting, formatAIPhighlight, selectedOption, showResult, showWrongFeedback, correctCount, wrongCount, wrongWords, lastReviewResult, showResumeModal, hasProgress, activeSettingCard, dashboardDone, dashboardTotal, bookTotalWords, totalReviewedWords, todayReviewed, learnedUniqueWords, dashboardSnapshot, showMasteredConfirm, reviewPreset, sessionNewCount, sessionOldCount, recommendedReviewStage, recommendedReviewState, getSettingsKey, getLastReviewResultKey, getCurrentBookId, saveReviewProgress, clearReviewProgress, loadReviewProgress, resumeReview, discardReview, checkProgress, getCurrentBookTotalWords, getCurrentBookWordPool, refreshDashboardSnapshot, refreshPlanStats, resetCurrentPlan, markWordsReviewed, syncDashboardProgress, dashboardTarget, dashboardPercent, formatRelativeReviewTime, currentReviewInsight, applyReviewPreview, finishedReviewInsight, completedInRound, currentRound, currentProgressPercent, oldReviewDailyTarget, dailyNewTarget, remainDays, remainingNewWords, estimatedFinishDate, dailyPlanText, isTodayTargetDone, primaryStartText, todayProgressPercent, recommendedPreset, recommendedPresetIcon, recommendedPresetTitle, recommendedPresetDesc, otherPresets, currentWordbookName, openSettings, sortByText, isLastQuestion, modeOptions, sortOptions, countOptions, dailyQuickOptions, modeIndex, modeDisplayText, sortIndex, countIndex, onModeChange, onSortChange, onCountChange, setDailyTarget, onDifficultyChange, openModeSelector, openSortSelector, openCountSelector, openDifficultySelector, loadSettings, saveSettings, loadLastReviewResult, saveReviewResult, buildPresetQueue, filterOutMasteredWords, buildBookReviewQueue, saveSettingsAndStart, startReviewInternal, startReview, startExtraRound20, onPrimaryStartClick, startRecommendedReview, startPresetReview, prefetchNextWordDetail, loadCurrentQuestion, get _dictWordsCache() {
+      const __returned__ = { showSettings, showModeSelector, showSortSelector, showCountSelector, showDifficultySelector, reviewStarted, reviewFinished, settings, reviewWords, currentIndex, currentWord, currentOptions, fillOptions, currentFillSentenceChinese, spellInput, escapeRegExp, formatHighlight, currentSentence, fillAnswer, aiSentence, userTranslation, aiResult, isGenerating, isSubmitting, formatAIPhighlight, selectedOption, showResult, showWrongFeedback, correctCount, wrongCount, wrongWords, lastReviewResult, showResumeModal, hasProgress, activeSettingCard, dashboardDone, dashboardTotal, bookTotalWords, totalReviewedWords, todayReviewed, learnedUniqueWords, dashboardSnapshot, showMasteredConfirm, reviewPreset, sessionNewCount, sessionOldCount, recommendedReviewStage, recommendedReviewState, getSettingsKey, getLastReviewResultKey, getCurrentBookId, saveReviewProgress, clearReviewProgress, loadReviewProgress, resumeReview, discardReview, checkProgress, getCurrentBookTotalWords, getCurrentBookWordPool, refreshDashboardSnapshot, refreshPlanStats, resetCurrentPlan, markWordsReviewed, syncDashboardProgress, dashboardTarget, dashboardPercent, formatRelativeReviewTime, currentReviewInsight, applyReviewPreview, finishedReviewInsight, completedInRound, currentRound, currentProgressPercent, oldReviewDailyTarget, dailyNewTarget, remainDays, remainingNewWords, estimatedFinishDate, dailyPlanText, isTodayTargetDone, primaryStartText, todayProgressPercent, recommendedPreset, recommendedPresetIcon, recommendedPresetTitle, recommendedPresetDesc, otherPresets, currentWordbookName, openSettings, sortByText, isLastQuestion, modeOptions, sortOptions, countOptions, dailyQuickOptions, modeIndex, modeDisplayText, sortIndex, countIndex, onModeChange, onSortChange, onCountChange, setDailyTarget, onDifficultyChange, openModeSelector, openSortSelector, openCountSelector, openDifficultySelector, loadSettings, saveSettings, loadLastReviewResult, saveReviewResult, buildPresetQueue, buildPresetQueueOptimized, filterOutMasteredWords, buildBookReviewQueue, saveSettingsAndStart, startReviewInternal, startReview, startExtraRound20, onPrimaryStartClick, startRecommendedReview, startPresetReview, prefetchNextWordDetail, loadCurrentQuestion, get _dictWordsCache() {
         return _dictWordsCache;
       }, set _dictWordsCache(v2) {
         _dictWordsCache = v2;
@@ -13450,7 +13685,9 @@ ${existingWordsStr}${examBlock}
     const brief = briefMap[key] && typeof briefMap[key] === "object" ? briefMap[key] : null;
     const [detail, pregen] = await Promise.all([
       getWordFullDetail(key).catch(() => null),
+      // 查询主库（真题数据）
       getPregenWord(key).catch(() => null)
+      // 查询预生成库
     ]);
     (detail == null ? void 0 : detail.examStats) || null;
     const chinese = ((brief == null ? void 0 : brief.chinese) || "").trim() || ((detail == null ? void 0 : detail.chinese) || "").trim() || buildShortChineseFromDefs(detail == null ? void 0 : detail.defs) || ((pregen == null ? void 0 : pregen.chinese) || "").trim() || "";
@@ -13486,12 +13723,17 @@ ${existingWordsStr}${examBlock}
       __expose();
       const word = vue.ref({
         english: "",
+        // 英文单词
         chinese: "",
+        // 中文释义
         importance: 3,
-        // 默认三星
+        // 重要程度（默认三星）
         source_page: "",
+        // 纸质书页码
         year: "",
+        // 真题年份
         tags: ""
+        // 标签
       });
       const foundWord = vue.ref(null);
       const isLoading = vue.ref(false);
@@ -14273,11 +14515,6 @@ ${existingWordsStr}${examBlock}
           studyStats.value = { streak: 0 };
         }
       };
-      const goToLogin = () => {
-        uni.navigateTo({
-          url: "/pages/login/login"
-        });
-      };
       const handleLogout = () => {
         uni.showModal({
           title: "确认退出",
@@ -14660,7 +14897,7 @@ ${existingWordsStr}${examBlock}
           aiSuggestionText.value = "生成失败，请检查网络或稍后重试。";
         }
       };
-      const __returned__ = { uid, username, userDisplayName, isLoggedIn: isLoggedIn2, localWordCount, totalViewCount, lastReviewAccuracy, lastReviewResult, showAiSuggestionModal, showImportModal, aiSuggestionText, currentWordbookKey, learningSnapshot, studyStats, displayName, currentWordbookLabel, goToWordbookList, goToStats, goToMistakes, goToMasteredWords, goToDueReview, userInitial, goToEditNickname, onWordbookChanged, checkLoginStatus, loadLocalWordCount, goToLogin, handleLogout, uploadToCloud, downloadFromCloud, performDownload, exportCsv, exportTxt, exportTxtEnglishOnly, chooseImportFile, handleFileImport, readAndImportFile, parseAndImport, backupProgressToCloud, openAiSuggestion, ref: vue.ref, computed: vue.computed, get onShow() {
+      const __returned__ = { uid, username, userDisplayName, isLoggedIn: isLoggedIn2, localWordCount, totalViewCount, lastReviewAccuracy, lastReviewResult, showAiSuggestionModal, showImportModal, aiSuggestionText, currentWordbookKey, learningSnapshot, studyStats, displayName, currentWordbookLabel, goToWordbookList, goToStats, goToMistakes, goToMasteredWords, goToDueReview, userInitial, goToEditNickname, onWordbookChanged, checkLoginStatus, loadLocalWordCount, handleLogout, uploadToCloud, downloadFromCloud, performDownload, exportCsv, exportTxt, exportTxtEnglishOnly, chooseImportFile, handleFileImport, readAndImportFile, parseAndImport, backupProgressToCloud, openAiSuggestion, ref: vue.ref, computed: vue.computed, get onShow() {
         return onShow;
       }, get onUnload() {
         return onUnload;
@@ -14741,7 +14978,7 @@ ${existingWordsStr}${examBlock}
         }, [
           vue.createElementVNode("button", {
             class: "login-btn",
-            onClick: $setup.goToLogin
+            onClick: _cache[0] || (_cache[0] = (...args) => _ctx.goToLogin && _ctx.goToLogin(...args))
           }, "登录 / 注册")
         ])) : vue.createCommentVNode("v-if", true)
       ]),
@@ -14988,11 +15225,11 @@ ${existingWordsStr}${examBlock}
       $setup.showAiSuggestionModal ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 3,
         class: "modal-overlay",
-        onClick: _cache[2] || (_cache[2] = vue.withModifiers(($event) => $setup.showAiSuggestionModal = false, ["self"]))
+        onClick: _cache[3] || (_cache[3] = vue.withModifiers(($event) => $setup.showAiSuggestionModal = false, ["self"]))
       }, [
         vue.createElementVNode("view", {
           class: "report-modal",
-          onClick: _cache[1] || (_cache[1] = vue.withModifiers(() => {
+          onClick: _cache[2] || (_cache[2] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("view", { class: "modal-title" }, "学习报告"),
@@ -15084,18 +15321,18 @@ ${existingWordsStr}${examBlock}
           ]),
           vue.createElementVNode("button", {
             class: "modal-close-btn",
-            onClick: _cache[0] || (_cache[0] = ($event) => $setup.showAiSuggestionModal = false)
+            onClick: _cache[1] || (_cache[1] = ($event) => $setup.showAiSuggestionModal = false)
           }, "关闭")
         ])
       ])) : vue.createCommentVNode("v-if", true),
       $setup.showImportModal ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 4,
         class: "modal-overlay",
-        onClick: _cache[5] || (_cache[5] = vue.withModifiers(($event) => $setup.showImportModal = false, ["self"]))
+        onClick: _cache[6] || (_cache[6] = vue.withModifiers(($event) => $setup.showImportModal = false, ["self"]))
       }, [
         vue.createElementVNode("view", {
           class: "import-modal",
-          onClick: _cache[4] || (_cache[4] = vue.withModifiers(() => {
+          onClick: _cache[5] || (_cache[5] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("view", { class: "modal-title" }, "导入单词"),
@@ -15146,7 +15383,7 @@ ${existingWordsStr}${examBlock}
           vue.createElementVNode("view", { class: "modal-actions" }, [
             vue.createElementVNode("button", {
               class: "modal-btn cancel",
-              onClick: _cache[3] || (_cache[3] = ($event) => $setup.showImportModal = false)
+              onClick: _cache[4] || (_cache[4] = ($event) => $setup.showImportModal = false)
             }, "取消"),
             vue.createElementVNode("button", {
               class: "modal-btn confirm",
@@ -15463,10 +15700,23 @@ ${existingWordsStr}${examBlock}
       __expose();
       const stats = vue.ref({
         dueCount: 0,
+        // 今日到期的单词数
         mistakeCount: 0,
+        // 错词待练的单词数
         reviewedCount: 0,
+        // 已建档的单词数
         streak: 0,
-        masteryBuckets: { strong: 0, normal: 0, weak: 0, danger: 0 }
+        // 连续学习天数
+        masteryBuckets: {
+          strong: 0,
+          // 熟练的单词数
+          normal: 0,
+          // 稳定的单词数
+          weak: 0,
+          // 薄弱的单词数
+          danger: 0
+          // 危险的单词数
+        }
       });
       const trend = vue.ref([]);
       const currentBookLabel = vue.computed(() => getCurrentWordbook() || "当前词书");
@@ -15967,10 +16217,11 @@ ${existingWordsStr}${examBlock}
           const words = getWordbookWords("mastered") || [];
           masteredWords.value = words.map((w2, index) => ({
             ...w2,
+            // 生成唯一 ID：用于虚拟滚动的 key
             id: w2.id || `mastered_${index}_${w2.english}`
           }));
         } catch (e2) {
-          logger$1.error("MasteredWords", "加载已斩单词本失败", e2);
+          logger$1.error("MasteredWords", "加载已斯掉单词本失败", e2);
           masteredWords.value = [];
         }
       };
@@ -16002,7 +16253,9 @@ ${existingWordsStr}${examBlock}
           return;
         try {
           const words = getWordbookWords("mastered") || [];
-          const filtered = words.filter((w2) => (w2.english || "").trim().toLowerCase() !== (unmasterItem.value.english || "").trim().toLowerCase());
+          const filtered = words.filter(
+            (w2) => (w2.english || "").trim().toLowerCase() !== (unmasterItem.value.english || "").trim().toLowerCase()
+          );
           setWordbookWords("mastered", filtered);
           masteredWords.value = filtered.map((w2, index) => ({
             ...w2,
@@ -16063,7 +16316,7 @@ ${existingWordsStr}${examBlock}
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("view", { class: "status-bar" }),
       vue.createElementVNode("view", { class: "header" }, [
-        vue.createElementVNode("view", { class: "header-title" }, "已斩单词本")
+        vue.createElementVNode("view", { class: "header-title" }, "已斯掉单词本")
       ]),
       $setup.masteredWords.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
@@ -16076,7 +16329,7 @@ ${existingWordsStr}${examBlock}
         key: 1,
         class: "content"
       }, [
-        vue.createElementVNode("view", { class: "section-label" }, "已斩统计"),
+        vue.createElementVNode("view", { class: "section-label" }, "已斯掉统计"),
         vue.createElementVNode("view", { class: "card stat-card" }, [
           vue.createElementVNode("view", { class: "stat-row" }, [
             vue.createElementVNode("view", { class: "stat-item" }, [

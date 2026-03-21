@@ -327,6 +327,36 @@
   </view>
 </template>
 
+/**
+ * ============================================================================
+ * 单词详情页面 (word-detail.vue)
+ * ============================================================================
+ *
+ * 功能概述：
+ * 本页面是单词学习系统的核心详情展示和编辑页面，支持以下功能：
+ * 1. 显示单词的完整信息（英文、中文释义、词性、真题数据等）
+ * 2. 支持编辑单词信息（释义、标签、重要程度等）
+ * 3. 生成 AI 辅助内容（例句、近义词、反义词、词族等）
+ * 4. 显示真题统计和真题例句
+ * 5. 支持"斩掉"功能（标记单词为已掌握）
+ * 6. 支持从单词本查看单词（只读模式）
+ *
+ * 页面模式：
+ * - 编辑模式：有 wordId，可编辑单词信息
+ * - 查看模式：从单词本跳转，只读显示
+ * - 新增模式：无 wordId，用于快速添加单词
+ *
+ * 数据加载策略（两阶段热加载）：
+ * - 第一阶段：快速加载轻量数据（英文、中文、标签等）
+ * - 第二阶段：异步加载重型数据（例句、近义词、真题数据等）
+ *
+ * 关键优化：
+ * - 使用虚拟滚动优化长列表性能
+ * - 异步加载真题数据，避免阻塞 UI
+ * - 支持从多个数据源补全信息（本地 DB、主库、预生成库）
+ * ============================================================================
+ */
+
 <script setup>
 import { ref, onMounted, watch, computed } from "vue";
 import { onLoad, onUnload } from "@dcloudio/uni-app";
@@ -339,31 +369,51 @@ import { getWordExtra, saveWordExtra } from '../../src/utils/learningCenter_v2.j
 import { logger, errorHandler } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 
+// ========== 单词数据对象 ==========
+/**
+ * 单词对象结构
+ * 存储当前编辑的单词信息，包含基本信息和学习数据
+ */
 const word = ref({
-  english: '',
-  chinese: '',
-  tags: '',
-  source_page: '',
-  year: '',
-  importance: 3, // 默认三星
-  error_rate: 0,
-  review_frequency: 0,
-  repeat_count: 1,
-  examples: [],
-  synonyms: [],
-  antonyms: [],
-  defs: [],
-  exam_tip: '',
-  sentiment: 'neu',
+  english: '',  // 英文单词
+  chinese: '',  // 中文释义
+  tags: '',  // 标签（逗号分隔）
+  source_page: '',  // 纸质书页码
+  year: '',  // 真题年份
+  importance: 3,  // 重要程度（1-5星，默认3星）
+  error_rate: 0,  // 错误率
+  review_frequency: 0,  // 复习频率
+  repeat_count: 1,  // 学习次数
+  examples: [],  // 例句列表
+  synonyms: [],  // 近义词列表
+  antonyms: [],  // 反义词列表
+  defs: [],  // 词义列表（包含词性和释义）
+  exam_tip: '',  // 真题提示
+  sentiment: 'neu',  // 情感色彩（pos/neg/neu）
 });
 
-// 词性缩写：支持英文点、全角点、中文句号；(?<!\n) 避免在已有换行前重复插入
+// ========== 词性缩写正则表达式 ==========
+// 用于在中文释义中自动换行（在词性前添加换行符）
+// 支持英文点、全角点、中文句号；(?<!\n) 避免在已有换行前重复插入
 const POS_BREAK_REGEX = /(?<!\n)(vi[.\．。]|vt[.\．。]|adj[.\．。]|adv[.\．。]|prep[.\．。]|conj[.\．。]|pron[.\．。]|num[.\．。]|int[.\．。]|aux[.\．。]|art[.\．。]|[nva][.\．。])/gi;
 
+/**
+ * 在词性前添加换行符，使释义更易阅读
+ * 功能：自动在词性标记（如 n.、v. 等）前插入换行符
+ * 例如："n. 名词 v. 动词" → "n. 名词\nv. 动词"
+ *
+ * 支持的词性标记：
+ * - 英文点：n. v. adj. adv. prep. conj. pron. num. int. aux. art.
+ * - 全角点：n． v． 等
+ * - 中文句号：n。v。等
+ *
+ * @param {string} chineseText - 中文释义文本
+ * @returns {string} 处理后的文本（开头的换行符已移除）
+ */
 function addNewlineBeforePos(chineseText) {
   if (!chineseText || typeof chineseText !== 'string') return chineseText;
   const s = chineseText.replace(POS_BREAK_REGEX, '\n$1');
-  return s.replace(/^\n/, '');
+  return s.replace(/^\n/, '');  // 移除开头的换行符
 }
 
 watch(() => word.value.chinese, (newValue) => {
@@ -468,9 +518,22 @@ const loadExtraPanels = () => {
   };
 };
 
+/**
+ * 从主库加载单词的完整信息
+ * 用于从单词本跳转到详情页时，补全主库中的数据
+ *
+ * 流程：
+ * 1. 初始化单词对象，显示"加载中..."
+ * 2. 从主库获取单词的完整信息（包含真题数据）
+ * 3. 提取各个字段，确保类型正确
+ * 4. 更新单词对象和真题统计信息
+ *
+ * @param {string} english - 英文单词
+ */
 const loadWordFromMasterDb = async (english) => {
   if (!english) return;
-  
+
+  // 初始化单词对象，显示"加载中..."
   word.value = {
     english: english,
     chinese: '加载中…',
@@ -488,22 +551,26 @@ const loadWordFromMasterDb = async (english) => {
     exam_tip: '',
     sentiment: 'neu',
   };
-  
+
+  // 设置加载状态
   detailHeavyLoading.value = true;
   examStatsLoading.value = true;
   examSentencesLoading.value = true;
-  
+
   try {
+    // 从主库获取单词的完整信息
     const detail = await masterDb.getWordFullDetail(english);
-    if (!detail || word.value.english !== english) return;
-    
+    if (!detail || word.value.english !== english) return;  // 用户切换了单词，放弃更新
+
+    // 提取各个字段，确保类型正确
     const wordDefs = Array.isArray(detail.defs) ? detail.defs : [];
     const examples = Array.isArray(detail.examples) ? detail.examples : [];
     const synonyms = Array.isArray(detail.synonyms) ? detail.synonyms : [];
     const antonyms = Array.isArray(detail.antonyms) ? detail.antonyms : [];
     const examTip = detail.exam_tip || '';
     const wordSentiment = detail.sentiment || 'neu';
-    
+
+    // 更新单词对象
     word.value = {
       ...word.value,
       chinese: detail.chinese || '',
@@ -515,15 +582,17 @@ const loadWordFromMasterDb = async (english) => {
       exam_tip: examTip,
       sentiment: wordSentiment,
     };
-    
+
+    // 更新真题统计信息
     if (detail.examStats) {
       examStats.value = detail.examStats;
       examStatsTags.value = Array.isArray(detail.examStats.tags) ? detail.examStats.tags : [];
       if (examStatsTags.value.length > 0) word.value = { ...word.value, tags: examStatsTags.value.join(',') };
     }
-    
+
+    // 更新真题例句
     examSentences.value = Array.isArray(detail.examSentences) ? detail.examSentences : [];
-    
+
   } catch (e) {
     logger.error('[详情页-masterdb] 加载失败:', e);
     word.value.chinese = '';
@@ -943,6 +1012,22 @@ onUnload(() => {
   }
 });
 
+/**
+ * 保存单词
+ * 流程：
+ * 1. 验证英文和中文不为空
+ * 2. 如果是编辑模式（有 wordId），则更新数据库
+ * 3. 如果是新增模式（无 wordId），则添加到数据库
+ * 4. 显示成功提示并返回上一页
+ *
+ * 数据验证：
+ * - 英文单词：必填
+ * - 中文释义：必填
+ *
+ * 返回行为：
+ * - 成功：显示成功提示，返回上一页
+ * - 失败：显示错误提示，留在当前页
+ */
 const save = async () => {
   if (!word.value.english || !word.value.chinese) {
     uni.showToast({
@@ -951,13 +1036,15 @@ const save = async () => {
     });
     return;
   }
-  
+
   if (wordId.value) {
+    // 编辑模式：更新现有单词
     await db.updateWord(wordId.value, word.value);
   } else {
+    // 新增模式：添加新单词
     await db.addWord(word.value);
   }
-  
+
   uni.showToast({
     title: wordId.value ? '更新成功' : '添加成功',
     duration: 2000
@@ -965,10 +1052,20 @@ const save = async () => {
   uni.navigateBack();
 };
 
+/**
+ * 取消编辑，返回上一页
+ */
 const cancel = () => {
   uni.navigateBack();
 };
 
+/**
+ * 删除单词
+ * 流程：
+ * 1. 显示确认对话框
+ * 2. 用户确认后从数据库删除
+ * 3. 显示删除成功提示并返回上一页
+ */
 const deleteWord = async () => {
   uni.showModal({
     title: '确认删除',
@@ -994,6 +1091,24 @@ const editWord = () => {
   });
 };
 
+/**
+ * 生成例句
+ * 流程：
+ * 1. 先从本地预生成库查找
+ * 2. 如果本地有，直接使用
+ * 3. 如果本地没有，调用 AI 生成
+ * 4. 保存到数据库
+ *
+ * 优化策略：
+ * - 优先使用本地预生成库（快速、无成本）
+ * - 获取其他单词作为上下文（避免生成重复的例句）
+ * - 获取真题统计信息作为上下文（生成更贴切的例句）
+ * - 生成 3 个例句供用户选择
+ *
+ * 错误处理：
+ * - 如果 AI 生成失败，显示错误提示
+ * - 保留已有的例句，不覆盖
+ */
 const generateExample = async () => {
   if (!word.value.english) {
     uni.showToast({
@@ -1004,6 +1119,7 @@ const generateExample = async () => {
   }
 
   try {
+    // 先从本地预生成库查找
     const pregen = await pregenVocab.getPregenWord(word.value.english);
     if (pregen && Array.isArray(pregen.examples) && pregen.examples.length > 0) {
       word.value.examples = pregen.examples;
@@ -1014,7 +1130,7 @@ const generateExample = async () => {
       return;
     }
 
-    // 用轻量分页查询替代全量 getWords()，只取英文字段
+    // 获取其他单词作为上下文（避免生成重复的例句）
     const words = await db.getWordsForList(10, 0, 'create_time', 'desc', {});
     const existingWords = words
       .filter(w => w.english !== word.value.english)
@@ -1024,14 +1140,17 @@ const generateExample = async () => {
     example.value = '生成中...';
     let examText = '';
     try {
+      // 获取真题统计信息作为上下文
       const examData = await masterDb.getWordExamData(word.value.english);
       if (examData?.examStats) examText = formatWordStatsForPrompt(examData.examStats);
     } catch (_) {}
+
+    // 调用 AI 生成例句
     const examples = await aiService.generateMultipleExamples(word.value.english, existingWords, 3, examText);
     word.value.examples = examples;
     example.value = '';
-    
-    // 如果是编辑模式，更新数据库
+
+    // 保存到数据库
     if (wordId.value) {
       await db.updateWord(wordId.value, { examples: examples });
       uni.showToast({
@@ -1050,6 +1169,14 @@ const generateExample = async () => {
   }
 };
 
+/**
+ * 生成近义词
+ * 流程：
+ * 1. 先从本地预生成库查找
+ * 2. 如果本地有，直接使用
+ * 3. 如果本地没有，调用 AI 生成
+ * 4. 保存到数据库
+ */
 const generateSynonyms = async () => {
   if (!word.value.english) {
     uni.showToast({
@@ -1061,6 +1188,8 @@ const generateSynonyms = async () => {
 
   try {
     synonymLoading.value = true;
+
+    // 先从本地预生成库查找
     const pregen = await pregenVocab.getPregenWord(word.value.english);
     if (pregen && Array.isArray(pregen.synonyms) && pregen.synonyms.length > 0) {
       word.value.synonyms = pregen.synonyms;
@@ -1071,16 +1200,18 @@ const generateSynonyms = async () => {
       return;
     }
 
-    // 用轻量分页查询替代全量 getWords()
+    // 获取其他单词作为上下文
     const words = await db.getWordsForList(10, 0, 'create_time', 'desc', {});
     const existingWords = words
       .filter(w => w.english !== word.value.english)
       .map(w => w.english)
       .slice(0, 10);
 
+    // 调用 AI 生成近义词
     const synonyms = await aiService.generateSynonyms(word.value.english, existingWords, 3);
     word.value.synonyms = synonyms;
-    
+
+    // 保存到数据库
     if (wordId.value) {
       await db.updateWord(wordId.value, { synonyms: synonyms });
       uni.showToast({
@@ -1192,74 +1323,134 @@ const updateRepeatCount = async () => {
   // 已废弃，保留空函数以防兼容性问题
 };
 
-// 斩掉单词（标记为已熟练）
+/**
+ * 斩掉单词（标记为已熟练）
+ * 功能：将单词标记为已掌握，在复习中隐藏
+ *
+ * 流程：
+ * 1. 设置 is_mastered 标志为 1
+ * 2. 记录斩掉时间（mastered_at）
+ * 3. 保存到数据库
+ * 4. 显示成功提示
+ *
+ * 效果：
+ * - 单词将从复习列表中隐藏
+ * - 显示"已斩掉"标记和时间
+ * - 可以通过"取消斩掉"恢复
+ *
+ * 数据持久化：
+ * - 更新数据库中的 is_mastered 和 mastered_at 字段
+ */
 const markAsMastered = async () => {
   if (!wordId.value) {
     uni.showToast({ title: '请先保存单词', icon: 'none' });
     return;
   }
-  
+
+  // 标记为已斩
   word.value.is_mastered = 1;
   word.value.mastered_at = new Date().toISOString();
-  
+
+  // 保存到数据库
   await db.updateWord(wordId.value, {
     is_mastered: 1,
     mastered_at: word.value.mastered_at
   });
-  
+
   uni.showToast({ title: '已斩掉！该单词将在复习中隐藏', icon: 'success' });
 };
 
-// 取消斩掉
+/**
+ * 取消斩掉
+ * 功能：取消已掌握标记，恢复复习
+ */
 const unmarkAsMastered = async () => {
   if (!wordId.value) return;
-  
+
+  // 取消斩掉标记
   word.value.is_mastered = 0;
   word.value.mastered_at = null;
-  
+
+  // 保存到数据库
   await db.updateWord(wordId.value, {
     is_mastered: 0,
     mastered_at: null
   });
-  
+
   uni.showToast({ title: '已取消斩掉', icon: 'none' });
 };
 
-// 格式化斩掉时间
+/**
+ * 格式化斩掉时间
+ * 显示相对时间（如"今天"、"昨天"、"3天前"）
+ *
+ * 时间格式规则：
+ * - 同一天：显示"今天"
+ * - 前一天：显示"昨天"
+ * - 7天内：显示"X天前"
+ * - 7天外：显示"月日"（如"01月15日"）
+ *
+ * @param {string} time - ISO 格式的时间字符串
+ * @returns {string} 格式化后的时间字符串
+ */
 const formatMasteredTime = (time) => {
   if (!time) return '';
   const date = new Date(time);
   const now = new Date();
   const diff = now - date;
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  
+
   if (days === 0) return '今天';
   if (days === 1) return '昨天';
   if (days < 7) return `${days}天前`;
-  
+
   const month = date.getMonth() + 1;
   const day = date.getDate();
   return `${month}月${day}日`;
 };
 
-// 格式化高亮文本
+/**
+ * 转义正则表达式特殊字符
+ * 用于在正则表达式中安全地使用用户输入
+ * @param {string} s - 需要转义的字符串
+ * @returns {string} 转义后的字符串
+ */
 const escapeRegExp = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+/**
+ * 格式化并高亮文本
+ * 功能：
+ * 1. 处理 Markdown 加粗语法 **单词** → 红色加粗
+ * 2. 高亮目标单词 → 红色加粗
+ *
+ * 使用场景：
+ * - 例句中高亮目标单词
+ * - 近义词例句中高亮对比词
+ * - 真题例句中高亮目标单词
+ *
+ * 样式：
+ * - 颜色：#FF85A1（主题色）
+ * - 字重：bold
+ * - 背景：无
+ *
+ * @param {string} text - 原始文本
+ * @returns {string} HTML 格式的文本
+ */
 const formatHighlight = (text) => {
   if (!text) return '';
-  
+
   // 处理 Markdown 加粗语法 **单词**
   let formattedText = text.replace(/\*\*(.*?)\*\*/g, function(match, word) {
     return `<span style="color: #FF85A1; font-weight: bold;">${word}</span>`;
   });
-  
+
   // 高亮目标单词
   if (word.value.english) {
     const targetWord = word.value.english;
     const targetRegex = new RegExp(`\\b(${escapeRegExp(targetWord)})\\b`, 'gi');
     formattedText = formattedText.replace(targetRegex, `<span style="color: #FF85A1; font-weight: bold;">$1</span>`);
   }
-  
+
   return formattedText;
 };
 </script>

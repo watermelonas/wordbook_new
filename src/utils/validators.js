@@ -1,12 +1,38 @@
 /**
- * 参数验证模块
- * 统一的数据验证和错误处理
+ * 参数验证模块 (validators.js)
+ *
+ * 功能：
+ * - 验证单词对象的有效性
+ * - 验证复习数据的有效性
+ * - 验证 SQL 参数（防止 SQL 注入）
+ * - 验证用户输入
+ *
+ * 验证规则：
+ * - 单词：英文不能为空，中文必须是字符串，重要性 0-5
+ * - 复习数据：isCorrect 必须是布尔值，难度 0.15-0.98，稳定性 > 0.2
+ * - SQL 参数：防止 DROP TABLE、DELETE FROM 等危险操作
+ *
+ * 使用场景：
+ * - 保存单词前验证
+ * - 提交复习数据前验证
+ * - 执行 SQL 前验证
+ * - 用户输入验证
  */
 
 import { logger } from './errorHandler.js';
 
 /**
  * 验证单词对象
+ *
+ * 检查项：
+ * - 单词必须是对象
+ * - 英文不能为空
+ * - 中文必须是字符串（可选）
+ * - 重要性必须是 0-5 的数字（可选）
+ *
+ * @param {object} word - 单词对象
+ * @returns {boolean} 验证通过返回 true
+ * @throws {Error} 验证失败抛出错误
  */
 export function validateWord(word) {
   if (!word || typeof word !== 'object') {
@@ -37,6 +63,16 @@ export function validateWord(word) {
 
 /**
  * 验证复习数据
+ *
+ * 检查项：
+ * - 复习数据必须是对象
+ * - isCorrect 必须是布尔值
+ * - 难度分数 0.15-0.98
+ * - 稳定性 > 0.2
+ *
+ * @param {object} data - 复习数据对象
+ * @returns {boolean} 验证通过返回 true
+ * @throws {Error} 验证失败抛出错误
  */
 export function validateReviewData(data) {
   if (!data || typeof data !== 'object') {
@@ -66,6 +102,15 @@ export function validateReviewData(data) {
 
 /**
  * 验证 SQL 参数（防止 SQL 注入）
+ *
+ * 检查项：
+ * - 参数必须是数组
+ * - 参数中不能包含危险的 SQL 关键字
+ * - 防止 DROP TABLE、DELETE FROM 等操作
+ *
+ * @param {array} params - SQL 参数数组
+ * @returns {boolean} 验证通过返回 true
+ * @throws {Error} 验证失败抛出错误
  */
 export function validateSqlParams(params) {
   if (!Array.isArray(params)) {

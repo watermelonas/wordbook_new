@@ -1,23 +1,62 @@
 /**
- * 缓存管理模块 - 实现 LRU 缓存和过期机制
- * 解决内存缓存无上限和无过期机制的问题
+ * 缓存管理模块 (cacheManager.js)
+ *
+ * 功能：
+ * - 实现 LRU（Least Recently Used）缓存
+ * - 实现内存缓存和本地存储缓存
+ * - 支持缓存过期机制
+ * - 防止内存泄漏
+ *
+ * 缓存类型：
+ * 1. LRUCache：内存缓存，支持 TTL（生存时间）
+ * 2. MemoryCache：简化的内存缓存
+ * 3. StorageCache：本地存储缓存，支持过期机制
+ *
+ * 使用场景：
+ * - 缓存数据库查询结果
+ * - 缓存 API 响应
+ * - 缓存计算结果
+ * - 减少重复操作
  */
 
 /**
  * LRU 缓存实现
+ *
+ * 工作原理：
+ * - 最多存储 maxSize 个项目
+ * - 每个项目有 TTL（生存时间）
+ * - 访问时移到最后（标记为最近使用）
+ * - 超过容量时删除最旧的项目
+ * - 过期的项目自动删除
+ *
+ * 性能：
+ * - get/set/delete：O(1) 时间复杂度
+ * - 内存占用：O(maxSize)
  */
 export class LRUCache {
+  /**
+   * 构造函数
+   * @param {number} maxSize - 最大缓存项数（默认 200）
+   * @param {number} ttlMs - 缓存生存时间，单位毫秒（默认 5 分钟）
+   */
   constructor(maxSize = 200, ttlMs = 5 * 60 * 1000) {
-    this.maxSize = maxSize;
-    this.ttlMs = ttlMs;
-    this.cache = new Map();
-    this.timestamps = new Map();
+    this.maxSize = maxSize;  // 最大缓存项数
+    this.ttlMs = ttlMs;  // 缓存生存时间
+    this.cache = new Map();  // 缓存数据
+    this.timestamps = new Map();  // 缓存时间戳
   }
 
   /**
    * 获取缓存值
-   * @param {string} key
-   * @returns {*}
+   *
+   * 流程：
+   * 1. 检查 key 是否存在
+   * 2. 检查是否过期（过期则删除）
+   * 3. 移到最后（标记为最近使用）
+   * 4. 返回值
+   *
+   * @param {string} key - 缓存 key
+   * @returns {*} 缓存值，不存在或过期返回 undefined
    */
   get(key) {
     if (!this.cache.has(key)) return undefined;
@@ -39,8 +78,15 @@ export class LRUCache {
 
   /**
    * 设置缓存值
-   * @param {string} key
-   * @param {*} value
+   *
+   * 流程：
+   * 1. 如果已存在，先删除
+   * 2. 如果超过容量，删除最旧的项
+   * 3. 添加新项
+   * 4. 记录时间戳
+   *
+   * @param {string} key - 缓存 key
+   * @param {*} value - 缓存值
    */
   set(key, value) {
     // 如果已存在，先删除
@@ -61,8 +107,8 @@ export class LRUCache {
 
   /**
    * 检查是否存在
-   * @param {string} key
-   * @returns {boolean}
+   * @param {string} key - 缓存 key
+   * @returns {boolean} 是否存在且未过期
    */
   has(key) {
     return this.get(key) !== undefined;
@@ -70,7 +116,7 @@ export class LRUCache {
 
   /**
    * 删除缓存
-   * @param {string} key
+   * @param {string} key - 缓存 key
    */
   delete(key) {
     this.cache.delete(key);

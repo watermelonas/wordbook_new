@@ -1,6 +1,18 @@
 /**
- * 改进的 db.js - 使用数据库适配器和工具模块
- * 解决 H5/App 代码混杂、缺少事务保护等问题
+ * 改进的数据库管理模块 (db_v2.js)
+ *
+ * 功能：
+ * - 统一管理 H5 和 App 端的数据库操作
+ * - 提供单词的增删改查接口
+ * - 支持复习数据的同步和管理
+ * - 实现 LRU 缓存优化性能
+ *
+ * 核心特性：
+ * 1. 跨平台适配：H5 使用 localStorage，App 使用 SQLite
+ * 2. 缓存机制：LRU 缓存避免重复 JSON 解析
+ * 3. 数据转换：自动转换 snake_case ↔ camelCase
+ * 4. 事务保护：关键操作使用事务确保数据一致性
+ * 5. 错误处理：完整的错误捕获和日志记录
  */
 
 import {
@@ -17,27 +29,45 @@ import { toJsonString, parseJsonSafe } from './sqlHelper.js';
 import { logger } from './errorHandler.js';
 import { dbToJs, dbRowsToJs, jsToDb } from './dataTransformer.js';
 
-const H5_STORAGE_KEY = 'wordbook_h5_words';
-const H5_MASTERED_KEY = 'wordbook_h5_mastered_words';
+// ========== 常量定义 ==========
+// H5 环境的本地存储 key
+const H5_STORAGE_KEY = 'wordbook_h5_words';  // 单词列表存储 key
+const H5_MASTERED_KEY = 'wordbook_h5_mastered_words';  // 已斩单词存储 key
 
 /**
- * LRU 缓存用于存储已解析的单词（避免重复 JSON 解析）
+ * LRU 缓存类
+ * 用于存储已解析的单词对象，避免重复的 JSON 解析
+ *
+ * 工作原理：
+ * - 最多缓存 1000 个单词
+ * - 访问时移到最后（标记为最近使用）
+ * - 超过容量时删除最旧的项
  */
 class WordParseCache {
   constructor(maxSize = 1000) {
     this.maxSize = maxSize;
-    this.cache = new Map();
+    this.cache = new Map();  // 使用 Map 保持插入顺序
   }
 
+  /**
+   * 获取缓存的单词
+   * @param {string} key - 缓存 key（单词 ID 或英文）
+   * @returns {object|null} 缓存的单词对象，不存在返回 null
+   */
   get(key) {
     if (!this.cache.has(key)) return null;
-    // 移到最后（最近使用）
+    // 移到最后（标记为最近使用）
     const value = this.cache.get(key);
     this.cache.delete(key);
     this.cache.set(key, value);
     return value;
   }
 
+  /**
+   * 设置缓存
+   * @param {string} key - 缓存 key
+   * @param {object} value - 单词对象
+   */
   set(key, value) {
     if (this.cache.has(key)) {
       this.cache.delete(key);
@@ -49,15 +79,30 @@ class WordParseCache {
     this.cache.set(key, value);
   }
 
+  /**
+   * 清空缓存
+   */
   clear() {
     this.cache.clear();
   }
 }
 
+// 全局单词解析缓存实例
 const wordParseCache = new WordParseCache(1000);
 
 /**
  * 解析单词对象（带缓存）
+ *
+ * 流程：
+ * 1. 检查缓存中是否存在
+ * 2. 解析 JSON 字段（examples、synonyms、antonyms）
+ * 3. 转换字段名为 camelCase
+ * 4. 规范化复习字段
+ * 5. 冻结对象防止意外修改
+ * 6. 缓存结果
+ *
+ * @param {object} item - 数据库中的单词对象
+ * @returns {object} 解析后的单词对象
  */
 const parseWord = (item) => {
   // ✅ 优化：检查缓存
@@ -67,6 +112,7 @@ const parseWord = (item) => {
     if (cached) return cached;
   }
 
+  // 解析 JSON 字段
   let examples = [], synonyms = [], antonyms = [];
   if (Array.isArray(item.examples)) examples = item.examples;
   else if (item.examples) examples = parseJsonSafe(item.examples, []);
@@ -91,7 +137,12 @@ const parseWord = (item) => {
 };
 
 /**
- * H5 环境的单词存储
+ * H5 环境的单词存储操作
+ */
+
+/**
+ * 获取 H5 环境的所有单词
+ * @returns {array} 单词列表
  */
 const getH5Words = () => {
   try {
@@ -103,6 +154,10 @@ const getH5Words = () => {
   }
 };
 
+/**
+ * 保存单词列表到 H5 环境
+ * @param {array} words - 单词列表
+ */
 const setH5Words = (words) => {
   try {
     uni.setStorageSync(H5_STORAGE_KEY, JSON.stringify(words));
@@ -111,6 +166,10 @@ const setH5Words = (words) => {
   }
 };
 
+/**
+ * 获取 H5 环境的已斩单词
+ * @returns {array} 已斩单词列表
+ */
 const getH5MasteredWords = () => {
   try {
     const raw = uni.getStorageSync(H5_MASTERED_KEY);
@@ -120,6 +179,10 @@ const getH5MasteredWords = () => {
   }
 };
 
+/**
+ * 保存已斩单词到 H5 环境
+ * @param {array} words - 已斩单词列表
+ */
 const setH5MasteredWords = (words) => {
   try {
     uni.setStorageSync(H5_MASTERED_KEY, JSON.stringify(words));
@@ -127,12 +190,23 @@ const setH5MasteredWords = (words) => {
 };
 
 /**
- * 数据库管理器
+ * 数据库管理器类
+ *
+ * 职责：
+ * - 初始化数据库连接
+ * - 提供单词的 CRUD 操作
+ * - 管理复习数据
+ * - 处理数据同步
+ *
+ * 特点：
+ * - 自动适配 H5 和 App 环境
+ * - 提供统一的 API 接口
+ * - 支持事务操作
  */
 class DatabaseManager {
   constructor() {
     logger.debug('db', 'DatabaseManager 构造函数被调用');
-    this.adapter = createDatabaseAdapter();
+    this.adapter = createDatabaseAdapter();  // 创建数据库适配器
     // 关键修复：不在构造时确定 isH5，而是在 init() 时动态检查
     this.isH5 = null;
     logger.debug('db', 'adapter 类型', { type: this.adapter.constructor.name });
@@ -140,6 +214,12 @@ class DatabaseManager {
 
   /**
    * 初始化数据库
+   *
+   * 流程：
+   * 1. 调用适配器的初始化方法
+   * 2. 检测运行环境（H5 或 App）
+   * 3. 创建必要的表和索引
+   * 4. 记录初始化结果
    */
   async init() {
     try {
