@@ -60,7 +60,17 @@
       "Bash(grep -l \"review\\\\|Review\" src/utils/*.js)",
       "Bash(/tmp/analysis_summary.txt:*)",
       "Read(//tmp/**)",
-      "Bash(ls -lh static/*.db)"
+      "Bash(ls -lh static/*.db)",
+      "Bash(find . -maxdepth 1 -type f \\\\\\(-name *.docx -o -name *.pdf -o -name *.txt -o -name *.py -o -name *.sh -o -name *.bat -o -name *.js \\\\\\))",
+      "Bash(find trueti/ -maxdepth 2 -type f \\\\\\(-name *.txt -o -name *.csv -o -name *.json -o -name *.py -o -name *.db -o -name *.sqlite \\\\\\))",
+      "Bash(find static/ -type f \\\\\\(-name *.txt -o -name *.csv -o -name *.json -o -name *.db \\\\\\))",
+      "Read(//.claude/**)",
+      "Bash(grep -r \"kaoyan_vocab.db\\\\|word_exam.db\\\\|vocal_master.db\" . --include=*.py --include=*.js)",
+      "Bash(grep -r static/wordbooks . --include=*.py --include=*.js)",
+      "Bash(grep -r \"pregen_data.db\\\\|word-exam-sentences\\\\|word-stats.json\" . --include=*.js --include=*.ts --include=*.tsx)",
+      "Bash(ls -lh trueti/*.db static/*.db)",
+      "Bash(find . -path */src/utils/*.js -type f)",
+      "Bash(du -sh trueti/*.txt trueti/*.py)"
     ],
     "additionalDirectories": [
       "E:\\vocal\\wordbook_new\\pages\\review"
