@@ -30,19 +30,19 @@ import { logger } from './errorHandler.js';
 const MASTERED_WORDBOOK_WORDS_KEY = 'mastered_wordbook_words_global_v1';
 
 /**
- * 获取全局已斯掉单词集合
+ * 获取全局已斩掉单词集合
  *
  * 功能：
- * - 从本地存储读取已斯掉单词列表
+ * - 从本地存储读取已斩掉单词列表
  * - 转换为 Set 以提升查询性能
  * - 处理读取失败的情况
  *
- * @returns {Set<string>} 已斯掉单词的英文集合
+ * @returns {Set<string>} 已斩掉单词的英文集合
  *
  * @example
  * const masteredSet = getGlobalMasteredWords();
  * if (masteredSet.has('abandon')) {
- *   console.log('abandon 已斯掉');
+ *   console.log('abandon 已斩掉');
  * }
  */
 export const getGlobalMasteredWords = () => {
@@ -57,10 +57,10 @@ export const getGlobalMasteredWords = () => {
 };
 
 /**
- * 标记单词为全局已斯掉
+ * 标记单词为全局已斩掉
  *
  * 功能：
- * - 将单词添加到已斯掉列表
+ * - 将单词添加到已斩掉列表
  * - 避免重复添加
  * - 保存到本地存储
  * - 记录操作日志
@@ -68,7 +68,7 @@ export const getGlobalMasteredWords = () => {
  * @param {string} english - 单词英文
  *
  * @example
- * addGlobalMasteredWord('abandon');  // 标记 abandon 为已斯掉
+ * addGlobalMasteredWord('abandon');  // 标记 abandon 为已斩掉
  */
 export const addGlobalMasteredWord = (english) => {
   try {
@@ -85,17 +85,17 @@ export const addGlobalMasteredWord = (english) => {
 };
 
 /**
- * 取消单词的全局已斯掉状态
+ * 取消单词的全局已斩掉状态
  *
  * 功能：
- * - 从已斯掉列表中移除单词
+ * - 从已斩掉列表中移除单词
  * - 保存到本地存储
  * - 记录操作日志
  *
  * @param {string} english - 单词英文
  *
  * @example
- * removeGlobalMasteredWord('abandon');  // 取消 abandon 的已斯掉状态
+ * removeGlobalMasteredWord('abandon');  // 取消 abandon 的已斩掉状态
  */
 export const removeGlobalMasteredWord = (english) => {
   try {
@@ -110,19 +110,19 @@ export const removeGlobalMasteredWord = (english) => {
 };
 
 /**
- * 检查单词是否已全局斯掉
+ * 检查单词是否已全局斩掉
  *
  * 功能：
- * - 快速查询单词是否已斯掉
+ * - 快速查询单词是否已斩掉
  * - 使用 Set 提升查询性能
  * - 返回布尔值
  *
  * @param {string} english - 单词英文
- * @returns {boolean} 是否已斯掉
+ * @returns {boolean} 是否已斩掉
  *
  * @example
  * if (isGlobalMasteredWord('abandon')) {
- *   console.log('abandon 已斯掉');
+ *   console.log('abandon 已斩掉');
  * }
  */
 export const isGlobalMasteredWord = (english) => {
@@ -131,15 +131,15 @@ export const isGlobalMasteredWord = (english) => {
 };
 
 /**
- * 获取某个词书的已斯掉单词集合（兼容旧代码）
+ * 获取某个词书的已斩掉单词集合（兼容旧代码）
  *
  * 注意：
  * - 此函数已弃用，保留仅为兼容性
- * - 返回全局已斯掉列表，不分词书
+ * - 返回全局已斩掉列表，不分词书
  * - 新代码应使用 getGlobalMasteredWords()
  *
  * @param {string} wordbookId - 词书 ID（已弃用，保留兼容性）
- * @returns {Set<string>} 已斯掉单词的英文集合
+ * @returns {Set<string>} 已斩掉单词的英文集合
  *
  * @deprecated 使用 getGlobalMasteredWords() 代替
  */
@@ -149,7 +149,7 @@ export const getMasteredWordbookWords = (wordbookId) => {
 };
 
 /**
- * 标记词书单词为已斯掉（兼容旧代码）
+ * 标记词书单词为已斩掉（兼容旧代码）
  *
  * 注意：
  * - 此函数已弃用，保留仅为兼容性
@@ -167,7 +167,7 @@ export const addMasteredWordbookWord = (wordbookId, english) => {
 };
 
 /**
- * 取消词书单词的"已斯掉"状态（兼容旧代码）
+ * 取消词书单词的"已斩掉"状态（兼容旧代码）
  *
  * 注意：
  * - 此函数已弃用，保留仅为兼容性
@@ -185,7 +185,7 @@ export const removeMasteredWordbookWord = (wordbookId, english) => {
 };
 
 /**
- * 检查词书单词是否已斯掉（兼容旧代码）
+ * 检查词书单词是否已斩掉（兼容旧代码）
  *
  * 注意：
  * - 此函数已弃用，保留仅为兼容性
@@ -194,7 +194,7 @@ export const removeMasteredWordbookWord = (wordbookId, english) => {
  *
  * @param {string} wordbookId - 词书 ID（已弃用，保留兼容性）
  * @param {string} english - 单词英文
- * @returns {boolean} 是否已斯掉
+ * @returns {boolean} 是否已斩掉
  *
  * @deprecated 使用 isGlobalMasteredWord() 代替
  */

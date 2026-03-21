@@ -1,19 +1,19 @@
 <!--
-  已斯掉单词本页面 (mastered-words.vue)
+  已斩掉单词本页面 (mastered-words.vue)
 
   功能：
-  - 显示用户已经斯掉（掌握）的所有单词
-  - 统计已斯掉单词的数量
+  - 显示用户已经斩掉（掌握）的所有单词
+  - 统计已斩掉单词的数量
   - 支持查看单词详情
-  - 支持取消斯掉状态
+  - 支持取消斩掉状态
   - 使用虚拟滚动优化性能
 
   页面结构：
   1. 顶部标题栏
   2. 空状态提示（无单词时）
-  3. 统计卡片（显示已斯掉单词数）
+  3. 统计卡片（显示已斩掉单词数）
   4. 单词列表（虚拟滚动）
-  5. 取消斯掉确认弹窗
+  5. 取消斩掉确认弹窗
 
   性能优化：
   - 虚拟滚动：只渲染可见区域的单词
@@ -27,20 +27,20 @@
 
     <!-- 顶部标题 -->
     <view class="header">
-      <view class="header-title">已斯掉单词本</view>
+      <view class="header-title">已斩掉单词本</view>
     </view>
 
-    <!-- 空状态：当没有已斯掉的单词时显示 -->
+    <!-- 空状态：当没有已斩掉的单词时显示 -->
     <view v-if="masteredWords.length === 0" class="empty-state">
       <view class="empty-icon">📚</view>
-      <text class="empty-title">还没有斯掉任何单词</text>
+      <text class="empty-title">还没有斩掉任何单词</text>
       <text class="empty-desc">开始复习，掌握更多单词吧</text>
     </view>
 
-    <!-- 统计卡片和单词列表：当有已斯掉的单词时显示 -->
+    <!-- 统计卡片和单词列表：当有已斩掉的单词时显示 -->
     <view v-else class="content">
       <!-- 统计部分 -->
-      <view class="section-label">已斯掉统计</view>
+      <view class="section-label">已斩掉统计</view>
       <view class="card stat-card">
         <view class="stat-row">
           <view class="stat-item">
@@ -64,7 +64,7 @@
         <!-- 单词卡片模板 -->
         <template #default="{ item, index }">
           <view class="card word-card">
-            <!-- 单词信息：英文、中文、斯掉日期 -->
+            <!-- 单词信息：英文、中文、斩掉日期 -->
             <view class="word-header">
               <view class="word-info">
                 <text class="word-english">{{ item.english }}</text>
@@ -72,20 +72,20 @@
               </view>
               <view class="word-date">{{ formatDate(item.mastered_at) }}</view>
             </view>
-            <!-- 操作按钮：查看详情、取消斯掉 -->
+            <!-- 操作按钮：查看详情、取消斩掉 -->
             <view class="word-actions">
               <button class="action-btn detail-btn" @click="goToDetail(item)">查看详情</button>
-              <button class="action-btn unmaster-btn" @click="showUnmasterConfirm(item)">取消斯掉</button>
+              <button class="action-btn unmaster-btn" @click="showUnmasterConfirm(item)">取消斩掉</button>
             </view>
           </view>
         </template>
       </VirtualScroller>
     </view>
 
-    <!-- 取消斯掉确认弹窗 -->
+    <!-- 取消斩掉确认弹窗 -->
     <view v-if="showUnmasterModal" class="modal-overlay" @click="showUnmasterModal = false">
       <view class="modal-content" @click.stop>
-        <text class="modal-title">取消斯掉？</text>
+        <text class="modal-title">取消斩掉？</text>
         <text class="modal-text">{{ unmasterItem?.english }} - {{ unmasterItem?.chinese }}</text>
         <text class="modal-hint">取消后该单词将重新加入复习队列</text>
         <view class="modal-actions">
@@ -99,13 +99,13 @@
 
 <script setup>
 /**
- * 已斯掉单词本页面脚本
+ * 已斩掉单词本页面脚本
  *
  * 主要功能：
- * - 加载已斯掉单词列表
+ * - 加载已斩掉单词列表
  * - 显示单词统计信息
  * - 处理虚拟滚动
- * - 管理取消斯掉操作
+ * - 管理取消斩掉操作
  */
 
 import { ref } from 'vue';
@@ -116,30 +116,30 @@ import { logger } from '../../src/utils/errorHandler.js';
 import { cleanupExpiredCaches } from '../../src/utils/learningCenter_v2.js';
 
 // ========== 响应式数据 ==========
-// 已斯掉的单词列表
+// 已斩掉的单词列表
 const masteredWords = ref([]);
 
 // 虚拟滚动容器的高度（像素）
 const containerHeight = ref(600);
 
-// 是否显示取消斯掉确认弹窗
+// 是否显示取消斩掉确认弹窗
 const showUnmasterModal = ref(false);
 
-// 待取消斯掉的单词项
+// 待取消斩掉的单词项
 const unmasterItem = ref(null);
 
 /**
- * 加载已斯掉单词列表
+ * 加载已斩掉单词列表
  *
  * 流程：
- * 1. 从本地存储读取"已斯掉"单词本
+ * 1. 从本地存储读取"已斩掉"单词本
  * 2. 为每个单词生成唯一 ID
  * 3. 更新响应式数据
  * 4. 处理错误情况
  */
 const loadMasteredWords = async () => {
   try {
-    // 加载"已斯掉"单词本
+    // 加载"已斩掉"单词本
     const words = getWordbookWords('mastered') || [];
     masteredWords.value = words.map((w, index) => ({
       ...w,
@@ -147,7 +147,7 @@ const loadMasteredWords = async () => {
       id: w.id || `mastered_${index}_${w.english}`
     }));
   } catch (e) {
-    logger.error('MasteredWords', '加载已斯掉单词本失败', e);
+    logger.error('MasteredWords', '加载已斩掉单词本失败', e);
     masteredWords.value = [];
   }
 };
@@ -204,10 +204,10 @@ const handleVirtualScroll = (event) => {
 };
 
 /**
- * 显示取消斯掉确认弹窗
+ * 显示取消斩掉确认弹窗
  *
  * 功能：
- * - 保存待取消斯掉的单词
+ * - 保存待取消斩掉的单词
  * - 显示确认弹窗
  *
  * @param {object} item - 单词对象
@@ -218,11 +218,11 @@ const showUnmasterConfirm = (item) => {
 };
 
 /**
- * 确认取消斯掉
+ * 确认取消斩掉
  *
  * 流程：
- * 1. 验证待取消斯掉的单词
- * 2. 从本地存储读取已斯掉单词列表
+ * 1. 验证待取消斩掉的单词
+ * 2. 从本地存储读取已斩掉单词列表
  * 3. 过滤掉该单词
  * 4. 保存更新后的列表
  * 5. 更新页面显示
@@ -237,7 +237,7 @@ const confirmUnmaster = async () => {
   if (!unmasterItem.value) return;
 
   try {
-    // 从"已斯掉"单词本中移除
+    // 从"已斩掉"单词本中移除
     const words = getWordbookWords('mastered') || [];
     const filtered = words.filter(w =>
       (w.english || '').trim().toLowerCase() !==
@@ -256,9 +256,9 @@ const confirmUnmaster = async () => {
     unmasterItem.value = null;
 
     // 显示成功提示
-    uni.showToast({ title: '已取消斯掉', icon: 'success' });
+    uni.showToast({ title: '已取消斩掉', icon: 'success' });
   } catch (e) {
-    logger.error('取消斯掉失败:', e);
+    logger.error('取消斩掉失败:', e);
     uni.showToast({ title: '操作失败', icon: 'none' });
   }
 };
@@ -267,7 +267,7 @@ const confirmUnmaster = async () => {
  * 页面显示时的生命周期钩子
  *
  * 功能：
- * 1. 加载已斯掉单词列表
+ * 1. 加载已斩掉单词列表
  * 2. 计算虚拟滚动容器的高度
  *
  * 高度计算：
