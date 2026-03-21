@@ -70,7 +70,8 @@
       "Bash(grep -r \"pregen_data.db\\\\|word-exam-sentences\\\\|word-stats.json\" . --include=*.js --include=*.ts --include=*.tsx)",
       "Bash(ls -lh trueti/*.db static/*.db)",
       "Bash(find . -path */src/utils/*.js -type f)",
-      "Bash(du -sh trueti/*.txt trueti/*.py)"
+      "Bash(du -sh trueti/*.txt trueti/*.py)",
+      "Bash(__NEW_LINE_65c142a9bd861dc3__ echo:*)"
     ],
     "additionalDirectories": [
       "E:\\vocal\\wordbook_new\\pages\\review"

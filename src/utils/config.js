@@ -23,13 +23,12 @@
 
 export default {
   // DeepSeek API Key
-  // 用于调用 DeepSeek API 生成例句、近义词等
-  // 修改此处即可全局生效
-  // 生产环境应使用环境变量：process.env.DEEPSEEK_API_KEY
-  deepseekApiKey: 'sk-c8ae8c792aa04c15960a0f5c7a38442c',  // 请替换为你的新 API Key
+  // 从环境变量读取，本地开发时从 .env.local 读取
+  // 优先级：环境变量 > .env.local > 空字符串
+  deepseekApiKey: import.meta.env.VITE_DEEPSEEK_API_KEY || '',
 
   // 是否启用 AI 服务
   // 设为 false 时关闭所有 AI 请求（仅用于测试，避免误触发 API）
   // 当禁用时，AI 相关功能会返回模拟数据
-  aiServiceEnabled: true,
+  aiServiceEnabled: import.meta.env.VITE_AI_SERVICE_ENABLED !== 'false',
 };
